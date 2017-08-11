@@ -1,3 +1,4 @@
+package voting;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
@@ -25,7 +26,6 @@ import org.bouncycastle.math.ec.ECPoint;
 public class VotingProccess {
 	   
    static class ECPointComparator implements Comparator<ECPoint> {
-	    @Override
 	    public int compare(ECPoint a, ECPoint b) {
 	    	if (a.isInfinity() && b.isInfinity()) {
 	    		return 0;
@@ -40,7 +40,7 @@ public class VotingProccess {
 	    	}
 	        	
 	    }
-	}
+   }
    
    public static Long logBabyStepGiantStepEC(ECPoint base, ECPoint result, long N) {
 	   long timeDebut = System.currentTimeMillis();
@@ -140,7 +140,7 @@ public class VotingProccess {
     	KeyPairGenerator g = KeyPairGenerator.getInstance("ECDSA", "BC");
     	g.initialize(ecSpec, new SecureRandom());
     	
-    	int nombre_votants = 250;
+    	int nombre_votants = 20;
     	
     	//Initialisation des clés des votants
     	List<KeyPair> key_list = new ArrayList<KeyPair>();
