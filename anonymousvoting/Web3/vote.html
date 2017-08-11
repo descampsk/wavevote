@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="Open Vote Network on Ethereum">
+    <meta name="author" content="Paddy">
+    <title>Voting Page</title>
+    <!-- Bootstrap core CSS
+    <link href="css/bootstrap.min.css" rel="stylesheet">-->
+    <!-- Custom styles for this template
+    <link href="starter-template.css" rel="stylesheet">-->
+    <!-- Custom styles for this template -->
+    <link href="css/steps.css" rel="stylesheet">
+</head>
+
+<body>
+    <form id="msform">
+        <!-- progressbar -->
+        <ul id="progressbar">
+            <li class="active">Voting Codes</li>
+            <li>Unlock Address</li>
+            <li>Register</li>
+            <li>Commit</li>
+            <li>Cast</li>
+            <li>Tally</li>
+        </ul>
+        <!-- The Steps -->
+        <fieldset id="uploadfs">
+            <h2> Upload Voting Codes </h2>
+            <br>
+            <p> Find your votingcodes.txt </p>
+            <div id="dropdown1">
+                <input id="uploadTrigger" name="next" class="action-button" value="Upload" type="button">
+                <input id="done" class="hidden next" type="button">
+                <input type='file' id='uploadFile' class="hidden" uploadtype='file' accept='text/plain' onchange='openFile(event);'>
+            </div>
+        </fieldset>
+        <fieldset id="unlockfs">
+            <div id="dropdown">
+                <p>Address:</p>
+                <select id='addrs' class="action-list">
+                    <option value='0'>None</option>
+                </select>
+                <br>
+                <br>
+                <p>None of your Ethereum accounts are eligible to vote...</p>
+            </div>
+        </fieldset>
+        <fieldset id="registerfs">
+            <div>
+                <p id="registerwait">Please wait.... Registration will begin soon.</p>
+                <div hidden id="registerready">
+                   <h2 id="question3"></h2>
+                   <br>
+                   <p>You have <span id="balance"></span> ether.</p>
+                   <br>
+                   <p id="asktoregister"> Registration deposit is <span id="deposit"></span> ether.
+                   <br>
+                   <p> Would you like to register for this vote?</p>
+                   <input id="registerbutton" class="action-button" type="button" value="Register" onclick="register();">
+                   <p hidden id = "submitvotingkey">Waiting for Ethereum to confirm your voting key.</p>
+                   <br>
+                   <p id="registerby"></p>
+                   <br>
+                   <p id="registerrefundby"></p>
+                   <br>
+                   <p id = "registrationprogress"></p>
+                </div>
+                <div hidden id="resetbutton" style="text-align: center">
+                  <p>The Election Authority should have finished registration before <span id="regclock"></span></p>
+                  <br>
+                  <p>Do you want to cancel the Election and get your deposit back?</p>
+                  <br>
+                  <div id="reset1">
+                    <input class="action-button" type="button" value="Yes" onclick="resetElection();"></button>
+                  </div>
+                  <div hidden id="reset1-msg">
+                    <p>Waiting for Ethereum to cancel the election.</p>
+                  </div>
+                </div>
+            </div>
+
+        </fieldset>
+
+        <fieldset id="commitfs">
+            <h2 id="question2"></h2>
+            <br>
+            <div id="vote">
+                <button onclick="vote(1)" class="action-button">Yes</button>
+                <button onclick="vote(0)" class="action-button">No</button>
+            </div>
+            <br>
+            <p id="no_vote_waiting"></p>
+
+            <div hidden id="resetbutton3" style="text-align: center">
+              <p>All commitments should have been cast before <span id="regclock3"></span></p>
+              <br>
+              <p>Do you want to cancel the Election and get your deposit back?</p>
+              <br>
+              <div id="reset3">
+                <input class="action-button" type="button" value="Yes" onclick="resetElection();"></button>
+              </div>
+              <div hidden id="reset3-msg">
+                <p>Waiting for Ethereum to cancel the election.</p>
+              </div>
+            </div>
+            <br>
+            <p id="commitby"></p>
+        </fieldset>
+
+        <fieldset id="votefs">
+            <h2 id="question"></h2>
+            <br>
+            <div id="do_vote">
+                <button onclick="vote(1)" class="action-button">Yes</button>
+                <button onclick="vote(0)" class="action-button">No</button>
+            </div>
+            <br>
+            <p id="vote_waiting"></p>
+
+            <div hidden id="resetbutton4" style="text-align: center">
+              <p>All votes should have been cast before <span id="regclock4"></span></p>
+              <br>
+              <p>Do you want to cancel the Election and get your deposit back?</p>
+              <br>
+              <div id="reset4">
+                <input class="action-button" type="button" value="Yes" onclick="resetElection();"></button>
+              </div>
+              <div hidden id="reset4-msg">
+                <p>Waiting for Ethereum to cancel the election.</p>
+              </div>
+            </div>
+            <br>
+            <p id="voteby"></p>
+
+        </fieldset>
+
+        <fieldset id="tallyfs">
+            <h2 id="question4"></h2>
+            <br>
+            <div id="result">
+            </div>
+            <br>
+            <hr>
+            <br>
+            <div hidden id="refund-valid">
+              <p>Claim your deposit of <span id="refund"></span> ether before <span id="refundclock"></span></p>
+              <input id="claimrefundbutton" type="button" value="Refund" onclick="claimrefund();" class="action-button" />
+              <p hidden id="waitingforrefund">Waiting for Ethereum to confirm your refund</p>
+            </div>
+            <div hidden id="refund-notvalid">
+              <p>Refund already claimed, or not available. </p>
+           </div>
+        </fieldset>
+    </form>
+
+
+    <!--<div id="infodiv1" class="notification rightTile">
+    <h2>Events from Ethereum:</h2>
+        <div class="insideArea">
+            <p></p>
+        </div>
+    </div>-->
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="js/jquery.min.js"></script>
+    <!-- jQuery easing plugin -->
+    <script src="js/jquery.easing.min.js" type="text/javascript"></script>
+    <!-- <script src="js/bootstrap.min.js"></script>-->
+    <script src="web3.min.js"></script>
+    <script src="bignumber.min.js"></script>
+    <script>
+    /*
+     * Web 3 credentials and connection
+     */
+    var web3;
+    var password = "";
+    var accounts_index;
+    if (typeof web3 !== 'undefined') {
+        web3 = new Web3(web3.currentProvider);
+    } else {
+        // set the provider you want from Web3.providers
+        web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+    }
+
+    // Anonymous Voting Contract
+    var abi = [{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"eligible","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"xG","type":"uint256[2]"},{"name":"vG","type":"uint256[3]"},{"name":"r","type":"uint256"}],"name":"register","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[],"name":"computeTally","outputs":[],"type":"function"},{"constant":false,"inputs":[],"name":"withdrawRefund","outputs":[],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"addressid","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"totaleligible","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"getVoter","outputs":[{"name":"_registeredkey","type":"uint256[2]"},{"name":"_reconstructedkey","type":"uint256[2]"},{"name":"_commitment","type":"bytes32"}],"type":"function"},{"constant":true,"inputs":[],"name":"endSignupPhase","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"commitmentphase","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[],"name":"question","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":false,"inputs":[{"name":"addr","type":"address[]"}],"name":"setEligible","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"finishSignupPhase","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"endRefundPhase","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"h","type":"bytes32"}],"name":"submitCommitment","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"totalrefunded","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"endCommitmentPhase","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"finishRegistrationPhase","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"params","type":"uint256[4]"},{"name":"y","type":"uint256[2]"},{"name":"a1","type":"uint256[2]"},{"name":"b1","type":"uint256[2]"},{"name":"a2","type":"uint256[2]"},{"name":"b2","type":"uint256[2]"}],"name":"submitVote","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[],"name":"gap","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"totalcommitted","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"votecast","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[],"name":"deadlinePassed","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[],"name":"totalvoted","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"params","type":"uint256[4]"},{"name":"y","type":"uint256[2]"},{"name":"a1","type":"uint256[2]"},{"name":"b1","type":"uint256[2]"},{"name":"a2","type":"uint256[2]"},{"name":"b2","type":"uint256[2]"}],"name":"verify1outof2ZKP","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":true,"inputs":[],"name":"charity","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":true,"inputs":[],"name":"endVotingPhase","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"commitment","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"registered","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"_question","type":"string"},{"name":"enableCommitmentPhase","type":"bool"},{"name":"_finishSignupPhase","type":"uint256"},{"name":"_endSignupPhase","type":"uint256"},{"name":"_endCommitmentPhase","type":"uint256"},{"name":"_endVotingPhase","type":"uint256"},{"name":"_endRefundPhase","type":"uint256"},{"name":"_depositrequired","type":"uint256"}],"name":"beginSignUp","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"refunds","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"state","outputs":[{"name":"","type":"uint8"}],"type":"function"},{"constant":true,"inputs":[],"name":"totaltorefund","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"finaltally","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"totalregistered","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"sendToCharity","outputs":[],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"voters","outputs":[{"name":"addr","type":"address"},{"name":"commitment","type":"bytes32"}],"type":"function"},{"constant":true,"inputs":[],"name":"lostdeposit","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"addresses","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"depositrequired","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"xG","type":"uint256[2]"},{"name":"r","type":"uint256"},{"name":"vG","type":"uint256[3]"}],"name":"verifyZKP","outputs":[{"name":"","type":"bool"}],"type":"function"},{"inputs":[{"name":"_gap","type":"uint256"},{"name":"_charity","type":"address"}],"type":"constructor"}];
+    var anonymousvoting = web3.eth.contract(abi);
+    var anonymousvotingAddr = anonymousvoting.at("0xa0a856ee329e7dd03891c3dc337b8178be397320");
+
+    // Local Crypto Contract
+    var abi_crypto = [{"constant":false,"inputs":[{"name":"params","type":"uint256[4]"},{"name":"xG","type":"uint256[2]"},{"name":"yG","type":"uint256[2]"},{"name":"y","type":"uint256[2]"},{"name":"a1","type":"uint256[2]"},{"name":"b1","type":"uint256[2]"},{"name":"a2","type":"uint256[2]"},{"name":"b2","type":"uint256[2]"}],"name":"commitToVote","outputs":[{"name":"","type":"bytes32"}],"type":"function"},{"constant":false,"inputs":[{"name":"xG","type":"uint256[2]"},{"name":"yG","type":"uint256[2]"},{"name":"w","type":"uint256"},{"name":"r2","type":"uint256"},{"name":"d2","type":"uint256"},{"name":"x","type":"uint256"}],"name":"create1outof2ZKPNoVote","outputs":[{"name":"res","type":"uint256[10]"},{"name":"res2","type":"uint256[4]"}],"type":"function"},{"constant":false,"inputs":[{"name":"a","type":"uint256"},{"name":"b","type":"uint256"}],"name":"submod","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"x","type":"uint256"},{"name":"v","type":"uint256"},{"name":"xG","type":"uint256[2]"}],"name":"createZKP","outputs":[{"name":"res","type":"uint256[4]"}],"type":"function"},{"constant":false,"inputs":[{"name":"params","type":"uint256[4]"},{"name":"xG","type":"uint256[2]"},{"name":"yG","type":"uint256[2]"},{"name":"y","type":"uint256[2]"},{"name":"a1","type":"uint256[2]"},{"name":"b1","type":"uint256[2]"},{"name":"a2","type":"uint256[2]"},{"name":"b2","type":"uint256[2]"}],"name":"verify1outof2ZKP","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"xG","type":"uint256[2]"},{"name":"yG","type":"uint256[2]"},{"name":"w","type":"uint256"},{"name":"r1","type":"uint256"},{"name":"d1","type":"uint256"},{"name":"x","type":"uint256"}],"name":"create1outof2ZKPYesVote","outputs":[{"name":"res","type":"uint256[10]"},{"name":"res2","type":"uint256[4]"}],"type":"function"},{"constant":false,"inputs":[{"name":"xG","type":"uint256[2]"},{"name":"r","type":"uint256"},{"name":"vG","type":"uint256[3]"}],"name":"verifyZKP","outputs":[{"name":"","type":"bool"}],"type":"function"},{"inputs":[],"type":"constructor"}];
+    var crypto_contract = web3.eth.contract(abi_crypto);
+    var cryptoAddr = crypto_contract.at("0x4537d53c60729171c708168d64b560e1658124d0");
+
+    // Fetch all the Ethereum addresses...
+    function selectBox() {
+
+        // Only run if user has not yet chosen an Ethereum address.
+        if (!addressChosen) {
+            var listEligible = "";
+            var foundEligible = false;
+            // Let user select one of their Ethereum addresses
+            for (var i = 0; i < web3.eth.accounts.length; i++) {
+                var tempaddr = web3.eth.accounts[i];
+                if (anonymousvotingAddr.eligible(tempaddr)) {
+                    foundEligible = true;
+                    listEligible = listEligible + '<option value="' + i + '">' + tempaddr + '</option>';
+                }
+            }
+
+            // Only create a drop-down box if we have found an address that is eligible to vote!
+            if (foundEligible) {
+                var selectbox = "<h2>Eligible Ethereum Accounts</h2><br><p>Address:</p><select id='addrs' class='action-list'>" + listEligible + "</select> <br><br><p>Password:</p> <input type='password' id='passwordf' value='ilikelittlepaddy' name='fname' class='action-text'> <input id='done2' class='hidden next' type='button'> <input type='button' class='action-button'  value = 'Login' onclick='unlock();'>";
+                document.getElementById('dropdown').innerHTML = selectbox;
+            }
+
+
+        }
+    }
+
+    function resetElection() {
+
+      web3.personal.unlockAccount(addr, password);
+      var res = anonymousvotingAddr.deadlinePassed.call({ from: web3.eth.accounts[accounts_index], gas: 4200000});
+
+      if(res) {
+        anonymousvotingAddr.deadlinePassed.sendTransaction({from: web3.eth.accounts[accounts_index],gas: 4200000});
+        document.getElementById('reset1').setAttribute("hidden", true);
+        document.getElementById("reset1-msg").removeAttribute("hidden");
+        document.getElementById('reset2').setAttribute("hidden", true);
+        document.getElementById("reset2-msg").removeAttribute("hidden");
+        document.getElementById('reset3').setAttribute("hidden", true);
+        document.getElementById("reset3-msg").removeAttribute("hidden");
+        document.getElementById('reset4').setAttribute("hidden", true);
+        document.getElementById('registerby').setAttribute("hidden", true);
+        document.getElementById('registerrefundby').setAttribute("hidden", true);
+        document.getElementById('commitby').setAttribute("hidden", true);
+        document.getElementById('voteby').setAttribute("hidden", true);
+        document.getElementById("reset4-msg").removeAttribute("hidden");
+      }
+
+      return false;
+    }
+
+    function claimrefund() {
+
+      web3.personal.unlockAccount(addr, password);
+      var res = anonymousvotingAddr.withdrawRefund.call({ from: web3.eth.accounts[accounts_index], gas: 4200000});
+
+      if(res) {
+        anonymousvotingAddr.withdrawRefund.sendTransaction({from: web3.eth.accounts[accounts_index],gas: 4200000});
+        document.getElementById('claimrefundbutton').setAttribute("hidden", true);
+        document.getElementById("waitingforrefund").removeAttribute("hidden");
+      }
+      // alert("test");
+      return false;
+    }
+
+    function unlock() {
+        var _addr = $('#addrs').find(":selected").text();
+        var _password = document.getElementById('passwordf').value;
+        document.getElementById('passwordf').value = "";
+
+        if (web3.personal.unlockAccount(_addr, _password)) {
+            addressChosen = true;
+            addr = _addr;
+            password = _password;
+            accounts_index = $("#addrs").val();
+            controlTransition("#unlockfs", null);
+            //document.getElementById('generalStatus').innerHTML = "You have selected the address " + addr;
+        } else {
+          alert("Password was not correct. Try again.");
+        }
+        currentState();
+    }
+
+    // Vote submits their voting key.
+    function register() {
+
+        if (!uploaded) {
+            alert("Please upload your voting codes");
+            return;
+        }
+
+        if (!addressChosen) {
+            alert("Please unlock your Ethereum address");
+            return;
+        }
+
+        if (state != 1) {
+            alert("You can only register during the SIGNUP Phase ");
+            return;
+        }
+
+        if (!anonymousvotingAddr.eligible(addr)) {
+            alert("Your Ethereum Account is not eligible for this vote");
+            return;
+        }
+
+        // We prove knowledge of the voting key
+        var single_zkp = cryptoAddr.createZKP.call(x, v, xG, {
+            from: web3.eth.accounts[accounts_index]
+        });
+        var vG = [single_zkp[1], single_zkp[2], single_zkp[3]];
+
+        web3.personal.unlockAccount(addr, password);
+
+        // Lets make sure the ZKP is valid!
+        var verifyres = cryptoAddr.verifyZKP.call(xG, single_zkp[0], vG, {
+            from: web3.eth.accounts[accounts_index]
+        });
+
+        if (!verifyres) {
+            alert("Problem with voting codes");
+            return;
+        }
+
+        var res = anonymousvotingAddr.register.call(xG, vG, single_zkp[0], {
+                from: web3.eth.accounts[accounts_index],
+                value: anonymousvotingAddr.depositrequired()
+            });
+
+        // Submit voting key to the network
+        if (res) {
+            anonymousvotingAddr.register.sendTransaction(xG, vG, single_zkp[0], {
+                from: web3.eth.accounts[accounts_index],
+                gas: 4200000,
+                value: anonymousvotingAddr.depositrequired()
+            });
+
+            //TODO: DUPLICATED CODE FROM CURRENTSTATE. Needs its own function.
+            document.getElementById('registerbutton').setAttribute("hidden",true);
+            document.getElementById("registrationprogress").removeAttribute("hidden");
+            document.getElementById("submitvotingkey").removeAttribute("hidden");
+
+        } else {
+            alert("Registration failed... Problem could be your voting codes or that you have already registered");
+        }
+    }
+
+
+    // User votes yes or no!
+    function vote(choice) {
+
+        if (!uploaded) {
+            alert("Please upload your voting codes");
+            return;
+        }
+
+        if (!addressChosen) {
+            alert("Please unlock your Ethereum address");
+            return;
+        }
+
+        // Lets make sure they are registered too...
+        if (!anonymousvotingAddr.registered(addr)) {
+            alert("You are not registered for this vote");
+            return;
+        }
+            // SETUP, SIGNUP, TALLY
+        if (state == 0 || state == 1 || state == 4 ) {
+            alert("You can only vote during the COMMITMENT or VOTE phase");
+            return;
+        }
+
+        var choice_text;
+
+        // Get xG and yG (only way to get values from a Struct)
+        var voter = anonymousvotingAddr.getVoter.call({
+            from: web3.eth.accounts[accounts_index]
+        });
+
+        var xG = [voter[0][0], voter[0][1]];
+        var yG = [voter[1][0], voter[1][1]];
+
+        if (choice == 1) {
+            choice_text = "YES";
+            result = cryptoAddr.create1outof2ZKPYesVote.call(xG, yG, w, r, d, x, {
+                from: web3.eth.accounts[accounts_index]
+            });
+        } else {
+            choice_text = "NO";
+            result = cryptoAddr.create1outof2ZKPNoVote.call(xG, yG, w, r, d, x, {
+                from: web3.eth.accounts[accounts_index]
+            });
+        }
+
+
+
+        var y = [result[0][0], result[0][1]];
+        var a1 = [result[0][2], result[0][3]];
+        var b1 = [result[0][4], result[0][5]];
+        var a2 = [result[0][6], result[0][7]];
+        var b2 = [result[0][8], result[0][9]];
+
+        var params = [result[1][0], result[1][1], result[1][2], result[1][3]];
+        result = anonymousvotingAddr.verify1outof2ZKP.call(params, y, a1, b1, a2, b2, {
+            from: web3.eth.accounts[accounts_index]
+        });
+
+        // Let's make sure the zero knowledge proof checked out...
+        if (result) {
+
+            var castvote = false;
+
+            // We either send a commitment to the vote, or the vote itself!
+            if (state == 2) {
+
+                if (anonymousvotingAddr.commitmentphase()) {
+                    castvote = true;
+                } else if (confirm("You are voting " + choice_text + "... You will not be able to change your vote")) {
+                    castvote = true;
+                }
+
+                if (castvote) {
+                    web3.personal.unlockAccount(addr, password);
+
+                    // Get us a hash commitment to the voter's zero knowledge proof
+                    var h = cryptoAddr.commitToVote.call(params, xG, yG, y, a1, b1, a2, b2, {
+                        from: web3.eth.accounts[accounts_index]
+                    });
+
+                    // Send commitment to Etherum!
+                    result = anonymousvotingAddr.submitCommitment.sendTransaction(h, {
+                        from: web3.eth.accounts[accounts_index],
+                        gas: 4200000
+                    });
+                    document.getElementById('vote').innerHTML = 'You have sent (but not revealed) your vote... Waiting for Ethereum to confirm';
+                }
+
+            } else if (state == 3) {
+
+                // No need to ask the user to confirm if they have already committed to it...
+                if (anonymousvotingAddr.commitmentphase()) {
+                    castvote = true;
+                } else if (confirm("You are voting " + choice_text + ". You will not be able to change your vote.")) {
+                    castvote = true;
+                }
+
+                // Should we broadcast the vote?
+                if (castvote) {
+                    web3.personal.unlockAccount(addr, password);
+                    result = anonymousvotingAddr.submitVote.sendTransaction(params, y, a1, b1, a2, b2, {
+                        from: web3.eth.accounts[accounts_index],
+                        gas: 4200000
+                    });
+                    document.getElementById('do_vote').innerHTML = 'Vote has been submitted... Waiting for confirmation';
+                }
+            }
+        } else {
+            alert("Vote was not computed successfully... Please check that you have uploaded the correct voting codes and unlocked the correct account");
+        }
+    }
+
+    function whatIsQuestion() {
+        document.getElementById('question').innerHTML = anonymousvotingAddr.question();
+        document.getElementById('question2').innerHTML = anonymousvotingAddr.question();
+        document.getElementById('question3').innerHTML = anonymousvotingAddr.question();
+        document.getElementById('question4').innerHTML = anonymousvotingAddr.question();    }
+
+    whatIsQuestion();
+
+    var temp=false;
+
+    //[0] = x (private key)
+    //[1] = xG (public key)
+    //[2] = v (random nonce for zkp)
+    //[3] = w (random nonce for 1outof2 zkp)
+    //[4] = r (1 or 2, random nonce for 1outof2 zkp)
+    //[5] = d (1 or 2, random nonce for 1outof2 zkp)
+    // Read file that contains users drawOperationGasTable
+
+    // x & xG is the voting key
+    // v is the blinding factor for single zkp
+    // w,r,d is required for 1 out of 2 zkp.
+    // yG is recomputed public key - we get this from Ethereum
+    var x;
+    var xG;
+    var v;
+    var w;
+    var r;
+    var d;
+    var addr;
+
+    /*
+     * State Variables. Make sure we only do these things ONCE.
+     */
+    var addressChosen = false; // User has selected their Ethereum Address
+    var uploaded = false; // User has uploaded their voting codes
+    var checkedCommit = false; // OPTIONAL: If user has commitment and in VOTE phase. Check if YES or NO.
+
+    var openFile = function(event) {
+        var input = event.target;
+
+        var reader = new FileReader();
+        reader.onload = function() {
+            var text = reader.result.split("\n");
+
+            var row = text[0].split(",");
+
+            // We are expecting 7 numbers...
+            if (row.length == 7) {
+                uploaded = true;
+                x = new BigNumber(row[0]);
+                xG = [new BigNumber(row[1]), new BigNumber(row[2])];
+                v = new BigNumber(row[3]);
+                w = new BigNumber(row[4]);
+                r = new BigNumber(row[5]);
+                d = new BigNumber(row[6]);
+                //  alert("Upload Succesful!");
+                selectBox();
+                nextSlide("#uploadfs","#unlockfs");
+                //document.getElementById('generalStatus').innerHTML = "We have extracted your voting codes";
+
+            } else {
+                alert("Problem with uploaded file..." + row.length);
+            }
+        }
+
+        reader.readAsText(input.files[0]);
+    };
+
+    var changedToRegistration = false;
+    var changedToCommit = false;
+    var changedToVote = false;
+    var changedToTally = false;
+
+    // Create the 'Registration Screen'. Mostly here to tidy up code.
+    function createRegistrationField() {
+
+      if(!changedToRegistration) {
+        document.getElementById('registerready').removeAttribute("hidden");
+        document.getElementById('deposit').innerHTML = web3.fromWei(anonymousvotingAddr.depositrequired());
+        var date = new Date();
+        date.setTime(anonymousvotingAddr.finishSignupPhase() * 1000);
+        document.getElementById('registerby').innerHTML = "<hr><br>Register your ballot before " + clockformat(date);
+        date.setTime(anonymousvotingAddr.endSignupPhase() * 1000);
+        document.getElementById('registerrefundby').innerHTML = "All deposits are refunded after " + clockformat(date) + " if the sign up phase does not finish.";
+        changedToRegistration = true;
+      }
+
+      // Have we submited the key yet?
+      if(anonymousvotingAddr.registered(addr)) {
+        document.getElementById('registerbutton').setAttribute("hidden",true);
+        document.getElementById('asktoregister').setAttribute("hidden",true);
+        document.getElementById("registrationprogress").removeAttribute("hidden");
+        document.getElementById("submitvotingkey").removeAttribute("hidden");
+      } else {
+        document.getElementById('asktoregister').removeAttribute("hidden");
+      }
+
+      document.getElementById('balance').innerHTML = web3.fromWei(web3.eth.getBalance(web3.eth.accounts[accounts_index]));
+
+    }
+
+    function currentState() {
+
+        if(!addressChosen) {
+          return;
+        }
+        state = anonymousvotingAddr.state();
+
+        whatIsQuestion();
+
+        if (state == 0) {
+
+        } else if (state == 1) {
+            var time = anonymousvotingAddr.endSignupPhase() * 1000;
+            var currentTime = new Date().getTime();
+            document.getElementById('registerwait').setAttribute("hidden",true);
+            if(currentTime > time) {
+              document.getElementById("registerready").setAttribute("hidden", true);
+              document.getElementById("resetbutton").removeAttribute("hidden");
+              document.getElementById("regclock").innerHTML = clockformat(new Date(time));
+              if(!anonymousvotingAddr.registered(web3.eth.accounts[accounts_index])) {
+                document.getElementById("resetbutton").innerHTML = "You did not register to vote. <br> No deposit to return.";
+              }
+              document.getElementById('registerby').setAttribute("hidden", true);
+              document.getElementById('registerrefundby').setAttribute("hidden", true);
+            } else {
+              if(document.getElementById("resetbutton").hasAttribute("hidden")) {
+                createRegistrationField();
+              }
+            }
+
+        } else if (state == 2) {
+
+          // Only run this transition once
+          if(!changedToCommit) {
+            changedToCommit = true;
+            controlTransition(id_current_fs, "#commitfs");
+          }
+
+          var time = anonymousvotingAddr.endCommitmentPhase() * 1000;
+          var currentTime = new Date().getTime();
+          var commitbytimer = new Date(time);
+          document.getElementById('commitby').innerHTML = "<hr><br>Your deposit can be refunded after " + clockformat(commitbytimer) + " if Ethereum has accepted your commitment.";
+          if(currentTime > time) {
+            document.getElementById("vote").setAttribute("hidden", true);
+            document.getElementById("no_vote_waiting").setAttribute("hidden", true);
+            document.getElementById("resetbutton3").removeAttribute("hidden");
+            document.getElementById("regclock3").innerHTML = clockformat(new Date(time));
+            document.getElementById('commitby').setAttribute("hidden", true);
+
+            if(!anonymousvotingAddr.commitment(web3.eth.accounts[accounts_index])) {
+              document.getElementById("resetbutton3").innerHTML = "You did not commit to your vote in time. <br> Your deposit will not be returned.";
+            }
+          }
+
+        } else if (state == 3) {
+
+          if(!changedToVote) {
+            changedToVote = true;
+            controlTransition(id_current_fs, "#votefs");
+          }
+
+          var time = anonymousvotingAddr.endVotingPhase() * 1000;
+          var currentTime = new Date().getTime();
+          var votebytimer = new Date(time);
+          document.getElementById('voteby').innerHTML = "<hr><br>Your deposit can be refunded after " + clockformat(votebytimer) + " if Ethereum has accepted your encrypted vote.";
+
+          if(currentTime > time) {
+            document.getElementById("do_vote").setAttribute("hidden", true);
+            document.getElementById("vote_waiting").setAttribute("hidden", true);
+            document.getElementById("resetbutton4").removeAttribute("hidden");
+            document.getElementById("regclock4").innerHTML = clockformat(new Date(time));
+            document.getElementById('voteby').setAttribute("hidden", true);
+
+            if(!anonymousvotingAddr.votecast(web3.eth.accounts[accounts_index])) {
+              document.getElementById("resetbutton4").innerHTML = "You did not cast your encrypted vote in time. <br> Your deposit will not be returned.";
+            }
+            return;
+          }
+
+          var date = new Date();
+          date.setTime(time);
+
+          if(anonymousvotingAddr.votecast(addr)) {
+            checkVoteCast();
+            checkStatistics();
+            return;
+          }
+
+            // If user has submited a commitment... then check if it is yes or no
+            // We can check this by re-computing the ZKP, and comparing the hashes.
+            // Need to make sure that address has been chosen, voting codes uploaded, and registered.
+            if (!checkedCommit && addressChosen && uploaded && anonymousvotingAddr.commitment(addr)) {
+
+                // Lets not repeat this function again...
+                checkedCommit = true;
+
+                // Get xG and yG (only way to get values from a Struct)
+                var voter = anonymousvotingAddr.getVoter.call({
+                    from: web3.eth.accounts[accounts_index]
+                });
+                var xG = [voter[0][0], voter[0][1]];
+                var yG = [voter[1][0], voter[1][1]];
+                var h = voter[2];
+
+                // Compute the 'YES' Zero Knowledge Proof...
+                var result = cryptoAddr.create1outof2ZKPYesVote.call(xG, yG, w, r, d, x, {
+                    from: web3.eth.accounts[accounts_index]
+                });
+
+                var y = [result[0][0], result[0][1]];
+                var a1 = [result[0][2], result[0][3]];
+                var b1 = [result[0][4], result[0][5]];
+                var a2 = [result[0][6], result[0][7]];
+                var b2 = [result[0][8], result[0][9]];
+                var params = [result[1][0], result[1][1], result[1][2], result[1][3]];
+
+                result = anonymousvotingAddr.verify1outof2ZKP.call(params, y, a1, b1, a2, b2, {
+                    from: web3.eth.accounts[accounts_index]
+                });
+
+                // Make sure zkp is OK (indicates problem with voting codes)
+                if (result) {
+
+                    // Get us a hash commitment to the voter's zero knowledge proof
+                    var _h = cryptoAddr.commitToVote.call(params, xG, yG, y, a1, b1, a2, b2, {
+                        from: web3.eth.accounts[accounts_index]
+                    });
+
+                    // Check hash for this ZKP, and the hash commitment stored in Ethereum for this voter...
+                    if (h == _h) {
+                        document.getElementById('do_vote').innerHTML = "<button onclick='vote(1)' class='action-button'>Cast encrypted yes vote</button>";
+                        return;
+                    }
+                } else {
+                    alert("Something went wrong... Please check your voting codes");
+                    return;
+                }
+
+                result = cryptoAddr.create1outof2ZKPNoVote.call(xG, yG, w, r, d, x, {
+                    from: web3.eth.accounts[accounts_index]
+                });
+                y = [result[0][0], result[0][1]];
+                a1 = [result[0][2], result[0][3]];
+                b1 = [result[0][4], result[0][5]];
+                a2 = [result[0][6], result[0][7]];
+                b2 = [result[0][8], result[0][9]];
+                params = [result[1][0], result[1][1], result[1][2], result[1][3]];
+
+                result = anonymousvotingAddr.verify1outof2ZKP.call(params, y, a1, b1, a2, b2, {
+                    from: web3.eth.accounts[accounts_index]
+                });
+
+                // Did we find a no vote?
+                if (result) {
+                    // Get us a hash commitment to the voter's zero knowledge proof
+                    var _h = cryptoAddr.commitToVote.call(params, xG, yG, y, a1, b1, a2, b2, {
+                        from: web3.eth.accounts[accounts_index]
+                    });
+
+                    if (h == _h) {
+                        document.getElementById('do_vote').innerHTML = "<button onclick='vote(0)' class='action-button'>Cast encrypted no vote</button>";
+                        return;
+                    }
+                } else {
+                    alert("Something went wrong. Please check your voting codes.");
+                    return;
+                }
+
+                //document.getElementById('vote').innerHTML = "Possibly something wrong with the voting codes you uploaded... Try again";
+            }
+
+
+        } else if (state == 4) {
+          if(!changedToTally) {
+            changedToTally = true;;
+            controlTransition(id_current_fs, "#tallyfs");
+          }
+
+            // Did everyone vote? Did we have voters registered?
+            if((anonymousvotingAddr.totalregistered().eq(anonymousvotingAddr.totalvoted())) && !anonymousvotingAddr.totalregistered().eq(new BigNumber("0"))) {
+              var yes = anonymousvotingAddr.finaltally(0);
+              var total = anonymousvotingAddr.finaltally(1);
+              var no = total - yes;
+              document.getElementById('result').innerHTML = "Yes = " + yes + "<br> No = " + no;
+            } else {
+              document.getElementById('result').innerHTML = "Voting has been cancelled.";
+            }
+
+            // Decide if refund button should be displayed or not...
+            if(anonymousvotingAddr.refunds(web3.eth.accounts[accounts_index]) > 0) {
+              document.getElementById("refund-notvalid").setAttribute("hidden", true);
+              document.getElementById("refund-valid").removeAttribute("hidden");
+              document.getElementById("refund").innerHTML = web3.fromWei(anonymousvotingAddr.depositrequired());
+              document.getElementById("refundclock").innerHTML = clockformat(new Date(anonymousvotingAddr.endRefundPhase() * 1000));
+            } else {
+              document.getElementById("refund-valid").setAttribute("hidden", true);
+              document.getElementById("refund-notvalid").removeAttribute("hidden");
+            }
+        } else {
+            //document.getElementById('state').innerHTML = "Undocumented Phase: Something went wrong... ";
+            alert("Undocumented Phase: Something went wrong... ");
+        }
+
+        // checkDeadlines();
+        checkVoteCast();
+        checkStatistics();
+
+    }
+
+    function checkStatistics() {
+
+      var eligible = anonymousvotingAddr.totaleligible();
+      var registered = anonymousvotingAddr.totalregistered();
+      var committed = anonymousvotingAddr.totalcommitted();
+      var voted = anonymousvotingAddr.totalvoted();
+
+      document.getElementById("registrationprogress").innerHTML = registered + "/" + eligible + " voters have registered.";
+      document.getElementById("no_vote_waiting").innerHTML = committed + "/" + registered + " voters have sealed, but not revealed their encrypted vote.";
+      document.getElementById("vote_waiting").innerHTML = voted + "/" + registered + " votes have been cast.";
+    }
+
+    function checkVoteCast() {
+
+        // Check if key has been submitted
+        if (anonymousvotingAddr.registered(addr)) {
+            document.getElementById('submitvotingkey').innerHTML = "Voting key has been accepted by Ethereum";
+            //Check if vote has already been cast (or if a commitment has been accepted)
+            if (anonymousvotingAddr.votecast(addr)) {
+                document.getElementById('do_vote').innerHTML = "Vote has been cast";
+            } else if (anonymousvotingAddr.commitment(addr) && state != 4) {
+                document.getElementById('vote').innerHTML = "You have comitted (but not revealed) your vote";
+            }
+        }
+
+
+    }
+
+    setInterval("currentState()", 5000);
+    currentState();
+
+    // Control which window opens....
+    function controlTransition(currentfs, nextfs) {
+
+      // Prevent weird loop
+      if(currentfs == nextfs) {
+        return;
+      }
+      // Do we know where to go next?
+      if(nextfs != null) {
+          nextSlide(currentfs, nextfs);
+      }
+
+      // Nope.. jump to latest state.
+      var state = anonymousvotingAddr.state();
+
+      switch(state.toString("10")) {
+        case "0":
+        case "1":
+           nextSlide(currentfs, "#registerfs");
+           break;
+        case "2":
+           $("#progressbar li").eq($("fieldset").index($("#registerfs"))).addClass("active");
+           nextSlide(currentfs, "#commitfs");
+           break;
+        case "3":
+           $("#progressbar li").eq($("fieldset").index($("#registerfs"))).addClass("active");
+           $("#progressbar li").eq($("fieldset").index($("#commitfs"))).addClass("active");
+           nextSlide(currentfs, "#votefs");
+           break;
+        case "4":
+           $("#progressbar li").eq($("fieldset").index($("#registerfs"))).addClass("active");
+           $("#progressbar li").eq($("fieldset").index($("#commitfs"))).addClass("active");
+           $("#progressbar li").eq($("fieldset").index($("#votefs"))).addClass("active");
+           $("#progressbar li").eq($("fieldset").index($("#tallyfs"))).addClass("active");
+           nextSlide(currentfs, "#tallyfs");
+           break;
+        default:
+          break;
+      }
+    }
+
+    // Easy to read clock time format.
+    function clockformat(date) {
+       var mins = "";
+
+       if(date.getMinutes() < 10) {
+         mins = "0" + date.getMinutes();
+       } else {
+         mins = date.getMinutes();
+       }
+       var toString = date.getHours() + ":" + mins + ", ";
+
+       toString = toString + (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear();
+
+       return toString;
+    }
+
+    /* FOR THE FIELD SET STEPPING */
+    var current_fs, next_fs; //fieldsets
+    var id_current_fs;
+    var left, opacity, scale; //fieldset properties which we will animate
+    var animating; //flag to prevent quick multi-click glitches
+
+    function nextSlide(current_id, next_id) {
+        if (animating) return false;
+        animating = true;
+
+        current_fs = $(current_id);
+        next_fs = $(next_id);
+        id_current_fs = next_id; // Added by paddy to get string id
+
+        //activate next step on progressbar using the index of next_fs
+        $("#progressbar li").eq($("fieldset").index(next_fs)).addClass("active");
+
+        //show the next fieldset
+        next_fs.show();
+        //hide the current fieldset with style
+        current_fs.animate({
+            opacity: 0
+        }, {
+            step: function(now, mx) {
+                //as the opacity of current_fs reduces to 0 - stored in "now"
+                //1. scale current_fs down to 80%
+                scale = 1 - (1 - now) * 0.2;
+                //2. bring next_fs from the right(50%)
+                left = (now * 50) + "%";
+                //3. increase opacity of next_fs to 1 as it moves in
+                opacity = 1 - now;
+                current_fs.css({
+                    'transform': 'scale(' + scale + ')'
+                });
+                next_fs.css({
+                    'left': left,
+                    'opacity': opacity
+                });
+            },
+            duration: 800,
+            complete: function() {
+                current_fs.hide();
+                animating = false;
+            },
+            //this comes from the custom easing plugin
+            easing: 'easeInOutBack'
+        });
+    }
+
+    $(".submit").click(function() {
+        return false;
+    });
+    /* FOR THE OTHER TWEAKS */
+
+    $("#uploadTrigger").click(function() {
+        //console.log("Clicked2");
+        $("#uploadFile").click();
+    });
+
+    //$("#triggerNext1").click(function() {
+    //  console.log("Clicked2");
+    // $("#done2").click();
+    //});
+    </script>
+    <!-- Until Here! -->
+</body>
+
+</html>

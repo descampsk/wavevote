@@ -1,0 +1,791 @@
+<html>
+<head>
+  <title>JavaScript API</title>
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js">
+
+</head>
+
+<body>
+
+  <div class="header">
+    <h3>Talking to Geth</h3>
+  </div>
+  <div class="container">
+  <h2>Progress Table</h2>
+  <p>This table records our current progress in the test:</p>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>State</th>
+        <th>Eligible</th>
+        <th>Registered</th>
+        <th>Committed</th>
+        <th>Votes</th>
+        <th>Yes Votes</th>
+        <th>No Votes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td id="state"></td>
+        <td id="eligible">0</td>
+        <td id="registered">0</td>
+        <td id="committed">0</td>
+        <td id="votes">0</td>
+        <td id="yesvotes">0</td>
+        <td id="novotes">0</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+  <div>
+     <input type='file' accept='text/plain' onchange='openFile(event)'>
+     <button onclick="finishRegistrationPhase()">FinishRegistration</button>
+     <!-- <button onclick="computePublicKeys()">Continue Computing 1</button> -->
+     <button onclick="submitVotes()">Submit Voices</button>
+     <button onclick="tally()">Tally</button>
+     <button onclick="topupEther()">Top up Ether</button>
+     <button onclick="drawGasTable()">Draw Gas Table</button>
+     <!-- <button onclick="drawOperationGasTable()">Draw table for operation estimates</button> -->
+     <button onclick="reset()">Reset</button>
+  </div>
+  <div id="tableresult">
+  </div>
+  <div id="infodiv">
+
+  </div>
+
+  <div id="gettally">
+  Tally
+  </div>
+
+  <br>
+
+  <div id="eligiblelist">
+  SetEligibleList
+  </div>
+
+  <br>
+
+  <div id="getVoter">
+  FetchVoter
+  </div>
+
+  <br>
+
+  <div id="submitCommit">
+  SubmitCommit
+  </div>
+
+  <br>
+
+  <div id="votesubmit">
+  SubmitVote
+  </div>
+
+  <br>
+
+  <div id="registercall">
+  Register
+  </div>
+
+  <br>
+
+  <div id="createZKP">
+  CreateZKP
+  </div>
+
+  <br>
+
+  <div id="verifyZKP">
+  VerifyZKP
+  </div>
+
+  <br>
+
+  <div id="commitToVote">
+  CommitToVote
+  </div>
+
+  <br>
+
+  <div id="createTwoZKP">
+  createTwoZKP
+  </div>
+
+  <br>
+
+  <div id="verifyTwoZKP">
+  VerifyTwoZKP
+  </div>
+
+  <br>
+
+  <div id="finishregtime">
+    FinishRegTime
+  </div>
+
+
+</body>
+
+<script src="../web3.min.js"></script>
+<script src="../bignumber.min.js"></script>
+<script src ="../js/jquery.min.js"></script>
+<script type="text/javascript">
+
+// borrowed from http://stackoverflow.com/questions/14895287/how-to-print-object-array-in-javascript
+function print_r(printthis, returnoutput) {
+    var output = '';
+
+    if($.isArray(printthis) || typeof(printthis) == 'object') {
+        for(var i in printthis) {
+            output += i + ' : ' + print_r(printthis[i], true) + '\n';
+        }
+    }else {
+        output += printthis;
+    }
+    if(returnoutput && returnoutput == true) {
+        return output;
+    }else {
+        append(output);
+    }
+}
+
+function append2(extra, sdiv) {
+   var div = document.getElementById(sdiv);
+   div.innerHTML = div.innerHTML + "," + extra;
+}
+function append(extra) {
+    var div = document.getElementById('infodiv');
+    div.innerHTML = div.innerHTML + "<br>" + "<p>" + extra + "</p>";
+}
+
+var web3;
+var password = "ilikelittlepaddy";
+if (typeof web3 !== 'undefined') {
+  web3 = new Web3(web3.currentProvider);
+} else {
+  // set the provider you want from Web3.providers
+  web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+}
+
+// Anonymous Voting Contract
+var abi = [{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"eligible","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"xG","type":"uint256[2]"},{"name":"vG","type":"uint256[3]"},{"name":"r","type":"uint256"}],"name":"register","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[],"name":"computeTally","outputs":[],"type":"function"},{"constant":false,"inputs":[],"name":"withdrawRefund","outputs":[],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"addressid","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"totaleligible","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"getVoter","outputs":[{"name":"_registeredkey","type":"uint256[2]"},{"name":"_reconstructedkey","type":"uint256[2]"},{"name":"_commitment","type":"bytes32"}],"type":"function"},{"constant":true,"inputs":[],"name":"endSignupPhase","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"commitmentphase","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[],"name":"question","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":false,"inputs":[{"name":"addr","type":"address[]"}],"name":"setEligible","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"finishSignupPhase","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"endRefundPhase","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"h","type":"bytes32"}],"name":"submitCommitment","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"totalrefunded","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"endCommitmentPhase","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"finishRegistrationPhase","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"params","type":"uint256[4]"},{"name":"y","type":"uint256[2]"},{"name":"a1","type":"uint256[2]"},{"name":"b1","type":"uint256[2]"},{"name":"a2","type":"uint256[2]"},{"name":"b2","type":"uint256[2]"}],"name":"submitVote","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[],"name":"gap","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"totalcommitted","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"votecast","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[],"name":"deadlinePassed","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[],"name":"totalvoted","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"params","type":"uint256[4]"},{"name":"y","type":"uint256[2]"},{"name":"a1","type":"uint256[2]"},{"name":"b1","type":"uint256[2]"},{"name":"a2","type":"uint256[2]"},{"name":"b2","type":"uint256[2]"}],"name":"verify1outof2ZKP","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":true,"inputs":[],"name":"charity","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":true,"inputs":[],"name":"endVotingPhase","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"commitment","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"registered","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"_question","type":"string"},{"name":"enableCommitmentPhase","type":"bool"},{"name":"_finishSignupPhase","type":"uint256"},{"name":"_endSignupPhase","type":"uint256"},{"name":"_endCommitmentPhase","type":"uint256"},{"name":"_endVotingPhase","type":"uint256"},{"name":"_endRefundPhase","type":"uint256"},{"name":"_depositrequired","type":"uint256"}],"name":"beginSignUp","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"refunds","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"state","outputs":[{"name":"","type":"uint8"}],"type":"function"},{"constant":true,"inputs":[],"name":"totaltorefund","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"finaltally","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"totalregistered","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"sendToCharity","outputs":[],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"voters","outputs":[{"name":"addr","type":"address"},{"name":"commitment","type":"bytes32"}],"type":"function"},{"constant":true,"inputs":[],"name":"lostdeposit","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"addresses","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"depositrequired","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"xG","type":"uint256[2]"},{"name":"r","type":"uint256"},{"name":"vG","type":"uint256[3]"}],"name":"verifyZKP","outputs":[{"name":"","type":"bool"}],"type":"function"},{"inputs":[{"name":"_gap","type":"uint256"},{"name":"_charity","type":"address"}],"type":"constructor"}];
+var anonymousvoting = web3.eth.contract(abi);
+var anonymousvotingAddr = anonymousvoting.at("0xa0a856ee329e7dd03891c3dc337b8178be397320");
+
+// Local Crypto Contract
+var abi_crypto = [{"constant":false,"inputs":[{"name":"params","type":"uint256[4]"},{"name":"xG","type":"uint256[2]"},{"name":"yG","type":"uint256[2]"},{"name":"y","type":"uint256[2]"},{"name":"a1","type":"uint256[2]"},{"name":"b1","type":"uint256[2]"},{"name":"a2","type":"uint256[2]"},{"name":"b2","type":"uint256[2]"}],"name":"commitToVote","outputs":[{"name":"","type":"bytes32"}],"type":"function"},{"constant":false,"inputs":[{"name":"xG","type":"uint256[2]"},{"name":"yG","type":"uint256[2]"},{"name":"w","type":"uint256"},{"name":"r2","type":"uint256"},{"name":"d2","type":"uint256"},{"name":"x","type":"uint256"}],"name":"create1outof2ZKPNoVote","outputs":[{"name":"res","type":"uint256[10]"},{"name":"res2","type":"uint256[4]"}],"type":"function"},{"constant":false,"inputs":[{"name":"a","type":"uint256"},{"name":"b","type":"uint256"}],"name":"submod","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"x","type":"uint256"},{"name":"v","type":"uint256"},{"name":"xG","type":"uint256[2]"}],"name":"createZKP","outputs":[{"name":"res","type":"uint256[4]"}],"type":"function"},{"constant":false,"inputs":[{"name":"params","type":"uint256[4]"},{"name":"xG","type":"uint256[2]"},{"name":"yG","type":"uint256[2]"},{"name":"y","type":"uint256[2]"},{"name":"a1","type":"uint256[2]"},{"name":"b1","type":"uint256[2]"},{"name":"a2","type":"uint256[2]"},{"name":"b2","type":"uint256[2]"}],"name":"verify1outof2ZKP","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"xG","type":"uint256[2]"},{"name":"yG","type":"uint256[2]"},{"name":"w","type":"uint256"},{"name":"r1","type":"uint256"},{"name":"d1","type":"uint256"},{"name":"x","type":"uint256"}],"name":"create1outof2ZKPYesVote","outputs":[{"name":"res","type":"uint256[10]"},{"name":"res2","type":"uint256[4]"}],"type":"function"},{"constant":false,"inputs":[{"name":"xG","type":"uint256[2]"},{"name":"r","type":"uint256"},{"name":"vG","type":"uint256[3]"}],"name":"verifyZKP","outputs":[{"name":"","type":"bool"}],"type":"function"},{"inputs":[],"type":"constructor"}];
+var crypto_contract = web3.eth.contract(abi_crypto);
+var cryptoAddr = crypto_contract.at("0x4537d53c60729171c708168d64b560e1658124d0");
+
+// These are counters to ensure that enough people have finished
+// the stage before moving on
+var eligibleCounter = 0;
+var registeredCounter = 0;
+var submitedVoteLog = new Array();
+var reconstructedCounter = 0;
+var submitVoteCounter = 0;
+
+// We keep track of the gas
+// [0] = total
+// [1] = lowest
+// [2] = highest
+// [3] = No transactions seen
+function trackGas(record, gas) {
+
+  var num = new BigNumber(gas);
+
+  record[0] = record[0].plus(num);
+
+  // Record the lowest
+  if(num.lt(record[1])) {
+    record[1] = num;
+  }
+
+  // Record the highest
+  if(num.gt(record[2])) {
+    record[2] = num;
+  }
+
+  // Increment
+  record[3] = record[3].plus(new BigNumber('1'));
+}
+
+// This was being used to track gas usage for each function...
+var eligibleGas = [new BigNumber('0'), new BigNumber('99999999'), new BigNumber('0'), new BigNumber('0')];
+var signupGas = [new BigNumber('0'), new BigNumber('99999999'), new BigNumber('0'), new BigNumber('0')];
+var finishGas = [new BigNumber('0'), new BigNumber('99999999'), new BigNumber('0'), new BigNumber('0')];
+var registerGas = [new BigNumber('0'), new BigNumber('99999999'), new BigNumber('0'), new BigNumber('0')];
+var commitGas = [new BigNumber('0'), new BigNumber('99999999'), new BigNumber('0'), new BigNumber('0')];
+var submitVoteGas = [new BigNumber('0'), new BigNumber('99999999'), new BigNumber('0'), new BigNumber('0')];
+var tallyGas = [new BigNumber('0'), new BigNumber('99999999'), new BigNumber('0'), new BigNumber('0')];
+
+// Draw a table on the site to show us the cost for each stage.
+function drawGasTable() {
+
+  var eligibleTable = "<tr><td>Eligible</td><td>" + eligibleGas[1].toFormat(0) + "</td><td>" + eligibleGas[2].toFormat(0) + "</td><td>" + eligibleGas[0].dividedBy(people.length).toFormat(0) + "</td><td>" + eligibleGas[0].toFormat(0) + "</td></tr>";
+  var signupTable = "<tr><td>Transition to SIGNUP</td><td>" + signupGas[1].toFormat(0) + "</td><td>" + signupGas[2].toFormat(0) + "</td><td> -1 </td><td>" + signupGas[0].toFormat(0) + "</td></tr>";
+  var registerTable = "<tr><td>Register to Vote</td><td>" + registerGas[1].toFormat(0) + "</td><td>" + registerGas[2].toFormat(0) + "</td><td>" + registerGas[0].dividedBy(people.length).toFormat(0) + "</td><td>" + registerGas[0].toFormat(0) + "</td></tr>";
+  var finishTable = "<tr><td>COMPUTE</td><td>" + finishGas[1].toFormat(0) + "</td><td>" + finishGas[2].toFormat(0) + "</td><td> " + finishGas[0].dividedBy(people.length).toFormat(0) + "</td><td>" + finishGas[0].toFormat(0) + "</td></tr>";
+  var commitTable = "<tr><td>Committment</td><td>" + commitGas[1].toFormat(0) + "</td><td>" + commitGas[2].toFormat(0) + "</td><td>" + commitGas[0].dividedBy(people.length).toFormat(0) + "</td><td>" + commitGas[0].toFormat(0) + "</td></tr>";
+  var submitVoteTable = "<tr><td>Submit Vote</td><td>" + submitVoteGas[1].toFormat(0) + "</td><td>" + submitVoteGas[2].toFormat(0) + "</td><td>" + submitVoteGas[0].dividedBy(people.length).toFormat(0) + "</td><td>" + submitVoteGas[0].toFormat(0) + "</td></tr>";
+  var tallyTable = "<tr><td>Tally</td><td>" + tallyGas[1].toFormat(0) + "</td><td>" + tallyGas[2].toFormat(0) + "</td><td>" + tallyGas[0].dividedBy(people.length).toFormat(0) + "</td><td>" + tallyGas[0].toFormat(0) + "</td></tr>";
+  var table = "<table> <tr><th>Stage</th><th>Lowest Gas</th><th>Highest Gas</th><th>Average Gas</th><th>Total Gas</th></tr>" +
+              eligibleTable + signupTable + registerTable + finishTable + commitTable + submitVoteTable + tallyTable + "</table>";
+  document.getElementById('tableresult').innerHTML = table;
+}
+
+// Make sure each event only happens once...
+var fileUploaded = false;
+var eligibleBool = false;
+var signupSentBool = false;
+var signupBool = false;
+var finishRegBool = false;
+var commitBool = false;
+var voteBool = false;
+var readyToTallyBool = false;
+var tallyBool = false;
+
+function currentState() {
+
+  state = anonymousvotingAddr.state();
+
+  // Make sure the test file has been uploaded
+  if(!fileUploaded) {
+     return;
+  }
+
+  // SETUP
+  if(state == 0) {
+
+     // Have we finished setting who is eligible?
+     if(!signupSentBool) {
+
+        // Set everyone as eligible..
+        if(!eligibleBool) {
+          document.getElementById('state').innerHTML = "SETUP";
+          eligibleBool = true;
+          setEligible();
+        } else {
+          // Make sure everyone has been set as eligible before moving on to SIGNUP Phase
+          var notEligibleBool = false;
+
+          var c = 0;
+
+          // Check if everyone is eligible..
+          for(var i=0; i<people.length; i++) {
+
+            var person = people[i];
+            // If someone is not eligible... record it...
+            var addr = person[8];
+            if(!anonymousvotingAddr.eligible(addr)) {
+              notEligibleBool = true;
+            } else {
+              c = c + 1;
+            }
+          }
+
+          document.getElementById('eligible').innerHTML = c;
+
+          // If we did not find anyone who was not eligible... then we can move onto the signup phase
+          if(!notEligibleBool) {
+             signupSentBool = true;
+             allowSignUp();
+          }
+         }
+      }
+  } else if(state == 1) { // SIGNUP
+
+    if(!finishRegBool) {
+        // Have we just finished signing people up?
+        if(!signupBool) {
+          document.getElementById('state').innerHTML = "SIGNUP";
+           signupBool = true;
+           register(); // People will start to register
+        } else {
+
+           // Make sure everyone is registered
+           var notRegisteredBool = false;
+           var c = 0;
+           for(var i=0; i<people.length; i++) {
+
+              if(!anonymousvotingAddr.registered(people[i][8])) {
+                 notRegisteredBool = true;
+              } else {
+                c = c + 1;
+              }
+           }
+
+           document.getElementById('registered').innerHTML = c;
+
+           if(!notRegisteredBool) {
+             finishRegBool = true;
+             finishRegistrationPhase();
+           }
+        }
+    }
+  } else if(state == 2) {// Commit
+
+    // Have we sent out commitments to Ethereum?
+    if(!commitBool) {
+       document.getElementById('state').innerHTML = 'COMMIT';
+       commitBool = true;
+       submitVotes();
+    } else {
+       var c = 0;
+
+       for(var i=0; i<people.length; i++) {
+
+         if(anonymousvotingAddr.commitment(people[i][8])) {
+           c = c + 1;
+         }
+       }
+
+       document.getElementById('committed').innerHTML = c;
+    }
+
+    // Once all commitments are sent... we will automatically tansit to VOTING phase
+
+  } else if(state == 3) { // VOTE
+
+    // Have we told Ethereum to perform the tally yet?
+    if(!readyToTallyBool) {
+        // Have we sent our votes to Ethereum?
+        if(!voteBool) {
+            document.getElementById('state').innerHTML = "VOTE";
+            submitVotes();
+            voteBool = true;
+        } else {
+
+            var notVotedBool = false;
+            var c = 0;
+            var x = 0;
+
+            // Try to see if a vote has not yet been recorded.
+            for(var i=0; i<people.length; i++) {
+
+              if(anonymousvotingAddr.commitment(people[i][8])) {
+                x = x + 1;
+              }
+
+                if(!anonymousvotingAddr.votecast(people[i][8])) {
+                    notVotedBool = true;
+                } else {
+                  c = c + 1;
+                }
+            }
+
+            document.getElementById('votes').innerHTML = c;
+            document.getElementById('committed').innerHTML = x;
+            // Have all votes been cast?
+            if(!notVotedBool) {
+                readyToTallyBool = true;
+                tally();
+            }
+         }
+    }
+
+  } else if(state == 4) { // TALLY
+
+      if(!tallyBool) {
+        var yes = anonymousvotingAddr.finaltally(0);
+        var total = anonymousvotingAddr.finaltally(1);
+        var no = total - yes;
+        document.getElementById('state').innerHTML = "TALLY";
+        document.getElementById('yesvotes').innerHTML = yes;
+        document.getElementById('novotes').innerHTML = no;
+        tallyBool = true;
+        dumpTxId();
+        drawGasTable();
+      }
+  }
+}
+
+
+// We submit our ZKP
+// We need to compute yG...
+// We submit yes or no votes
+// Finally tally
+var people = new Array();
+var eligibleTx = 0;
+var signuptx = 0;
+var registeredTx = new Array();
+var finishedregtx = 0;
+var commitTx = new Array();
+var voteTx = new Array();
+var tallytx = 0;
+
+function dumpTxId() {
+    var txid = "";
+
+    append("Eligible TX: " + eligibleTx);
+
+    var receipt = web3.eth.getTransactionReceipt(eligibleTx);
+    trackGas(eligibleGas, receipt.gasUsed);
+
+    append("Signup TX: " + signuptx);
+    receipt = web3.eth.getTransactionReceipt(signuptx);
+    trackGas(signupGas, receipt.gasUsed)
+
+    for(var i=0; i<registeredTx.length; i++) {
+      receipt = web3.eth.getTransactionReceipt(registeredTx[i]);
+      trackGas(registerGas, receipt.gasUsed);
+      txid = txid + registeredTx[i] + ",";
+    }
+
+    append("Registered TX: " + txid);
+    txid = "";
+
+    append("Finish Registration TX: " + finishedregtx);
+    receipt = web3.eth.getTransactionReceipt(finishedregtx);
+    trackGas(finishGas, receipt.gasUsed);
+
+    for(var i=0; i<commitTx.length; i++) {
+      receipt = web3.eth.getTransactionReceipt(commitTx[i]);
+      trackGas(commitGas, receipt.gasUsed);
+      txid = txid + commitTx[i] + ",";
+    }
+
+    for(var i=0; i<voteTx.length; i++) {
+      receipt = web3.eth.getTransactionReceipt(voteTx[i]);
+      trackGas(submitVoteGas, receipt.gasUsed);
+      txid = txid + voteTx[i] + ",";
+    }
+
+    append("Vote TX: " + txid);
+
+    append("Tally TX: " + tallytx);
+    receipt = web3.eth.getTransactionReceipt(tallytx);
+    trackGas(tallyGas, receipt.gasUsed);
+}
+
+
+var totalparticipate = 65;
+var openFile = function(event) {
+  var input = event.target;
+
+  var reader = new FileReader();
+  reader.onload = function(){
+    var text = reader.result.split("\n");
+
+
+    for(var i=1; i<totalparticipate+1; i++) {
+      var row = text[i].split(",");
+      var person = new Array();
+
+      //[0] = x (private key)
+      //[1] = xG (public key)
+      //[2] = v (random nonce for zkp)
+      //[3] = w (random nonce for 1outof2 zkp)
+      //[4] = r (1 or 2, random nonce for 1outof2 zkp)
+      //[5] = d (1 or 2, random nonce for 1outof2 zkp)
+      //[6] = name
+      //[7] = vote yes or no
+      //[8] = address id
+      //[9] = counter;
+      person[0] = new BigNumber(row[0]);
+      person[1] = [new BigNumber(row[1]), new BigNumber(row[2])];
+      person[2] = new BigNumber(row[3]);
+      person[3] = new BigNumber(row[4]);
+      person[4] = new BigNumber(row[5]);
+      person[5] = new BigNumber(row[6]);
+      person[6] = row[7];
+      person[7] = row[8];
+      person[8] = web3.eth.accounts[i];
+      person[9] = -1; // Index in the vote - given to us later
+
+      people.push(person);
+
+      append(text[i]);
+    }
+
+    if(i > 0) {
+      append("You can now start the election");
+    } else {
+      append("No one was found in the file...");
+    }
+  };
+  reader.readAsText(input.files[0]);
+  fileUploaded = true;
+};
+
+function finishRegistrationPhase() {
+  web3.personal.unlockAccount(web3.eth.accounts[0],password);
+
+  for(var i=0; i<40; i++) {
+    var t1 = performance.now();
+    anonymousvotingAddr.finishRegistrationPhase.call({from:web3.eth.accounts[0], gas: 4700000})
+    var t2 = performance.now();
+    append2(t2-t1,"finishregtime");
+  }
+
+  var res = anonymousvotingAddr.finishRegistrationPhase.sendTransaction({from:web3.eth.accounts[0], gas: 4700000})
+  finishedregtx = res;
+  append("Finished Registration sent from " + web3.eth.accounts[0]);
+
+  append("Finished Registration TxID: " + res);
+}
+
+function topupEther() {
+  var w = new BigNumber(web3.toWei(1, "ether"));
+
+  for(var i=1; i<41; i++) {
+    // var balance = web3.eth.getBalance(web3.eth.accounts[i]);
+    web3.personal.unlockAccount(web3.eth.accounts[0],password);
+    web3.eth.sendTransaction({from:web3.eth.accounts[0], to:web3.eth.accounts[i], value: w});
+  }
+
+}
+
+function setEligible() {
+
+  if(people.length > 0) {
+    append("====== Establish which voters are eligible ======");
+    var addresses = new Array();
+
+    // First address is always the owner...
+    for(var i=1; i<totalparticipate+1; i++) {
+      var account = web3.eth.accounts[i];
+      var balance = web3.eth.getBalance(web3.eth.accounts[i]);
+      append("Key: " + web3.eth.accounts[i] + " Balance: " + web3.fromWei(balance.toString(10), "ether")) + " Deposit: " + anonymousvotingAddr.refunds(web3.eth.accounts[i]);
+
+      addresses.push(web3.eth.accounts[i]);
+    }
+
+    web3.personal.unlockAccount(web3.eth.accounts[0],password);
+
+    for(var i=0; i<40; i++) {
+      var t1 = performance.now();
+      var res = anonymousvotingAddr.setEligible.call(addresses, {from:web3.eth.accounts[0], gas: 4700000})
+      var t2 = performance.now();
+      append2(t2-t1, "eligiblelist");
+    }
+
+    var res = anonymousvotingAddr.setEligible.sendTransaction(addresses, {from:web3.eth.accounts[0], gas: 4700000})
+    eligibleTx = res;
+    append("Eligible whitelist sent from " + web3.eth.accounts[0]);
+
+    append("Eligible TxID: " + res);
+
+  } else {
+    append("Please read a file with the people's information first!");
+  }
+
+}
+
+function allowSignUp() {
+  web3.personal.unlockAccount(web3.eth.accounts[0],password);
+  var res = anonymousvotingAddr.beginSignUp.sendTransaction("Should Satoshi Nakamoto reveal his real identity?", true, 3, 1916006400, 1916006411, 1916006442, 1916006453, new BigNumber("1000000000000000"), {from:web3.eth.accounts[0], gas: 4700000});
+  signuptx = res;
+  append("Allow signup sent from " + web3.eth.accounts[0]);
+
+  append("Allow Sign Up TxID: " + res);
+}
+
+// Make sure there are as many ETH accounts with Ether as there is people in the election!
+// One ETH account per voter!
+function register() {
+  append("====== Registering Voters ======");
+  for(var i=0; i<people.length; i++) {
+    var person = people[i];
+    var xG = person[1];
+    var x = person[0];
+    var v = person[2];
+
+    var t1 = performance.now();
+
+    var zkp = cryptoAddr.createZKP.call(x, v, xG, {from:person[8]});
+
+    var t2 = performance.now();
+
+    append2(t2-t1, "createZKP");
+
+    var vG = [zkp[1], zkp[2], zkp[3]];
+    // var res = anonymousvotingAddr.register.call(person[1], vG, zkp[0]);
+    web3.personal.unlockAccount(person[8],password);
+
+    t1 = performance.now();
+    var verifyzkp = anonymousvotingAddr.verifyZKP.call(xG, zkp[0], vG, {from:person[8]});
+    t2 = performance.now();
+    append2(t2-t1, "verifyZKP");
+    // Make sure it can be verified...
+    if(!verifyzkp) {
+      append("Could not verify a single ZKP... for person " + person[8]);
+      return;
+    }
+
+    t1 = performance.now();
+    var bo = anonymousvotingAddr.register.call(person[1], vG, zkp[0], {from:person[8], gas: 4700000, value:anonymousvotingAddr.depositrequired()});
+    t2 = performance.now();
+
+    if(!bo) {
+      append("DO NOT TRUST REGISTER TIMING");
+    }
+
+    append2(t2-t1,"registercall");
+
+    var res = anonymousvotingAddr.register.sendTransaction(person[1], vG, zkp[0], {from:person[8], gas: 4700000, value:anonymousvotingAddr.depositrequired()});
+    registeredTx.push(res);
+    append("Registration for " + person[6] + " TxID: " + res);
+  }
+}
+
+function submitVotes() {
+
+  // We are re-using this function for commitments and voting
+  if(state == 3) {
+      append("====== Submit Commitment ======");
+  } else if(state == 4) {
+      append("====== Submit Vote ======");
+  }
+
+  for(var i=0; i<people.length; i++) {
+    var person = people[i];
+
+    var w = person[3];
+    var r = person[4];
+    var d = person[5];
+    var t1 = performance.now();
+    var voter = anonymousvotingAddr.getVoter.call({from:person[8]});
+    var t2 = performance.now();
+
+    append2(t2-t1,"getVoter");
+    var yG = [voter[1][0], voter[1][1]];
+    var xG = [voter[0][0], voter[0][1]];
+    var x = person[0];
+    var result;
+
+    if(person[7] == 1) {
+      append(person[6] + " is voting yes");
+      var t1 = performance.now();
+      result = cryptoAddr.create1outof2ZKPYesVote.call(xG,yG,w,r,d,x, {from:person[8]});
+      var t2 = performance.now();
+      append2(t2-t1, "createTwoZKP");
+
+    } else {
+      append(person[6] + " is voting no");
+      var t1 = performance.now();
+      result = cryptoAddr.create1outof2ZKPNoVote.call(xG,yG,w,r,d,x, {from:person[8]});
+      var t2 = performance.now();
+      append2(t2-t1,"createTwoZKP");
+    }
+
+    var y = [result[0][0], result[0][1]];
+    var a1 = [result[0][2], result[0][3]];
+    var b1 = [result[0][4], result[0][5]];
+    var a2 = [result[0][6], result[0][7]];
+    var b2 = [result[0][8], result[0][9]];
+
+    var params = [result[1][0], result[1][1], result[1][2], result[1][3]];
+
+    var t1 = performance.now();
+    var checkzkp = anonymousvotingAddr.verify1outof2ZKP.call(params, y, a1, b1, a2, b2, {from:person[8]});
+    var t2 = performance.now();
+    append2(t2-t1,"verifyTwoZKP");
+    if(checkzkp) {
+      append("YES 1 out of 2 ZKP " + person[6]);
+    } else {
+      append("NO 1 out of 2 ZKP " + person[6]);
+    }
+
+    // We either send a commitment to the vote, or the vote itself!
+    if(state == 2) {
+      // In the Commitment Phase
+      web3.personal.unlockAccount(person[8],password);
+
+      // Get us a hash commitment to the voter's zero knowledge proof
+      var t1 = performance.now();
+      var h = cryptoAddr.commitToVote.call(params, xG, yG, y, a1, b1, a2, b2, {from:person[8]});
+      var t2 = performance.now();
+
+      append2(t2-t1, "commitToVote");
+
+      // Send commitment to Etherum!
+      t1 = performance.now();
+      anonymousvotingAddr.submitCommitment.call(h, {from:person[8], gas: 4700000});
+      t2 = performance.now();
+
+      append2(t2-t1, "submitCommit");
+      result = anonymousvotingAddr.submitCommitment.sendTransaction(h, {from:person[8], gas: 4700000});
+      append("We have sent the commitment " + h + " for " + person[6] + " to Ethereum");
+      commitTx.push(result);
+
+    } else if(state == 3) {
+
+      web3.personal.unlockAccount(person[8],password);
+
+      var t1 = performance.now();
+      if(anonymousvotingAddr.submitVote.call(params, y, a1, b1, a2, b2, {from:person[8]})) {
+        var t2 = performance.now();
+        append2(t2-t1,"votesubmit");
+        result = anonymousvotingAddr.submitVote.sendTransaction(params, y, a1, b1, a2, b2, {from:person[8], gas: 4700000});
+        append("We have sent the encrypted vote for " + person[6]);
+        voteTx.push(result);
+      } else {
+        append("Encrypted vote is not accepted by our anonymous contract...");
+      }
+
+   }
+  }
+}
+
+function tally() {
+  append("====== Tally ======");
+
+  web3.personal.unlockAccount(web3.eth.accounts[0],password);
+
+  for(var i=0; i<40; i++) {
+    var t1 = performance.now();
+    anonymousvotingAddr.computeTally.call({from:web3.eth.accounts[0], gas: 4700000});
+    var t2 = performance.now();
+    append2(t2-t1,"gettally")
+  }
+
+  result = anonymousvotingAddr.computeTally.sendTransaction({from:web3.eth.accounts[0], gas: 4700000});
+  tallytx = result;
+  interval = setInterval("findTally()", 1000);
+  append("TxID for tally: " + result);
+}
+
+var interval; // We removed TallyEvent.. so need to watch for the state to change...
+
+function findTally() {
+  var state = anonymousvotingAddr.state();
+
+  // Are we at the finish state?
+  if(state == 5) {
+    var yes = anonymousvotingAddr.finaltally(0);
+    var total = anonymousvotingAddr.finaltally(1);
+    var no = total - yes;
+    append("Tally: Yes - " + yes + " No - " + no);
+    clearInterval(interval);
+  }
+}
+function checkOwner() {
+   append("==== Owner ===");
+   append("Owner is " + anonymousvotingAddr.owner());
+}
+
+function reset() {
+  append("=== Reset Election ===");
+  web3.personal.unlockAccount(web3.eth.accounts[0],password);
+  result = anonymousvotingAddr.reset.sendTransaction({from:web3.eth.accounts[0], gas: 4700000});
+  eligibleCounter = 0;
+  registeredCounter = 0;
+  submitedVoteLog = new Array();
+  reconstructedCounter = 0;
+  submitVoteCounter = 0;
+}
+
+for(var i=0; i<web3.eth.accounts.length; i++) {
+  var account = web3.eth.accounts[i];
+  var balance = web3.eth.getBalance(web3.eth.accounts[i]);
+  append("Key: " + web3.eth.accounts[i] + " Balance: " + web3.fromWei(balance.toString(10), "ether") + " Deposit: " + anonymousvotingAddr.refunds(web3.eth.accounts[i]));
+}
+
+setInterval("currentState()", 1000);
+
+</script>
+</html>
