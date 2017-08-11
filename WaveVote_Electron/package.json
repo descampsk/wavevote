@@ -1,0 +1,70 @@
+{
+  "name": "WaveVote",
+  "version": "1.0.0",
+  "description": "A minimal Electron application",
+  "main": "js/main.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "test": "mocha"
+  },
+  "keywords": [
+    "Electron",
+    "quick",
+    "start",
+    "tutorial",
+    "demo"
+  ],
+  "author": "GitHub",
+  "license": "CC0-1.0",
+  "devDependencies": {
+    "abi-decoder": "^1.0.8",
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
+    "babel-preset-env": "^1.6.0",
+    "babel-preset-react": "^6.24.1",
+    "elasticsearch": "^13.3.1",
+    "electron-forge": "^4.0.0",
+    "electron-prebuilt-compile": "1.6.12",
+    "mocha": "^3.5.3"
+  },
+  "dependencies": {
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
+    "babel-preset-env": "^1.6.0",
+    "bignumber.js": "^4.0.3",
+    "electron-compile": "^6.4.1",
+    "electron-compilers": "^5.9.0",
+    "electron-forge": "^4.0.0",
+    "elliptic": "^6.4.0",
+    "fs-extra": "^4.0.2",
+    "geth": "^0.4.0",
+    "jquery": "^3.2.1",
+    "jquery-datetimepicker": "^2.5.4",
+    "nedb": "^1.8.0",
+    "nodemailer": "^4.1.0",
+    "web3": "0.20.0",
+    "winston": "^2.3.1"
+  },
+  "config": {
+    "forge": {
+      "make_targets": {
+        "win32": [
+          "zip"
+        ]
+      },
+      "electronPackagerConfig": {},
+      "electronWinstallerConfig": {
+        "name": "WaveVote"
+      },
+      "electronInstallerDebian": {},
+      "electronInstallerRedhat": {},
+      "github_repository": {
+        "owner": "",
+        "name": ""
+      },
+      "windowsStoreConfig": {
+        "packageName": "Wavevote"
+      }
+    }
+  }
+}

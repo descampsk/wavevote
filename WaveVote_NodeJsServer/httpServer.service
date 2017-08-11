@@ -1,0 +1,10 @@
+[Unit]
+Description=Http Server to send Ether
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/node /home/ubuntu/wavevote/WaveVote_NodeJsServer/js/http-server.js
+Restart=always
+
+[Install]
+WantedBy=default.target
