@@ -15,9 +15,9 @@
     }
 
     // Anonymous Voting Contract
-    var abi = [{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"eligible","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"xG","type":"uint256[2]"},{"name":"vG","type":"uint256[3]"},{"name":"r","type":"uint256"}],"name":"register","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[],"name":"computeTally","outputs":[],"type":"function"},{"constant":false,"inputs":[],"name":"withdrawRefund","outputs":[],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"addressid","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"totaleligible","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"getVoter","outputs":[{"name":"_registeredkey","type":"uint256[2]"},{"name":"_reconstructedkey","type":"uint256[2]"},{"name":"_commitment","type":"bytes32"}],"type":"function"},{"constant":true,"inputs":[],"name":"endSignupPhase","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"commitmentphase","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[],"name":"question","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":false,"inputs":[{"name":"addr","type":"address[]"}],"name":"setEligible","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"finishSignupPhase","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"endRefundPhase","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"h","type":"bytes32"}],"name":"submitCommitment","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"totalrefunded","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"endCommitmentPhase","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"finishRegistrationPhase","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"params","type":"uint256[4]"},{"name":"y","type":"uint256[2]"},{"name":"a1","type":"uint256[2]"},{"name":"b1","type":"uint256[2]"},{"name":"a2","type":"uint256[2]"},{"name":"b2","type":"uint256[2]"}],"name":"submitVote","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[],"name":"gap","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"totalcommitted","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"votecast","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[],"name":"deadlinePassed","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[],"name":"totalvoted","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"params","type":"uint256[4]"},{"name":"y","type":"uint256[2]"},{"name":"a1","type":"uint256[2]"},{"name":"b1","type":"uint256[2]"},{"name":"a2","type":"uint256[2]"},{"name":"b2","type":"uint256[2]"}],"name":"verify1outof2ZKP","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":true,"inputs":[],"name":"charity","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":true,"inputs":[],"name":"endVotingPhase","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"commitment","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"registered","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"_question","type":"string"},{"name":"enableCommitmentPhase","type":"bool"},{"name":"_finishSignupPhase","type":"uint256"},{"name":"_endSignupPhase","type":"uint256"},{"name":"_endCommitmentPhase","type":"uint256"},{"name":"_endVotingPhase","type":"uint256"},{"name":"_endRefundPhase","type":"uint256"},{"name":"_depositrequired","type":"uint256"}],"name":"beginSignUp","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"refunds","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"state","outputs":[{"name":"","type":"uint8"}],"type":"function"},{"constant":true,"inputs":[],"name":"totaltorefund","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"finaltally","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"totalregistered","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"sendToCharity","outputs":[],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"voters","outputs":[{"name":"addr","type":"address"},{"name":"commitment","type":"bytes32"}],"type":"function"},{"constant":true,"inputs":[],"name":"lostdeposit","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"addresses","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"depositrequired","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"xG","type":"uint256[2]"},{"name":"r","type":"uint256"},{"name":"vG","type":"uint256[3]"}],"name":"verifyZKP","outputs":[{"name":"","type":"bool"}],"type":"function"},{"inputs":[{"name":"_gap","type":"uint256"},{"name":"_charity","type":"address"}],"type":"constructor"}];
+    var abi = [ { "constant": true, "inputs": [ { "name": "", "type": "address" } ], "name": "eligible", "outputs": [ { "name": "", "type": "bool", "value": false } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "xG", "type": "uint256[2]" }, { "name": "vG", "type": "uint256[3]" }, { "name": "r", "type": "uint256" } ], "name": "register", "outputs": [ { "name": "", "type": "bool" } ], "payable": true, "type": "function" }, { "constant": false, "inputs": [], "name": "computeTally", "outputs": [], "payable": false, "type": "function" }, { "constant": false, "inputs": [], "name": "withdrawRefund", "outputs": [], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "address" } ], "name": "addressid", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "totaleligible", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "getVoter", "outputs": [ { "name": "_registeredkey", "type": "uint256[2]", "value": [ "0", "0" ] }, { "name": "_reconstructedkey", "type": "uint256[2]", "value": [ "0", "0" ] } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "endSignupPhase", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "question", "outputs": [ { "name": "", "type": "string", "value": "No question set" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "addr", "type": "address[]" } ], "name": "setEligible", "outputs": [], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "finishSignupPhase", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "endRefundPhase", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "totalrefunded", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [], "name": "finishRegistrationPhase", "outputs": [ { "name": "", "type": "bool" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "params", "type": "uint256[4]" }, { "name": "y", "type": "uint256[2]" }, { "name": "a1", "type": "uint256[2]" }, { "name": "b1", "type": "uint256[2]" }, { "name": "a2", "type": "uint256[2]" }, { "name": "b2", "type": "uint256[2]" } ], "name": "submitVote", "outputs": [ { "name": "", "type": "bool" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "gap", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "address" } ], "name": "votecast", "outputs": [ { "name": "", "type": "bool", "value": false } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [], "name": "deadlinePassed", "outputs": [ { "name": "", "type": "bool" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "totalvoted", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "params", "type": "uint256[4]" }, { "name": "y", "type": "uint256[2]" }, { "name": "a1", "type": "uint256[2]" }, { "name": "b1", "type": "uint256[2]" }, { "name": "a2", "type": "uint256[2]" }, { "name": "b2", "type": "uint256[2]" } ], "name": "verify1outof2ZKP", "outputs": [ { "name": "", "type": "bool" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "owner", "outputs": [ { "name": "", "type": "address", "value": "0x7a4e839863f5862352efd06ab89af8ec72a9e7a5" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "_question", "type": "string" }, { "name": "_finishSignupPhase", "type": "uint256" }, { "name": "_endSignupPhase", "type": "uint256" }, { "name": "_endVotingPhase", "type": "uint256" }, { "name": "_endRefundPhase", "type": "uint256" }, { "name": "_depositrequired", "type": "uint256" } ], "name": "beginSignUp", "outputs": [ { "name": "", "type": "bool" } ], "payable": true, "type": "function" }, { "constant": true, "inputs": [], "name": "charity", "outputs": [ { "name": "", "type": "address", "value": "0x0000000000000000000000000000000000000000" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "endVotingPhase", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "address" } ], "name": "registered", "outputs": [ { "name": "", "type": "bool", "value": false } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "address" } ], "name": "refunds", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "state", "outputs": [ { "name": "", "type": "uint8", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "totaltorefund", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "uint256" } ], "name": "finaltally", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "totalregistered", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [], "name": "sendToCharity", "outputs": [], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "uint256" } ], "name": "voters", "outputs": [ { "name": "addr", "type": "address", "value": "0x0000000000000000000000000000000000000000" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "lostdeposit", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [], "name": "forceCancelElection", "outputs": [], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "uint256" } ], "name": "addresses", "outputs": [ { "name": "", "type": "address", "value": "0x" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "newOwner", "type": "address" } ], "name": "transferOwnership", "outputs": [], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "depositrequired", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "xG", "type": "uint256[2]" }, { "name": "r", "type": "uint256" }, { "name": "vG", "type": "uint256[3]" } ], "name": "verifyZKP", "outputs": [ { "name": "", "type": "bool" } ], "payable": false, "type": "function" }, { "inputs": [ { "name": "_gap", "type": "uint256", "index": 0, "typeShort": "uint", "bits": "256", "displayName": "&thinsp;<span class=\"punctuation\">_</span>&thinsp;gap", "template": "elements_input_uint", "value": "0" } ], "payable": false, "type": "constructor" } ];
     var anonymousvoting = web3.eth.contract(abi);
-    var anonymousvotingAddr = anonymousvoting.at("0xAe006562f409D8d5527Ed2cF2ADAEA129a5C01EF");
+    var anonymousvotingAddr = anonymousvoting.at("0x40A1e2AeBAEedeeacf43FeE12492A03A65926d5D");
 
     // Local Crypto Contract
     var abi_crypto = [{"constant":false,"inputs":[{"name":"params","type":"uint256[4]"},{"name":"xG","type":"uint256[2]"},{"name":"yG","type":"uint256[2]"},{"name":"y","type":"uint256[2]"},{"name":"a1","type":"uint256[2]"},{"name":"b1","type":"uint256[2]"},{"name":"a2","type":"uint256[2]"},{"name":"b2","type":"uint256[2]"}],"name":"commitToVote","outputs":[{"name":"","type":"bytes32"}],"type":"function"},{"constant":false,"inputs":[{"name":"xG","type":"uint256[2]"},{"name":"yG","type":"uint256[2]"},{"name":"w","type":"uint256"},{"name":"r2","type":"uint256"},{"name":"d2","type":"uint256"},{"name":"x","type":"uint256"}],"name":"create1outof2ZKPNoVote","outputs":[{"name":"res","type":"uint256[10]"},{"name":"res2","type":"uint256[4]"}],"type":"function"},{"constant":false,"inputs":[{"name":"a","type":"uint256"},{"name":"b","type":"uint256"}],"name":"submod","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"x","type":"uint256"},{"name":"v","type":"uint256"},{"name":"xG","type":"uint256[2]"}],"name":"createZKP","outputs":[{"name":"res","type":"uint256[4]"}],"type":"function"},{"constant":false,"inputs":[{"name":"params","type":"uint256[4]"},{"name":"xG","type":"uint256[2]"},{"name":"yG","type":"uint256[2]"},{"name":"y","type":"uint256[2]"},{"name":"a1","type":"uint256[2]"},{"name":"b1","type":"uint256[2]"},{"name":"a2","type":"uint256[2]"},{"name":"b2","type":"uint256[2]"}],"name":"verify1outof2ZKP","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"xG","type":"uint256[2]"},{"name":"yG","type":"uint256[2]"},{"name":"w","type":"uint256"},{"name":"r1","type":"uint256"},{"name":"d1","type":"uint256"},{"name":"x","type":"uint256"}],"name":"create1outof2ZKPYesVote","outputs":[{"name":"res","type":"uint256[10]"},{"name":"res2","type":"uint256[4]"}],"type":"function"},{"constant":false,"inputs":[{"name":"xG","type":"uint256[2]"},{"name":"r","type":"uint256"},{"name":"vG","type":"uint256[3]"}],"name":"verifyZKP","outputs":[{"name":"","type":"bool"}],"type":"function"},{"inputs":[],"type":"constructor"}];
@@ -208,7 +208,7 @@
             return;
         }
             // SETUP, SIGNUP, TALLY
-        if (state == 0 || state == 1 || state == 4 ) {
+        if (state == 0 || state == 1 || state == 3 ) {
             alert("You can only vote during the COMMITMENT or VOTE phase");
             return;
         }
@@ -255,39 +255,10 @@
 
             // We either send a commitment to the vote, or the vote itself!
             if (state == 2) {
-
-                if (anonymousvotingAddr.commitmentphase()) {
-                    castvote = true;
-                } else if (confirm("You are voting " + choice_text + "... You will not be able to change your vote")) {
+                if (confirm("You are voting " + choice_text + "... You will not be able to change your vote")) {
                     castvote = true;
                 }
-
-                if (castvote) {
-                    web3.personal.unlockAccount(addr, password);
-
-                    // Get us a hash commitment to the voter's zero knowledge proof
-                    var h = cryptoAddr.commitToVote.call(params, xG, yG, y, a1, b1, a2, b2, {
-                        from: web3.eth.accounts[accounts_index]
-                    });
-
-                    // Send commitment to Etherum!
-                    result = anonymousvotingAddr.submitCommitment.sendTransaction(h, {
-                        from: web3.eth.accounts[accounts_index],
-                        gas: 4200000
-                    });
-                    document.getElementById('vote').innerHTML = 'You have sent (but not revealed) your vote... Waiting for Ethereum to confirm';
-                }
-
-            } else if (state == 3) {
-
-                // No need to ask the user to confirm if they have already committed to it...
-                if (anonymousvotingAddr.commitmentphase()) {
-                    castvote = true;
-                } else if (confirm("You are voting " + choice_text + ". You will not be able to change your vote.")) {
-                    castvote = true;
-                }
-
-                // Should we broadcast the vote?
+                
                 if (castvote) {
                     web3.personal.unlockAccount(addr, password);
                     result = anonymousvotingAddr.submitVote.sendTransaction(params, y, a1, b1, a2, b2, {
@@ -304,7 +275,6 @@
 
     function whatIsQuestion() {
         document.getElementById('question').innerHTML = anonymousvotingAddr.question();
-        document.getElementById('question2').innerHTML = anonymousvotingAddr.question();
         document.getElementById('question3').innerHTML = anonymousvotingAddr.question();
         document.getElementById('question4').innerHTML = anonymousvotingAddr.question();    
     }
@@ -343,10 +313,6 @@
         if(!addressChosen) {
           return;
         }
-    	
-        if (!uploaded) {
-        	
-        }
         
         state = anonymousvotingAddr.state();
 
@@ -374,30 +340,6 @@
             }
 
         } else if (state == 2) {
-
-          // Only run this transition once
-          if(!changedToCommit) {
-            changedToCommit = true;
-            controlTransition(id_current_fs, "#commitfs");
-          }
-
-          var time = anonymousvotingAddr.endCommitmentPhase() * 1000;
-          var currentTime = new Date().getTime();
-          var commitbytimer = new Date(time);
-          document.getElementById('commitby').innerHTML = "<hr><br>Your deposit can be refunded after " + clockformat(commitbytimer) + " if Ethereum has accepted your commitment.";
-          if(currentTime > time) {
-            document.getElementById("vote").setAttribute("hidden", true);
-            document.getElementById("no_vote_waiting").setAttribute("hidden", true);
-            document.getElementById("resetbutton3").removeAttribute("hidden");
-            document.getElementById("regclock3").innerHTML = clockformat(new Date(time));
-            document.getElementById('commitby').setAttribute("hidden", true);
-
-            if(!anonymousvotingAddr.commitment(web3.eth.accounts[accounts_index])) {
-              document.getElementById("resetbutton3").innerHTML = "You did not commit to your vote in time. <br> Your deposit will not be returned.";
-            }
-          }
-
-        } else if (state == 3) {
 
           if(!changedToVote) {
             changedToVote = true;
@@ -434,7 +376,7 @@
             // If user has submited a commitment... then check if it is yes or no
             // We can check this by re-computing the ZKP, and comparing the hashes.
             // Need to make sure that address has been chosen, voting codes uploaded, and registered.
-            if (!checkedCommit && addressChosen && uploaded && anonymousvotingAddr.commitment(addr)) {
+            if (!checkedCommit && addressChosen && uploaded) {
 
                 // Lets not repeat this function again...
                 checkedCommit = true;
@@ -515,7 +457,7 @@
             }
 
 
-        } else if (state == 4) {
+        } else if (state == 3) {
           if(!changedToTally) {
             changedToTally = true;;
             controlTransition(id_current_fs, "#tallyfs");
@@ -556,11 +498,9 @@
 
       var eligible = anonymousvotingAddr.totaleligible();
       var registered = anonymousvotingAddr.totalregistered();
-      var committed = anonymousvotingAddr.totalcommitted();
       var voted = anonymousvotingAddr.totalvoted();
 
       document.getElementById("registrationprogress").innerHTML = registered + "/" + eligible + " voters have registered.";
-      document.getElementById("no_vote_waiting").innerHTML = committed + "/" + registered + " voters have sealed, but not revealed their encrypted vote.";
       document.getElementById("vote_waiting").innerHTML = voted + "/" + registered + " votes have been cast.";
     }
 
@@ -572,8 +512,6 @@
             //Check if vote has already been cast (or if a commitment has been accepted)
             if (anonymousvotingAddr.votecast(addr)) {
                 document.getElementById('do_vote').innerHTML = "Vote has been cast";
-            } else if (anonymousvotingAddr.commitment(addr) && state != 4) {
-                document.getElementById('vote').innerHTML = "You have comitted (but not revealed) your vote";
             }
         }
 
@@ -587,14 +525,19 @@
       if(currentfs == nextfs) {
         return;
       }
-      // Do we know where to go next?
-      if(nextfs != null) {
-          nextSlide(currentfs, nextfs);
-      }
       
       if (!uploaded) {
     	  nextSlide(currentfs, "#uploadfs")
+    	  return;
       }
+      
+      // Do we know where to go next?
+      if(nextfs != null) {
+          nextSlide(currentfs, nextfs);
+          return;
+      }
+      
+
 
       // Nope.. jump to latest state.
       var state = anonymousvotingAddr.state();
@@ -606,16 +549,10 @@
            break;
         case "2":
            $("#progressbar li").eq($("fieldset").index($("#registerfs"))).addClass("active");
-           nextSlide(currentfs, "#commitfs");
+           nextSlide(currentfs, "#votefs");
            break;
         case "3":
            $("#progressbar li").eq($("fieldset").index($("#registerfs"))).addClass("active");
-           $("#progressbar li").eq($("fieldset").index($("#commitfs"))).addClass("active");
-           nextSlide(currentfs, "#votefs");
-           break;
-        case "4":
-           $("#progressbar li").eq($("fieldset").index($("#registerfs"))).addClass("active");
-           $("#progressbar li").eq($("fieldset").index($("#commitfs"))).addClass("active");
            $("#progressbar li").eq($("fieldset").index($("#votefs"))).addClass("active");
            $("#progressbar li").eq($("fieldset").index($("#tallyfs"))).addClass("active");
            nextSlide(currentfs, "#tallyfs");

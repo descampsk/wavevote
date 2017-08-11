@@ -21,6 +21,53 @@ body {
 .hidden {
     display:none;
 }
+#msform2 {
+	width: 600px;
+	margin: 400px auto;
+	text-align: center;
+	position: relative;
+}
+#msform2 fieldset {
+	background: white;
+	border: 0 none;
+	border-radius: 3px;
+	box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.4);
+	padding: 20px 30px;
+
+	box-sizing: border-box;
+	width: 80%;
+	margin: 0 3.5%;
+
+	/*stacking fieldsets above each other*/
+	position: absolute;
+}
+/*inputs*/
+#msform2 input, #msform textarea {
+	padding: 15px;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	margin-bottom: 10px;
+	width: 100%;
+	box-sizing: border-box;
+	font-family: montserrat;
+	color: #2C3E50;
+	font-size: 13px;
+}
+/*buttons*/
+#msform2 .action-button {
+	width: 100px;
+	background: #27AE60;
+	font-weight: bold;
+	color: white;
+	border: 0 none;
+	border-radius: 1px;
+	cursor: pointer;
+	padding: 10px 5px;
+	margin: 10px 5px;
+}
+#msform2 .action-button:hover, #msform2 .action-button:focus {
+	box-shadow: 0 0 0 2px white, 0 0 0 3px #27AE60;
+}
 
 #msform {
 	width: 600px;
