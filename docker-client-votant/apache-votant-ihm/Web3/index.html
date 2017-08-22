@@ -27,6 +27,21 @@
             <li>Cast</li>
             <li>Tally</li>
         </ul>
+        <!-- V2 :  
+        <fieldset id="registerTestfs">
+            <h2> Connexion </h2>
+            <br>
+            <div id="ethereumListAccount">
+                <p>Select your ethereum account :</p>
+                <select id='addrsAccount' class="action-list">
+                    <option value='0'>None</option>
+                </select>
+                <br>
+                <br>
+                <p>No Ethereum account found</p>
+            </div>
+        </fieldset>
+        -->
         <!-- The Steps -->
 		<fieldset id="unlockfs">
             <div id="dropdown">
@@ -38,7 +53,7 @@
                 <br>
                 <p>None of your Ethereum accounts are eligible to vote...</p>
             </div>
-        </fieldset>
+		</fieldset>
 		<fieldset id="uploadfs">
             <h2> Upload Voting Codes </h2>
             <br>
@@ -49,6 +64,8 @@
                 <input type='file' id='uploadFile' class="hidden" uploadtype='file' accept='text/plain' onchange='openFile(event);'>
             </div>
         </fieldset>
+        
+        <!--  V2 :  
         <fieldset id="registerfs">
             <div>
                 <p id="registerwait">Please wait.... Registration will begin soon.</p>
@@ -59,9 +76,9 @@
                    <br>
                    <p id="asktoregister"> Registration deposit is <span id="deposit"></span> ether.
                    <br>
-                   <p> Would you like to register for this vote?</p>
+                   <p> Would you like to register for this vote with this ethereum account <span id="account"></span>?</p>
                    <input id="registerbutton" class="action-button" type="button" value="Register" onclick="register();">
-                   <p hidden id = "submitvotingkey">Waiting for Ethereum to confirm your voting key.</p>
+                   <p hidden id = "submitvotingkey">Waiting for Ethereum to confirm your registration's demand.</p>
                    <br>
                    <p id="registerby"></p>
                    <br>
@@ -69,17 +86,31 @@
                    <br>
                    <p id = "registrationprogress"></p>
                 </div>
+            </div>
+
+        </fieldset>
+        -->
+        
+        
+        <fieldset id="registerfs">
+            <div>
+                <p id="registerwait">Please wait.... Registration will begin soon.</p>
+                <div hidden id="registerready">
+                   <h2 id="question3"></h2>
+                   <br>
+                   <p>You have <span id="balance"></span> ether.</p>
+                   <br>
+                   <p> Would you like to register for this vote?</p>
+                   <input id="registerbutton" class="action-button" type="button" value="Register" onclick="register();">
+                   <p hidden id = "submitvotingkey">Waiting for Ethereum to confirm your voting key.</p>
+                   <br>
+                   <p id="registerby"></p>
+                   <br>
+                   <p id = "registrationprogress"></p>
+                </div>
                 <div hidden id="resetbutton" style="text-align: center">
                   <p>The Election Authority should have finished registration before <span id="regclock"></span></p>
                   <br>
-                  <p>Do you want to cancel the Election and get your deposit back?</p>
-                  <br>
-                  <div id="reset1">
-                    <input class="action-button" type="button" value="Yes" onclick="resetElection();"></button>
-                  </div>
-                  <div hidden id="reset1-msg">
-                    <p>Waiting for Ethereum to cancel the election.</p>
-                  </div>
                 </div>
             </div>
 
@@ -98,17 +129,14 @@
             <div hidden id="resetbutton4" style="text-align: center">
               <p>All votes should have been cast before <span id="regclock4"></span></p>
               <br>
-              <p>Do you want to cancel the Election and get your deposit back?</p>
-              <br>
-              <div id="reset4">
-                <input class="action-button" type="button" value="Yes" onclick="resetElection();"></button>
-              </div>
-              <div hidden id="reset4-msg">
-                <p>Waiting for Ethereum to cancel the election.</p>
-              </div>
             </div>
             <br>
-            <p id="voteby"></p>
+            <div hidden id="voteby">
+            	<br><p>Do you want to check your vote?</p>
+            	<div id='checkVoteButton'>
+            		<input class='action-button' type='button' value='Yes' onclick='checkVote();'></input>
+            	</div>
+            </div>
 
         </fieldset>
 
@@ -120,14 +148,6 @@
             <br>
             <hr>
             <br>
-            <div hidden id="refund-valid">
-              <p>Claim your deposit of <span id="refund"></span> ether before <span id="refundclock"></span></p>
-              <input id="claimrefundbutton" type="button" value="Refund" onclick="claimrefund();" class="action-button" />
-              <p hidden id="waitingforrefund">Waiting for Ethereum to confirm your refund</p>
-            </div>
-            <div hidden id="refund-notvalid">
-              <p>Refund already claimed, or not available. </p>
-           </div>
         </fieldset>
     </form>
 	<form id = msform2>

@@ -472,9 +472,6 @@ contract AnonymousVoting is owned {
   mapping (address => bool) public registered; // Address registered?
   mapping (address => bool) public votecast; // Address voted?
   
-  /*
-  mapping (address => bool) public commitment; // Have we received their commitment?
-  */
   mapping (address => uint) public refunds; // Have we received their commitment?
   
 
@@ -483,41 +480,39 @@ contract AnonymousVoting is owned {
       uint[2] registeredkey;
       uint[2] reconstructedkey;
       uint[2] vote;
-      //bytes32 commitment;
   }
 
   // Work around function to fetch details about a voter
-  function getVoter() constant returns (uint[2] _registeredkey, uint[2] _reconstructedkey) { //}, bytes32 _commitment){
-      uint index = addressid[msg.sender];
+  function getVoter(address _address) constant returns (uint[2] _registeredkey, uint[2] _reconstructedkey, uint[2] _vote) { //}, bytes32 _commitment){
+      uint index = addressid[_address];
       _registeredkey = voters[index].registeredkey;
       _reconstructedkey = voters[index].reconstructedkey;
-      //_commitment = voters[index].commitment;
+      _vote = voters[index].vote;
   }
 
   // List of timers that each phase MUST end by an explicit time in UNIX timestamp.
   // Ethereum works in SECONDS. Not milliseconds.
   uint public finishSignupPhase; // Election Authority to transition to next phase.
   uint public endSignupPhase; // Election Authority does not transition to next phase by this time.
-  //uint public endCommitmentPhase; // Voters have not sent their commitments in by this time.
   uint public endVotingPhase; // Voters have not submitted their vote by this stage.
-  uint public endRefundPhase; // Voters must claim their refund by this stage.
+  //uint public endRefundPhase; // Voters must claim their refund by this stage.
 
   uint public totalregistered; //Total number of participants that have submited a voting key
   uint public totaleligible;
   //uint public totalcommitted;
   uint public totalvoted;
-  uint public totalrefunded;
-  uint public totaltorefund;
+  //uint public totalrefunded;
+  //uint public totaltorefund;
 
   string public question;
   uint[2] public finaltally; // Final tally
   //bool public commitmentphase; // OPTIONAL phase.
-  uint public depositrequired;
+  //uint public depositrequired;
   uint public gap; // Minimum amount of time between time stamps.
-  address public charity;
+  //address public charity;
 
   // TODO: Why cant election authority receive the spoils?
-  uint public lostdeposit; // This money is collected from non active voters...
+  //uint public lostdeposit; // This money is collected from non active voters...
 
   //enum State { SETUP, SIGNUP, COMMITMENT, VOTE, FINISHED }
   enum State { SETUP, SIGNUP, VOTE, FINISHED }
@@ -568,7 +563,7 @@ contract AnonymousVoting is owned {
   // Owner of contract declares that eligible addresses begin round 1 of the protocol
   // Time is the number of 'blocks' we must wait until we can move onto round 2.
   //function beginSignUp(string _question, bool enableCommitmentPhase, uint _finishSignupPhase, uint _endSignupPhase, uint _endCommitmentPhase, uint _endVotingPhase, uint _endRefundPhase, uint _depositrequired) inState(State.SETUP) onlyOwner payable returns (bool){
-  function beginSignUp(string _question, uint _finishSignupPhase, uint _endSignupPhase, uint _endVotingPhase, uint _endRefundPhase, uint _depositrequired) inState(State.SETUP) onlyOwner payable returns (bool){
+  function beginSignUp(string _question, uint _finishSignupPhase, uint _endSignupPhase, uint _endVotingPhase) inState(State.SETUP) onlyOwner payable returns (bool){
     // We have lots of timers. let's explain each one
     // _finishSignUpPhase - Voters should be signed up before this timer
 
@@ -584,7 +579,8 @@ contract AnonymousVoting is owned {
     // TODO: Enforce gap to be at least 1 hour.. may break unit testing
     // Make sure 3 people are at least eligible to vote..
     // Deposit can be zero or more WEI
-    if(_finishSignupPhase > 0 + gap && addresses.length >= 3 && _depositrequired >= 0) {
+	if(_finishSignupPhase > 0 + gap) {
+    //if(_finishSignupPhase > 0 + gap && addresses.length >= 3) {
 
         // Ensure each time phase finishes in the future...
         // Ensure there is a gap of 'x time' between each phase.
@@ -592,49 +588,11 @@ contract AnonymousVoting is owned {
           return false;
         }
         
-        /*
-        // We need to check Commitment timestamps if phase is enabled.
-        if(enableCommitmentPhase) {
-
-          // Make sure there is a gap between 'end of registration' and 'end of commitment' phases.
-          if(_endCommitmentPhase-gap < _endSignupPhase) {
-            return false;
-          }
-
-          // Make sure there is a gap between 'end of commitment' and 'end of vote' phases.
-          if(_endVotingPhase-gap < _endCommitmentPhase) {
-            return false;
-          }
-
-        } else {
-		
-          // We have no commitment phase.
-          // Make sure there is a gap between 'end of registration' and 'end of vote' phases.
-          if(_endVotingPhase-gap < _endSignupPhase) {
-            return false;
-          }
-        }
-        */
-        
         // We have no commitment phase.
         // Make sure there is a gap between 'end of registration' and 'end of vote' phases.
         if(_endVotingPhase-gap < _endSignupPhase) {
           return false;
         }
-
-        
-        // Provide time for people to get a refund once the voting phase has ended.
-        if(_endRefundPhase-gap < _endVotingPhase) {
-          return false;
-        }
-        
-
-      
-      // Require Election Authority to deposit ether.
-      if(msg.value  != _depositrequired) {
-        return false;
-      }
-
 		
       // Store the election authority's deposit
       // Note: This deposit is only lost if the
@@ -649,12 +607,8 @@ contract AnonymousVoting is owned {
       // All timestamps should be in UNIX..
       finishSignupPhase = _finishSignupPhase;
       endSignupPhase = _endSignupPhase;
-      //endCommitmentPhase = _endCommitmentPhase;
       endVotingPhase = _endVotingPhase;
-      endRefundPhase = _endRefundPhase;
       question = _question;
-      //commitmentphase = enableCommitmentPhase;
-      depositrequired = _depositrequired; // Deposit required from all voters
 
       return true;
     }
@@ -667,130 +621,24 @@ contract AnonymousVoting is owned {
   // and allocate refunds to the correct people depending on the situation.
   function deadlinePassed() returns (bool){
 
-      uint refund = 0;
-
+      //TODO : cette fonction ne sert peut-être à rien
       // Has the Election Authority missed the signup deadline?
       // Election Authority will forfeit his deposit.
       if(state == State.SIGNUP && block.timestamp > endSignupPhase) {
-
          // Nothing to do. All voters are refunded.
          state = State.FINISHED;
-         totaltorefund = totalregistered;
-
-         // Election Authority forfeits his deposit...
-         // If 3 or more voters had signed up...
-         if(addresses.length >= 3) {
-           // Election Authority forfeits deposit
-           refund = refunds[owner];
-           refunds[owner] = 0;
-           lostdeposit = lostdeposit + refund;
-
-         }
          return true;
       }
-      
-      
-      /*
-      // Has a voter failed to send their commitment?
-      // Election Authority DOES NOT forgeit his deposit.
-      if(state == State.COMMITMENT && block.timestamp > endCommitmentPhase) {
-
-         // Check which voters have not sent their commitment
-         for(uint i=0; i<totalregistered; i++) {
-
-            // Voters forfeit their deposit if failed to send a commitment
-            if(!commitment[voters[i].addr]) {
-               refund = refunds[voters[i].addr];
-               refunds[voters[i].addr] = 0;
-               lostdeposit = lostdeposit + refund;
-            } else {
-
-              // We will need to refund this person.
-              totaltorefund = totaltorefund + 1;
-            }
-         }
-
-         state = State.FINISHED;
-         return true;
-      }
-      */
 
       // Has a voter failed to send in their vote?
       // Eletion Authority does NOT forfeit his deposit.
       if(state == State.VOTE && block.timestamp > endVotingPhase) {
-
-         // Check which voters have not cast their vote
-         for(uint i=0; i<totalregistered; i++) {
-
-            // Voter forfeits deposit if they have not voted.
-            if(!votecast[voters[i].addr]) {
-              refund = refunds[voters[i].addr];
-              refunds[voters[i].addr] = 0;
-              lostdeposit = lostdeposit + refund;
-            } else {
-
-              // Lets make sure refund has not already been issued...
-              if(refunds[voters[i].addr] > 0) {
-                // We will need to refund this person.
-                totaltorefund = totaltorefund + 1;
-              }
-            }
-         }
-
          state = State.FINISHED;
          return true;
       }
-
-      // Has the deadline passed for voters to claim their refund?
-      // Only owner can call. Owner must be refunded (or forfeited).
-      // Refund period is over or everyone has already been refunded.
-      if(state == State.FINISHED && msg.sender == owner && refunds[owner] == 0 && (block.timestamp > endRefundPhase || totaltorefund == totalrefunded)) {
-
-         // Collect all unclaimed refunds. We will send it to charity.
-         for(i=0; i<totalregistered; i++) {
-           refund = refunds[voters[i].addr];
-           refunds[voters[i].addr] = 0;
-           lostdeposit = lostdeposit + refund;
-         }
-
-         uint[2] memory empty;
-
-         for(i=0; i<addresses.length; i++) {
-            address addr = addresses[i];
-            eligible[addr] = false; // No longer eligible
-            registered[addr] = false; // Remove voting registration
-            voters[i] = Voter({addr: 0, registeredkey: empty, reconstructedkey: empty, vote: empty});
-            addressid[addr] = 0; // Remove index
-            votecast[addr] = false; // Remove that vote was cast
-            //commitment[addr] = false;
-         }
-
-         // Reset timers.
-         finishSignupPhase = 0;
-         endSignupPhase = 0;
-         //endCommitmentPhase = 0;
-         endVotingPhase = 0;
-         endRefundPhase = 0;
-
-         delete addresses;
-
-         // Keep track of voter activity
-         totalregistered = 0;
-         totaleligible = 0;
-         //totalcommitted = 0;
-         totalvoted = 0;
-
-         // General values that need reset
-         question = "No question set";
-         finaltally[0] = 0;
-         finaltally[1] = 0;
-         //commitmentphase = false;
-         depositrequired = 0;
-         totalrefunded = 0;
-         totaltorefund = 0;
-
-         state = State.SETUP;
-         return true;
+      
+      if (state == State.FINISHED) {
+    	  return true;
       }
 
       // No deadlines have passed...
@@ -801,86 +649,145 @@ contract AnonymousVoting is owned {
    * ONLY FOR TEST PURPOSE
    */
   function forceCancelElection() onlyOwner {
-	uint refund = 0;
-	// Collect all unclaimed refunds. We will send it to charity.
-      for(uint i=0; i<totalregistered; i++) {
-        refund = refunds[voters[i].addr];
-        refunds[voters[i].addr] = 0;
-        lostdeposit = lostdeposit + refund;
-      }
-
       uint[2] memory empty;
 
-      for(i=0; i<addresses.length; i++) {
+      for(uint i=0; i<addresses.length; i++) {
          address addr = addresses[i];
          eligible[addr] = false; // No longer eligible
          registered[addr] = false; // Remove voting registration
          voters[i] = Voter({addr: 0, registeredkey: empty, reconstructedkey: empty, vote: empty});
          addressid[addr] = 0; // Remove index
          votecast[addr] = false; // Remove that vote was cast
-         //commitment[addr] = false;
       }
 
       // Reset timers.
       finishSignupPhase = 0;
       endSignupPhase = 0;
-      //endCommitmentPhase = 0;
       endVotingPhase = 0;
-      endRefundPhase = 0;
 
       delete addresses;
 
       // Keep track of voter activity
       totalregistered = 0;
       totaleligible = 0;
-      //totalcommitted = 0;
       totalvoted = 0;
 
       // General values that need reset
       question = "No question set";
       finaltally[0] = 0;
       finaltally[1] = 0;
-      //commitmentphase = false;
-      depositrequired = 0;
-      totalrefunded = 0;
-      totaltorefund = 0;
 
       state = State.SETUP;  
   }
 
   // Called by participants to register their voting public key
   // Participant mut be eligible, and can only register the first key sent key.
-  function register(uint[2] xG, uint[3] vG, uint r) inState(State.SIGNUP) payable returns (bool) {
-
+  function register(uint[2] xG, uint[3] vG, uint r) inState(State.SIGNUP) payable returns (bool _successful, string _error) {
+	  
+	  //TODO: mieux gérer les messages d'erreurs
      // HARD DEADLINE
      if(block.timestamp > finishSignupPhase) {
        throw; // throw returns the voter's ether, but exhausts their gas.
      }
 
-    // Make sure the ether being deposited matches what we expect.
-    if(msg.value != depositrequired) {
-      return false;
-    }
-
+     //TODO : doit vérifier que xG est unique !!!
     // Only white-listed addresses can vote
     if(eligible[msg.sender]) {
-        if(verifyZKP(xG,r,vG) && !registered[msg.sender]) {
+    	if (!registered[msg.sender]) {
+            if(verifyZKP(xG,r,vG) ) {
+                // Update voter's registration
+                uint[2] memory empty;
+                addressid[msg.sender] = totalregistered;
+                voters[totalregistered] = Voter({addr: msg.sender, registeredkey: xG, reconstructedkey: empty, vote: empty});
+                registered[msg.sender] = true;
+                totalregistered += 1;
 
-            // Store deposit
-            refunds[msg.sender] = msg.value;
-
-            // Update voter's registration
-            uint[2] memory empty;
-            addressid[msg.sender] = totalregistered;
-            voters[totalregistered] = Voter({addr: msg.sender, registeredkey: xG, reconstructedkey: empty, vote: empty});
-            registered[msg.sender] = true;
-            totalregistered += 1;
-
-            return true;
-        }
+                _successful = true;
+            } else {
+            	_successful = false;
+            	_error = "Impossible to verify correctly the ZKP";
+            }
+    	} else {
+        	_successful = false;
+        	_error = "This ethereum account is already registred.";
+    	}
+    } else {
+    	_successful = false;
+    	_error = "This ethereum account isn't eligible to vote.";
     }
+  }
+  
+  // Called by participants to register their voting public key
+  // Participant mut be eligible, and can only register the first key sent key.
+  function registerAccount(address accountToRegister, uint[2] xG, uint[3] vG, uint r) inState(State.SIGNUP) onlyOwner payable returns (bool _successful, string _error) {
+	  
+	 //TODO: mieux gérer les messages d'erreurs
+     // HARD DEADLINE
+     if(block.timestamp > finishSignupPhase) {
+       throw; // throw returns the voter's ether, but exhausts their gas.
+     }
 
-    return false;
+    //TODO : doit vérifier que xG est unique !!!
+    // Only white-listed addresses can vote
+    if(eligible[accountToRegister]) {
+    	if (!registered[accountToRegister]) {
+            if(verifyZKP(xG,r,vG) ) {
+                // Update voter's registration
+                uint[2] memory empty;
+                addressid[accountToRegister] = totalregistered;
+                voters[totalregistered] = Voter({addr: accountToRegister, registeredkey: xG, reconstructedkey: empty, vote: empty});
+                registered[accountToRegister] = true;
+                totalregistered += 1;
+
+                _successful = true;
+            } else {
+            	_successful = false;
+            	_error = "Impossible to verify correctly the ZKP";
+            }
+    	} else {
+        	_successful = false;
+        	_error = "This ethereum account is already registred.";
+    	}
+    } else {
+    	_successful = false;
+    	_error = "This ethereum account isn't eligible to vote.";
+    }
+  }
+  
+  function checkVote(uint x, uint[2] _yG, uint[2] _voteCrypted) constant returns(uint[3] temp1_bis, uint[3] temps2_bis, uint temp4) {
+      //uint index = addressid[msg.sender];
+      //uint[2] yG = voters[index].reconstructedkey;
+      //uint[2] voteCrypted = voters[index].vote;
+      
+      uint[2] memory yG = _yG;
+      uint[2] memory voteCrypted = _voteCrypted;
+	  
+      //On calcule g^yixi
+	  uint[3] memory temp1 = Secp256k1._mul(x,yG);
+	  ECCMath.toZ1(temp1, pp);
+	  
+	  temp1_bis[0] = temp1[0];
+	  temp1_bis[1] = temp1[1];
+	  temp1_bis[2] = temp1[2];
+      
+    //On regarde si g^xiyi = vote
+      if (temp1[0] == voteCrypted[0] && temp1[1] == voteCrypted[1]) {
+    	  temp4 = 0;
+      } else {
+    	  uint[3] memory temp2 = Secp256k1._addMixed(temp1, G);
+    	  ECCMath.toZ1(temp2, pp);
+    	  temp2_bis[0] = temp2[0];
+    	  temp2_bis[1] = temp2[1];
+    	  temp2_bis[2] = temp2[2];
+    	  if (temp2[0] == voteCrypted[0] && temp2[1] == voteCrypted[1]) {
+    		  temp4 = 1;
+    	  } else {
+    		  temp4 = 10;
+    	  }
+      }
+
+      
+      
   }
 
 
@@ -964,54 +871,9 @@ contract AnonymousVoting is owned {
           voters[i].reconstructedkey[1] = yG[1];
        }
      }
-     
-     /*
-      // We have computed each voter's special voting key.
-      // Now we either enter the commitment phase (option) or voting phase.
-      if(commitmentphase) {
-        state = State.COMMITMENT;
-      } else {
-        state = State.VOTE;
-      }
-      */
      state = State.VOTE;
-  }
+  }  
 
-  
-  
-  /*
-   * OPTIONAL STAGE: All voters submit the hash of their vote.
-   * Why? The final voter that submits their vote gets to see the tally result
-   * before anyone else. This provides the voter with an additional advantage
-   * compared to all other voters. To get around this issue; we can force all
-   * voters to commit to their vote in advance.... and votes are only revealed
-   * once all voters have committed. This way the final voter has no additional
-   * advantage as they cannot change their vote depending on the tally.
-   * However... we cannot enforce the pre-image to be a hash, and someone could
-   * a commitment that is not a vote. This will break the election, but you
-   * will be able to determine who did it (and possibly punish them!).
-   */
-  /*
-  function submitCommitment(bytes32 h) inState(State.COMMITMENT) {
-
-     //All voters have a deadline to send their commitment
-     if(block.timestamp > endCommitmentPhase) {
-       return;
-     }
-
-    if(!commitment[msg.sender]) {
-        commitment[msg.sender] = true;
-        uint index = addressid[msg.sender];
-        voters[index].commitment = h;
-        totalcommitted = totalcommitted + 1;
-
-        // Once we have recorded all commitments... let voters vote!
-        if(totalcommitted == totalregistered) {
-          state = State.VOTE;
-        }
-    }
-  }
-	*/
   // Given the 1 out of 2 ZKP - record the users vote!
   function submitVote(uint[4] params, uint[2] y, uint[2] a1, uint[2] b1, uint[2] a2, uint[2] b2) inState(State.VOTE) returns (bool) {
 
@@ -1024,21 +886,6 @@ contract AnonymousVoting is owned {
 
      // Make sure the sender can vote, and hasn't already voted.
      if(registered[msg.sender] && !votecast[msg.sender]) {
-    	 
-    	 /*
-       // OPTIONAL Phase: Voters need to commit to their vote in advance.
-       // Time to verify if this vote matches the voter's previous commitment.
-       if(commitmentphase) {
-
-         // Voter has previously committed to the entire zero knowledge proof...
-         bytes32 h = sha3(msg.sender, params, voters[c].registeredkey, voters[c].reconstructedkey, y, a1, b1, a2, b2);
-
-         // No point verifying the ZKP if it doesn't match the voter's commitment.
-         if(voters[c].commitment != h) {
-           return false;
-         }
-       }
-       */
 
        // Verify the ZKP for the vote being cast
        if(verify1outof2ZKP(params, y, a1, b1, a2, b2)) {
@@ -1048,18 +895,6 @@ contract AnonymousVoting is owned {
          votecast[msg.sender] = true;
 
          totalvoted += 1;
-
-         // Refund the sender their ether..
-         // Voter has finished their part of the protocol...
-         uint refund = refunds[msg.sender];
-         refunds[msg.sender] = 0;
-
-         // We can still fail... Safety first.
-         // If failed... voter can call withdrawRefund()
-         // to collect their money once the election has finished.
-         if (!msg.sender.send(refund)) {
-            refunds[msg.sender] = refund;
-         }
 
          return true;
        }
@@ -1078,7 +913,6 @@ contract AnonymousVoting is owned {
 
      uint[3] memory temp;
      uint[2] memory vote;
-     uint refund;
 
      // Sum all votes
      for(uint i=0; i<totalregistered; i++) {
@@ -1106,28 +940,12 @@ contract AnonymousVoting is owned {
      // All voters should already be refunded!
      for(i = 0; i<totalregistered; i++) {
 
-       // Sanity check.. make sure refunds have been issued..
-       if(refunds[voters[i].addr] > 0) {
-         totaltorefund = totaltorefund + 1;
-       }
-     }
-
      // Each vote is represented by a G.
      // If there are no votes... then it is 0G = (0,0)...
      if(temp[0] == 0) {
        finaltally[0] = 0;
        finaltally[1] = totalregistered;
 
-       // Election Authority is responsible for calling this....
-       // He should not fail his own refund...
-       // Make sure tally is computed before refunding...
-       // TODO: Check if this is necessary
-       refund = refunds[msg.sender];
-       refunds[msg.sender] = 0;
-
-       if (!msg.sender.send(refund)) {
-          refunds[msg.sender] = refund;
-       }
        return;
      } else {
 
@@ -1146,19 +964,6 @@ contract AnonymousVoting is owned {
          if(temp[0] == tempG[0]) {
              finaltally[0] = i;
              finaltally[1] = totalregistered;
-
-             // Election Authority is responsible for calling this....
-             // He should not fail his own refund...
-             // Make sure tally is computed before refunding...
-             // TODO: Check if this is necessary
-             // If it fails - he can use withdrawRefund()
-             // Election cannot be reset until he is refunded.
-             refund = refunds[msg.sender];
-             refunds[msg.sender] = 0;
-
-             if (!msg.sender.send(refund)) {
-                refunds[msg.sender] = refund;
-             }
              return;
          }
 
@@ -1176,62 +981,10 @@ contract AnonymousVoting is owned {
          // TODO: Handle this better....
          finaltally[0] = 0;
          finaltally[1] = 0;
-
-         // Election Authority is responsible for calling this....
-         // He should not fail his own refund...
-         // TODO: Check if this is necessary
-         refund = refunds[msg.sender];
-         refunds[msg.sender] = 0;
-
-         if (!msg.sender.send(refund)) {
-            refunds[msg.sender] = refund;
-         }
+         
          return;
-      }
-  }
-
-  // There are two reasons why we might be in a finished state
-  // 1. The tally has been computed
-  // 2. A deadline has been missed.
-  // In the former; everyone gets a refund. In the latter; only active participants get a refund
-  // We can assume if the deadline has been missed - then refunds has ALREADY been updated to
-  // take that into account. (a transaction is required to indicate a deadline has been missed
-  // and in that transaction - we can penalise the non-active participants. lazy sods!)
-  function withdrawRefund() inState(State.FINISHED){
-
-    uint refund = refunds[msg.sender];
-    refunds[msg.sender] = 0;
-
-    if (!msg.sender.send(refund)) {
-       refunds[msg.sender] = refund;
-    } else {
-
-      // Tell everyone we have issued the refund.
-      // Owner is not included in refund counter.
-      // This is OK - we cannot reset election until
-      // the owner has been refunded...
-      // Counter only concerns voters!
-      if(msg.sender != owner) {
-         totalrefunded = totalrefunded + 1;
-      }
-    }
-  }
-
-  // Send the lost deposits to a charity. Anyone can call it.
-  // Lost Deposit increments for each failed election. It is only
-  // reset upon sending to the charity!
-  function sendToCharity() {
-
-    // Only send this money to the owner
-    uint profit = lostdeposit;
-    lostdeposit = 0;
-
-    // Try to send money
-    if(!charity.send(profit)) {
-
-      // We failed to send the money. Record it again.
-      lostdeposit = profit;
-    }
+     }
+   }
   }
 
   // Parameters xG, r where r = v - xc, and vG.

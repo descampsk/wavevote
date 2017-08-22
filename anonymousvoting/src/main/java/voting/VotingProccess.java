@@ -21,6 +21,8 @@ import org.bouncycastle.jce.interfaces.ECPrivateKey;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECParameterSpec;
+import org.bouncycastle.math.ec.ECCurve;
+import org.bouncycastle.math.ec.ECFieldElement;
 import org.bouncycastle.math.ec.ECPoint;
 
 public class VotingProccess {
@@ -139,6 +141,39 @@ public class VotingProccess {
     	ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256k1");
     	KeyPairGenerator g = KeyPairGenerator.getInstance("ECDSA", "BC");
     	g.initialize(ecSpec, new SecureRandom());
+    	
+    	ECCurve curve = ecSpec.getCurve();
+    	ECPoint yG1 = curve.createPoint(new BigInteger("86316685970588307429033653044703810266063448936310083625135301300168276346020"), new BigInteger("70609030508126098936625815403912452148114223794954800450388545420130772541283"));
+    	ECPoint votePoint1 = curve.createPoint(new BigInteger("56321406392798902601463525060233516822248532674269807233234267998287529646083"), new BigInteger("16397007917345963904976872491420336079325640164272097739632189698676522567322"));
+    	BigInteger Xpri1 = new BigInteger("73684597056470802520640839675442817373247702535850643999083350831860052477001");
+    	
+    	ECPoint yG2 = curve.createPoint(new BigInteger("2363880676757623940841095194183461073203073850451613489602539408261257833234"), new BigInteger("50350659381819845923494186119250516105603813527224614627217446865676381856417"));
+    	ECPoint votePoint2 = curve.createPoint(new BigInteger("95069486358188837661323375614801361963607218617204558822555281701024564542398"), new BigInteger("98508925712894897278208141542708546870827494465219426806879377100579785141052"));
+    	BigInteger Xpri2 = new BigInteger("106554628258140934843991940734271727557510876833354296893443127816727132563840");
+    	
+    	
+    	String address1 = "0x70f9d95d0660476fd9ba6f0e052e560e2d41caf9";
+    	String address2 = "0xa76512bcf54f1994a451c5b295d0f749138d59aa";
+    	String address3 = "0xc3c98a47af44aba07cdc4380e76e26a25abc468a";
+    	
+    	System.out.println(yG1.isValid());
+    	System.out.println(votePoint1.isValid());
+    	System.out.println(yG2.isValid());
+    	System.out.println(votePoint2.isValid());
+    	
+    	System.out.println(yG1);
+    	System.out.println(votePoint1);
+    	
+    	ECPoint ygx = (yG1.multiply(Xpri1)).normalize();
+    	System.out.println("ygx : " + ygx.getRawXCoord().toBigInteger());
+    	ECPoint	sol = votePoint1.add(ygx.negate()).normalize();
+    	System.out.println(ecSpec.getG().getAffineXCoord().toBigInteger());
+    	System.out.println(sol);
+    	
+    	ECPoint ygx2g = (yG2.multiply(Xpri2)).add(ecSpec.getG()).normalize();
+    	System.out.println("ygx2 : " + ygx2g);
+    	System.out.println("sol2 : " + votePoint2);
+    	
     	
     	int nombre_votants = 20;
     	
