@@ -9,6 +9,10 @@ var addr = 0;
 var state = 0;
 var accountindex = 0;
 
+var $ = require('jQuery')
+
+var Web3 = require('web3');
+
 if (typeof web3 !== 'undefined') {
   web3 = new Web3(web3.currentProvider);
 } else {
@@ -26,14 +30,9 @@ var abi_crypto = [{"constant":false,"inputs":[{"name":"params","type":"uint256[4
 var crypto_contract = web3.eth.contract(abi_crypto);
 var cryptoAddr = crypto_contract.at("0x26A5bB2c241652f8c6C6Fd7fB02De5f16f6103c8");
 
-//Ouverture du fichier json contenant les clés privées de votants
-
-var jsonfile = require('jsonfile')
-var file = '/tmp/data.json'
-jsonfile.readFile(file, function(err, obj) {
-  console.dir(obj)
-})
-
+//Ouverture de la base de données
+var Datastore = require('nedb')
+var db = new Datastore({filename: 'db/key.db', autoload: true});
 
 //Create and initialize EC context
 //(better do it once and reuse it)
@@ -388,7 +387,7 @@ function openLogin() {
 }
 
 function unlock(callback) {
-  var _addr = $('#addrs').find(":selected").text();
+  var _addr = jQuery('#addrs').find(":selected").text();
   var _password = document.getElementById('passwordf').value;
 
   if(web3.personal.unlockAccount(_addr,_password)) {
@@ -527,13 +526,13 @@ function registerNewVoter() {
 		//Generate keys of the new voter
 		var key = ec.genKeyPair();
 		var x = new BigNumber(key.getPrivate().toString());
-		x = new BigNumber("6959887475939879634657453300833665249729495309926027309660679704549321604357");
+		//x = new BigNumber("6959887475939879634657453300833665249729495309926027309660679704549321604357");
 		console.log(key.getPrivate().toString());
 		
 		var _x = key.getPublic().x.toString();
-		_x = "78019442854369070734606356417324367102708779656641891835271466081108792483995";
+		//_x = "78019442854369070734606356417324367102708779656641891835271466081108792483995";
 		var _y = key.getPublic().y.toString();
-		_y = "81177259980896688224623289645487454948080985310841243675059192092210790040475";
+		//_y = "81177259980896688224623289645487454948080985310841243675059192092210790040475";
 		var xG =  [new BigNumber(_x), new BigNumber(_y)];
 		console.log(_x);
 		console.log(_y);
@@ -570,6 +569,17 @@ function registerNewVoter() {
                 from: web3.eth.accounts[accountindex],
                 gas: 4200000
             });
+            
+            db.find({account : addr}, function(err, docs) {
+            	if (docs == []) {
+            		console.log("ok");
+            		var key = {account: addr, privatekey: x};
+            		db.insert(key);
+            	} else {
+            		db.update({account: addr}, {privatekey: x}, {});
+            	}
+            });
+            
             alert("The registration has been sent");
         } else {
         	alert("Error : " + res[1])

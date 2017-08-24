@@ -717,41 +717,34 @@ contract AnonymousVoting is owned {
     }
   }
   
-  // Called by participants to register their voting public key
-  // Participant mut be eligible, and can only register the first key sent key.
+  // Called by the administrator to register a voter
   function registerAccount(address accountToRegister, uint[2] xG, uint[3] vG, uint r) inState(State.SIGNUP) onlyOwner payable returns (bool _successful, string _error) {
 	  
-	 //TODO: mieux gérer les messages d'erreurs
      // HARD DEADLINE
      if(block.timestamp > finishSignupPhase) {
-       throw; // throw returns the voter's ether, but exhausts their gas.
+    	 _successful = false;
+    	 _error = "The deadline to signup is over";
      }
 
     //TODO : doit vérifier que xG est unique !!!
-    // Only white-listed addresses can vote
-    if(eligible[accountToRegister]) {
-    	if (!registered[accountToRegister]) {
-            if(verifyZKP(xG,r,vG) ) {
-                // Update voter's registration
-                uint[2] memory empty;
-                addressid[accountToRegister] = totalregistered;
-                voters[totalregistered] = Voter({addr: accountToRegister, registeredkey: xG, reconstructedkey: empty, vote: empty});
-                registered[accountToRegister] = true;
-                totalregistered += 1;
-
-                _successful = true;
-            } else {
-            	_successful = false;
-            	_error = "Impossible to verify correctly the ZKP";
-            }
-    	} else {
+	if (!registered[accountToRegister]) {
+        if(verifyZKP(xG,r,vG) ) {
+            // Update voter's registration
+            uint[2] memory empty;
+            addressid[accountToRegister] = totalregistered;
+            voters[totalregistered] = Voter({addr: accountToRegister, registeredkey: xG, reconstructedkey: empty, vote: empty});
+            registered[accountToRegister] = true;
+            totalregistered += 1;
+            _successful = true;
+        } else {
         	_successful = false;
-        	_error = "This ethereum account is already registred.";
-    	}
-    } else {
+        	_error = "Impossible to verify correctly the ZKP";
+        }
+	} else {
     	_successful = false;
-    	_error = "This ethereum account isn't eligible to vote.";
-    }
+    	_error = "This ethereum account is already registred.";
+	}
+
   }
   
   function checkVote(uint x, uint[2] _yG, uint[2] _voteCrypted) constant returns(uint[3] temp1_bis, uint[3] temps2_bis, uint temp4) {

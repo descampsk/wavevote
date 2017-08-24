@@ -25,3 +25,4 @@ hs_err_pid*
 .classpath
 .settings
 /target/
+/electron-ihm-votant/node_modules
