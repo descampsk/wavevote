@@ -110,10 +110,14 @@
           <p id="beginRegistrationbutton"><button onclick="beginRegistration()" class="btn btn-primary">Begin Registration Phase</button></p>
         </div>
 -->
-        <div hidden id="finishRegistration">  
+        <div hidden id="finishRegistration">
+            <div id='selectAccountToRegister'></div>
+   
+          
         	<p>Enter the ethereum address to register</p>
+        	
         	<textarea id="addressRegister" name="list" cols="40" rows="1"></textarea>
-       	 	<button class="btn btn-primary" onclick="registerNewVoter()">Register a new voter</button>
+       	 	<button class="btn btn-primary" onclick="registerNewVoterFromTextArea()">Register a new voter</button>
        	  <br>
              <p id="currentRegistration"></p>
              <p id="finishby"></p>
@@ -153,6 +157,9 @@
         <p>Events from Ethereum:</p>
       </div>
     </div><!-- /.container -->
+    
+    <a href="admin.html" id='pageAdmin' class="btn btn-primary">Page Administration</a>
+  	<a href="vote.html" id='pageVotant' class="btn btn-primary">Page Votant</a>
 
     <!-- Bootstrap core JavaScript
     ================================================== -->
@@ -162,5 +169,6 @@
     <script src="../js/jquery.min.js"></script>
     <script>var jQuery = require('jQuery')</script>
     <script src="../js/jquery.datetimepicker.js"></script>  
+    <script src="../js/bignumber.min.js"></script>
 </body>
 </html>

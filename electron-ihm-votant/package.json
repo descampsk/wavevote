@@ -1,5 +1,5 @@
 {
-  "name": "electron-quick-start",
+  "name": "electron-ihm-votant",
   "version": "1.0.0",
   "description": "A minimal Electron application",
   "main": "js/main.js",
@@ -19,6 +19,11 @@
     "electron": "~1.6.2"
   },
   "dependencies": {
-    "nedb": "^1.8.0"
+    "bignumber.js": "*",
+    "elliptic": "^6.4.0",
+    "jQuery": "*",
+    "nedb": "^1.8.0",
+    "node-jre": "^0.2.1",
+    "web3": "0.20.0"
   }
 }

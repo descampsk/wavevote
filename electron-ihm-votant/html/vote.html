@@ -9,12 +9,9 @@
     <meta name="description" content="Open Vote Network on Ethereum">
     <meta name="author" content="Paddy">
     <title>Voting Page</title>
-    <!-- Bootstrap core CSS
-    <link href="css/bootstrap.min.css" rel="stylesheet">-->
-    <!-- Custom styles for this template
-    <link href="starter-template.css" rel="stylesheet">-->
     <!-- Custom styles for this template -->
-    <link href="css/steps.css" rel="stylesheet">
+    <link href="../css/steps.css" rel="stylesheet">
+    
 </head>
 
 <body>
@@ -26,12 +23,12 @@
             <li>Register</li>
             <li>Cast</li>
             <li>Tally</li>
-        </ul>
-        <!-- V2 :  
-        <fieldset id="registerTestfs">
+        </ul> 
+        <!-- The Steps -->
+        <fieldset id="unlockfs">
             <h2> Connexion </h2>
             <br>
-            <div id="ethereumListAccount">
+            <div id="dropdown">
                 <p>Select your ethereum account :</p>
                 <select id='addrsAccount' class="action-list">
                     <option value='0'>None</option>
@@ -41,8 +38,7 @@
                 <p>No Ethereum account found</p>
             </div>
         </fieldset>
-        -->
-        <!-- The Steps -->
+        <!-- 
 		<fieldset id="unlockfs">
             <div id="dropdown">
                 <p>Address:</p>
@@ -54,6 +50,7 @@
                 <p>None of your Ethereum accounts are eligible to vote...</p>
             </div>
 		</fieldset>
+		 -->
 		<fieldset id="uploadfs">
             <h2> Upload Voting Codes </h2>
             <br>
@@ -101,8 +98,8 @@
                    <p>You have <span id="balance"></span> ether.</p>
                    <br>
                    <p> Would you like to register for this vote?</p>
-                   <input id="registerbutton" class="action-button" type="button" value="Register" onclick="register();">
-                   <p hidden id = "submitvotingkey">Waiting for Ethereum to confirm your voting key.</p>
+                   <input id="registerbutton" class="action-button" type="button" value="Ask for registration" onclick="askForRegistration();">
+                   <p hidden id = "submitregistration">Waiting for an administrator to confirm your registration.</p>
                    <br>
                    <p id="registerby"></p>
                    <br>
@@ -119,6 +116,8 @@
         <fieldset id="votefs">
             <h2 id="question"></h2>
             <br>
+            <p>Enter your voting private key:</p>
+        	<textarea id="privateKey" name="list" cols="40" rows="1"></textarea>
             <div id="do_vote">
                 <button onclick="vote(1)" class="action-button">Yes</button>
                 <button onclick="vote(0)" class="action-button">No</button>
@@ -165,18 +164,20 @@
             <p></p>
         </div>
     </div>-->
-
+	
+	
+	<form id = msform3>
+		<button onclick="location.href='admin.html;'" class="action-button">Page Administration</button>
+		<button onclick="location.href='vote.html;'" class="action-button">Page Votant</button>
+	</form>
     <!-- Bootstrap core JavaScript
     ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="js/jquery.min.js"></script>
-    <!-- jQuery easing plugin -->
-    <script src="js/jquery.easing.min.js" type="text/javascript"></script>
-    <!-- <script src="js/bootstrap.min.js"></script>-->
-    <script src="web3.min.js"></script>
-    <script src="bignumber.min.js"></script>
-    <script src ="vote.js"> 
-    </script>
+    <!-- Placed at the end of the document so the pages load faster --> 
+    <script src="../js/vote.js"></script> 
+    <script>var jQuery = require('jQuery')</script>
+    <script src="../js/jquery.min.js"></script>
+	<script src="../js/jquery.easing.min.js"></script>
+    <script src="../js/jquery.datetimepicker.js"></script>  
     <!-- Until Here! -->
 </body>
 

@@ -24,5 +24,7 @@ hs_err_pid*
 .project
 .classpath
 .settings
-/target/
-/electron-ihm-votant/node_modules
+target/
+electron-ihm-votant/node_modules/
+anonymousvoting/target/
+anonymousvoting/target/maven-archiver/

@@ -1,4 +1,4 @@
-from ethereum/client-go:latest
+from ethereum/client-go:v1.6.6
 
 RUN apk add --update \
 		bash \
