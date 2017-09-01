@@ -3,8 +3,10 @@ import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.KeyStore.PrivateKeyEntry;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.util.ArrayList;
@@ -143,24 +145,37 @@ public class VotingProccess {
     	g.initialize(ecSpec, new SecureRandom());
     	
     	ECCurve curve = ecSpec.getCurve();
-    	ECPoint yG1 = curve.createPoint(new BigInteger("86316685970588307429033653044703810266063448936310083625135301300168276346020"), new BigInteger("70609030508126098936625815403912452148114223794954800450388545420130772541283"));
+    	ECPoint xG2 = curve.createPoint(new BigInteger("95787470013882240377780579361846477715076442832980715937919592583391890323206"), new BigInteger("60955581105196326129778580802235693220501564381302441236987645503202198387523"));
     	ECPoint votePoint1 = curve.createPoint(new BigInteger("56321406392798902601463525060233516822248532674269807233234267998287529646083"), new BigInteger("16397007917345963904976872491420336079325640164272097739632189698676522567322"));
     	BigInteger Xpri1 = new BigInteger("73684597056470802520640839675442817373247702535850643999083350831860052477001");
     	
-    	ECPoint yG2 = curve.createPoint(new BigInteger("2363880676757623940841095194183461073203073850451613489602539408261257833234"), new BigInteger("50350659381819845923494186119250516105603813527224614627217446865676381856417"));
+    	ECPoint xG3 = curve.createPoint(new BigInteger("80227359492715094506325016781306806136822890283990303394298243616817936770299"), new BigInteger("70056389323893569053657074063749746191252176222615108208694655004295637164321"));
     	ECPoint votePoint2 = curve.createPoint(new BigInteger("95069486358188837661323375614801361963607218617204558822555281701024564542398"), new BigInteger("98508925712894897278208141542708546870827494465219426806879377100579785141052"));
     	BigInteger Xpri2 = new BigInteger("106554628258140934843991940734271727557510876833354296893443127816727132563840");
     	
+    	
+    	ECPoint xG1 = curve.createPoint(new BigInteger("33561867925540106748684736507917043448339171144892578936974884912379995892352"), new BigInteger("1872976994842669328236376191998994182108827779376965610480382302885253006649"));
+    	BigInteger privateKey = new BigInteger("114974353814374300534403313831673194688880570414354514484570699902104115492311");
     	
     	String address1 = "0x70f9d95d0660476fd9ba6f0e052e560e2d41caf9";
     	String address2 = "0xa76512bcf54f1994a451c5b295d0f749138d59aa";
     	String address3 = "0xc3c98a47af44aba07cdc4380e76e26a25abc468a";
     	
-    	System.out.println(yG1.isValid());
+    	System.out.println(xG1.isValid());
     	System.out.println(votePoint1.isValid());
-    	System.out.println(yG2.isValid());
+    	System.out.println(xG2.isValid());
     	System.out.println(votePoint2.isValid());
+    	ECPoint result = (xG2.negate().subtract(xG3)).normalize();
+    	ECPoint result2 = (xG1.multiply(privateKey)).normalize();
+    	ECPoint result3 = (xG1.subtract(xG3)).normalize();
+    	System.out.println(result.getRawXCoord().toBigInteger());
+    	System.out.println(result.getRawYCoord().toBigInteger());
+    	System.out.println(result2.getRawXCoord().toBigInteger());
+    	System.out.println(result2.getRawYCoord().toBigInteger());
+    	System.out.println(result3.getRawXCoord().toBigInteger());
+    	System.out.println(result3.getRawYCoord().toBigInteger());
     	
+    	/*
     	System.out.println(yG1);
     	System.out.println(votePoint1);
     	
@@ -173,15 +188,17 @@ public class VotingProccess {
     	ECPoint ygx2g = (yG2.multiply(Xpri2)).add(ecSpec.getG()).normalize();
     	System.out.println("ygx2 : " + ygx2g);
     	System.out.println("sol2 : " + votePoint2);
+    	*/
     	
-    	
-    	int nombre_votants = 20;
+    	int nombre_votants = 3;
     	
     	//Initialisation des clés des votants
     	List<KeyPair> key_list = new ArrayList<KeyPair>();
+    	
     	for(int i=0;i<nombre_votants;i++) {
     		key_list.add(g.generateKeyPair());
     	}
+    	
     	
     	KeyPair keypair1 = g.generateKeyPair();
     	KeyPair keypair2 = g.generateKeyPair();

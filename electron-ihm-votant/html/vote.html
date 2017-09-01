@@ -19,7 +19,6 @@
         <!-- progressbar -->
         <ul id="progressbar">
             <li class="active">Unlock Address</li>
-            <li>Voting Codes</li>
             <li>Register</li>
             <li>Cast</li>
             <li>Tally</li>
@@ -38,56 +37,6 @@
                 <p>No Ethereum account found</p>
             </div>
         </fieldset>
-        <!-- 
-		<fieldset id="unlockfs">
-            <div id="dropdown">
-                <p>Address:</p>
-                <select id='addrs' class="action-list">
-                    <option value='0'>None</option>
-                </select>
-                <br>
-                <br>
-                <p>None of your Ethereum accounts are eligible to vote...</p>
-            </div>
-		</fieldset>
-		 -->
-		<fieldset id="uploadfs">
-            <h2> Upload Voting Codes </h2>
-            <br>
-            <p> Find your votingcodes.txt </p>
-            <div id="dropdown1">
-                <input id="uploadTrigger" name="next" class="action-button" value="Upload" type="button">
-                <input id="done" class="hidden next" type="button">
-                <input type='file' id='uploadFile' class="hidden" uploadtype='file' accept='text/plain' onchange='openFile(event);'>
-            </div>
-        </fieldset>
-        
-        <!--  V2 :  
-        <fieldset id="registerfs">
-            <div>
-                <p id="registerwait">Please wait.... Registration will begin soon.</p>
-                <div hidden id="registerready">
-                   <h2 id="question3"></h2>
-                   <br>
-                   <p>You have <span id="balance"></span> ether.</p>
-                   <br>
-                   <p id="asktoregister"> Registration deposit is <span id="deposit"></span> ether.
-                   <br>
-                   <p> Would you like to register for this vote with this ethereum account <span id="account"></span>?</p>
-                   <input id="registerbutton" class="action-button" type="button" value="Register" onclick="register();">
-                   <p hidden id = "submitvotingkey">Waiting for Ethereum to confirm your registration's demand.</p>
-                   <br>
-                   <p id="registerby"></p>
-                   <br>
-                   <p id="registerrefundby"></p>
-                   <br>
-                   <p id = "registrationprogress"></p>
-                </div>
-            </div>
-
-        </fieldset>
-        -->
-        
         
         <fieldset id="registerfs">
             <div>
@@ -97,7 +46,7 @@
                    <br>
                    <p>You have <span id="balance"></span> ether.</p>
                    <br>
-                   <p> Would you like to register for this vote?</p>
+                   <p id="questionRegistration"> Would you like to register for this vote?</p>
                    <input id="registerbutton" class="action-button" type="button" value="Ask for registration" onclick="askForRegistration();">
                    <p hidden id = "submitregistration">Waiting for an administrator to confirm your registration.</p>
                    <br>
@@ -116,11 +65,9 @@
         <fieldset id="votefs">
             <h2 id="question"></h2>
             <br>
-            <p>Enter your voting private key:</p>
-        	<textarea id="privateKey" name="list" cols="40" rows="1"></textarea>
             <div id="do_vote">
-                <button onclick="vote(1)" class="action-button">Yes</button>
-                <button onclick="vote(0)" class="action-button">No</button>
+                <input class="action-button" type='button' value='Yes' onclick='vote(1);'>
+                <input class="action-button" type='button' value ='No' onclick='vote(0);'>
             </div>
             <br>
             <p id="vote_waiting"></p>
@@ -153,23 +100,18 @@
 		<fieldset id="test">
             <h2> Création ou import d'un compte Ethereum</h2>
 			<div id="dropdown2">
-                <button onclick="openNewPasswordBox()" class="action-button">Création</button>
-                <button onclick="importEthereumAccount()" class="action-button">Import</button>
+                <button onclick="openNewPasswordBox();" class="action-button">Création</button>
+                <button onclick="importEthereumAccount();" class="action-button">Import</button>
             </div>
         </fieldset>
 	</form>
-    <!--<div id="infodiv1" class="notification rightTile">
-    <h2>Events from Ethereum:</h2>
-        <div class="insideArea">
-            <p></p>
-        </div>
-    </div>-->
-	
-	
+
+<!--  
 	<form id = msform3>
 		<button onclick="location.href='admin.html;'" class="action-button">Page Administration</button>
 		<button onclick="location.href='vote.html;'" class="action-button">Page Votant</button>
 	</form>
+	-->
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster --> 

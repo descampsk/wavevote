@@ -138,44 +138,6 @@ library Secp256k1 {
         isPK = onCurve(a_P);
     }
 
-    /// @dev See Curve.validateSignature
-    function validateSignature(bytes32 message, uint[2] rs, uint[2] Q) internal constant returns (bool) {
-        uint n = nn;
-        uint p = pp;
-        if(rs[0] == 0 || rs[0] >= n || rs[1] == 0 || rs[1] > lowSmax)
-            return false;
-        if (!isPubKey(Q))
-            return false;
-
-        uint sInv = ECCMath.invmod(rs[1], n);
-        uint[3] memory u1G = _mul(mulmod(uint(message), sInv, n), [Gx, Gy]);
-        uint[3] memory u2Q = _mul(mulmod(rs[0], sInv, n), Q);
-        uint[3] memory P = _add(u1G, u2Q);
-
-        if (P[2] == 0)
-            return false;
-
-        uint Px = ECCMath.invmod(P[2], p); // need Px/Pz^2
-        Px = mulmod(P[0], mulmod(Px, Px, p), p);
-        return Px % n == rs[0];
-    }
-
-    /// @dev See Curve.compress
-    function compress(uint[2] P) internal constant returns (uint8 yBit, uint x) {
-        x = P[0];
-        yBit = P[1] & 1 == 1 ? 1 : 0;
-    }
-
-    /// @dev See Curve.decompress
-    function decompress(uint8 yBit, uint x) internal constant returns (uint[2] P) {
-        uint p = pp;
-        var y2 = addmod(mulmod(x, mulmod(x, x, p), p), 7, p);
-        var y_ = ECCMath.expmod(y2, (p + 1) / 4, p);
-        uint cmp = yBit ^ y_ & 1;
-        P[0] = x;
-        P[1] = (cmp == 0) ? y_ : p - y_;
-    }
-
     // Point addition, P + Q
     // inData: Px, Py, Pz, Qx, Qy, Qz
     // outData: Rx, Ry, Rz
@@ -468,10 +430,12 @@ contract AnonymousVoting is owned {
   address[] public addresses;
   
   
-  mapping (address => int) public addressid; // Address to Counter
+  //WARNING : begin to uint 1 ! 0 is used for the empty object
+  mapping (address => uint) public addressid; // Address to Counter
   //mapping (address => uint) public addressidToRegister;
   //mapping (uint => Voter) public voters;
   //mapping (address => bool) public registered; // Address registered?
+  //WARNING : begin to uint 1 ! 0 is used for the empty object
   mapping (uint => VoterBis) public voterMapBis;
   //mapping (address => bool) public votecast; // Address voted?
 
@@ -520,8 +484,8 @@ contract AnonymousVoting is owned {
   
   // Work around function to fetch details about a voter
   function getVoterBis(address _address) constant returns (bool _registered, bool _voteCast, uint[2] _personalPublicKey, uint[2] _adminPublicKey, uint[2] _registeredkey, uint[2] _reconstructedkey, uint[2] _vote) {
-	  int index = addressid[_address];
-	  if (index<0) {
+	  uint index = addressid[_address];
+	  if (index==0) {
 		  uint256[2] memory nullArray;
 		  _registered = false;
 		  _voteCast = false;
@@ -531,14 +495,13 @@ contract AnonymousVoting is owned {
 	      _reconstructedkey = nullArray;
 	      _vote = nullArray; 
 	  } else {
-		  uint uindex = uint(index);
-		  _registered = voterMapBis[uindex].registered;
-		  _voteCast = voterMapBis[uindex].voteCast;
-		  _personalPublicKey = voterMapBis[uindex].personalPublicKey;
-	      _adminPublicKey = voterMapBis[uindex].adminPublicKey;
-	      _registeredkey = voterMapBis[uindex].registeredkey;
-	      _reconstructedkey = voterMapBis[uindex].reconstructedkey;
-	      _vote = voterMapBis[uindex].vote; 
+		  _registered = voterMapBis[index].registered;
+		  _voteCast = voterMapBis[index].voteCast;
+		  _personalPublicKey = voterMapBis[index].personalPublicKey;
+	      _adminPublicKey = voterMapBis[index].adminPublicKey;
+	      _registeredkey = voterMapBis[index].registeredkey;
+	      _reconstructedkey = voterMapBis[index].reconstructedkey;
+	      _vote = voterMapBis[index].vote; 
 	  }
   }
   
@@ -548,23 +511,13 @@ contract AnonymousVoting is owned {
   }
   
   function isRegistered(address _address) constant returns(bool) {
-	  int index = addressid[_address];
-	  if(index<0) {
-		  return false;
-	  } else {
-		  return voterMapBis[uint(index)].registered;
-	  }
-	  
+	  uint index = addressid[_address];
+	  return voterMapBis[index].registered; 
   }
   
   function hasCastVote(address _address) constant returns(bool) {
-	  int index = addressid[_address];
-	  if (index<0) {
-		  return false;
-	  } else {
-		  return voterMapBis[uint(index)].voteCast;
-	  }
-	  
+	  uint index = addressid[_address];
+	  return voterMapBis[index].voteCast; 
   }
 
   // List of timers that each phase MUST end by an explicit time in UNIX timestamp.
@@ -723,7 +676,7 @@ contract AnonymousVoting is owned {
         	registeredkey: nullArray, 
         	reconstructedkey: nullArray,
         	vote: nullArray});
-         addressid[addr] = -1; // Remove index
+         addressid[addr] = 0; // Remove index
          //votecast[addr] = false; // Remove that vote was cast
       }
       
@@ -769,7 +722,8 @@ contract AnonymousVoting is owned {
   // Called by the administrator to register a voter
   function registerAccount(address accountToRegister, uint[2] adminPublicKey, uint[2] xG, uint[3] vG, uint r) inState(State.SIGNUP) onlyOwner payable returns (bool _successful, string _error) {
 	  
-	uint256[2] memory nullArray;  
+	uint256[2] memory nullArray;
+	
 	  
      // HARD DEADLINE
      if(block.timestamp > finishSignupPhase) {
@@ -779,10 +733,11 @@ contract AnonymousVoting is owned {
      
     //TODO : doit vérifier que xG est unique !!!
 	if (!isRegistered(accountToRegister)) {
-        if(verifyZKP(xG,r,vG) ) {
+        if(verifyZKP(xG,r,vG, nullArray) ) {
             // Update voter's registration
             addresses.push(accountToRegister);	
-            addressid[accountToRegister] = int(totalregistered);
+            totalregistered += 1;
+            addressid[accountToRegister] = totalregistered;
             voterMapBis[totalregistered] = VoterBis({
             	addr: accountToRegister,
             	registered: true,
@@ -793,7 +748,6 @@ contract AnonymousVoting is owned {
             	reconstructedkey: nullArray,
             	vote: nullArray});
             
-            totalregistered += 1;
             _successful = true;
         } else {
         	_successful = false;
@@ -806,43 +760,6 @@ contract AnonymousVoting is owned {
 
   }
   
-  function checkVote(uint x, uint[2] _yG, uint[2] _voteCrypted) constant returns(uint[3] temp1_bis, uint[3] temp2_bis, uint temp4) {
-      //uint index = addressid[msg.sender];
-      //uint[2] yG = voters[index].reconstructedkey;
-      //uint[2] voteCrypted = voters[index].vote;
-      
-      uint[2] memory yG = _yG;
-      uint[2] memory voteCrypted = _voteCrypted;
-	  
-      //On calcule g^yixi
-	  uint[3] memory temp1 = Secp256k1._mul(x,yG);
-	  ECCMath.toZ1(temp1, pp);
-	  
-	  temp1_bis[0] = temp1[0];
-	  temp1_bis[1] = temp1[1];
-	  temp1_bis[2] = temp1[2];
-      
-    //On regarde si g^xiyi = vote
-      if (temp1[0] == voteCrypted[0] && temp1[1] == voteCrypted[1]) {
-    	  temp4 = 0;
-      } else {
-    	  uint[3] memory temp2 = Secp256k1._addMixed(temp1, G);
-    	  ECCMath.toZ1(temp2, pp);
-    	  temp2_bis[0] = temp2[0];
-    	  temp2_bis[1] = temp2[1];
-    	  temp2_bis[2] = temp2[2];
-    	  if (temp2[0] == voteCrypted[0] && temp2[1] == voteCrypted[1]) {
-    		  temp4 = 1;
-    	  } else {
-    		  temp4 = 10;
-    	  }
-      }
-
-      
-      
-  }
-
-
   // Timer has expired - we want to start computing the reconstructed keys
   function finishRegistrationPhase() inState(State.SIGNUP) onlyOwner returns(bool) {
 
@@ -870,25 +787,25 @@ contract AnonymousVoting is owned {
       uint[3] memory beforei;
       uint[3] memory afteri;
 
-      // Step 1 is to compute the index 1 reconstructed key
-      afteri[0] = voterMapBis[1].registeredkey[0];
-      afteri[1] = voterMapBis[1].registeredkey[1];
+      // Step 1 is to compute the index 2 reconstructed key
+      afteri[0] = voterMapBis[2].registeredkey[0];
+      afteri[1] = voterMapBis[2].registeredkey[1];
       afteri[2] = 1;
 
-      for(uint i=2; i<totalregistered; i++) {
+      for(uint i=3; i<=totalregistered; i++) {
          Secp256k1._addMixedM(afteri, voterMapBis[i].registeredkey);
       }
 
       ECCMath.toZ1(afteri,pp);
-      voterMapBis[0].reconstructedkey[0] = afteri[0];
-      voterMapBis[0].reconstructedkey[1] = pp - afteri[1];
+      voterMapBis[1].reconstructedkey[0] = afteri[0];
+      voterMapBis[1].reconstructedkey[1] = pp - afteri[1];
 
       // Step 2 is to add to beforei, and subtract from afteri.
-     for(i=1; i<totalregistered; i++) {
+     for(i=2; i<=totalregistered; i++) {
 
-       if(i==1) {
-         beforei[0] = voterMapBis[0].registeredkey[0];
-         beforei[1] = voterMapBis[0].registeredkey[1];
+       if(i==2) {
+         beforei[0] = voterMapBis[1].registeredkey[0];
+         beforei[1] = voterMapBis[1].registeredkey[1];
          beforei[2] = 1;
        } else {
          Secp256k1._addMixedM(beforei, voterMapBis[i-1].registeredkey);
@@ -896,8 +813,8 @@ contract AnonymousVoting is owned {
 
        // If we have reached the end... just store beforei
        // Otherwise, we need to compute a key.
-       // Counting from 0 to n-1...
-       if(i==(totalregistered-1)) {
+       // Counting from 1 to n...
+       if(i==(totalregistered)) {
          ECCMath.toZ1(beforei,pp);
          voterMapBis[i].reconstructedkey[0] = beforei[0];
          voterMapBis[i].reconstructedkey[1] = beforei[1];
@@ -943,7 +860,7 @@ contract AnonymousVoting is owned {
        // Verify the ZKP for the vote being cast
        if(verify1outof2ZKP(params, y, a1, b1, a2, b2)) {
            
-         uint c = uint(addressid[msg.sender]);
+         uint c = addressid[msg.sender];
            
     	 voterMapBis[c].vote[0] = y[0];
     	 voterMapBis[c].vote[1] = y[1];
@@ -959,6 +876,50 @@ contract AnonymousVoting is owned {
      // Either vote has already been cast, or ZKP verification failed.
      return false;
   }
+  
+  event IsVoteCastEvent(address indexed _from, bool _isVoteCast, string _error);
+  
+  function submitNullVote(address addressToDoNullVote, uint[2] nullVote, uint[2] reconstructedKey, uint[3] vG, uint r) inState(State.VOTE) onlyOwner returns (bool _successful, string _error) {
+     // HARD DEADLINE
+	  
+	  //A modifier pour pouvoir lancer la fonction qu'après la fin du vote
+	  
+	  /*
+     if(block.timestamp > endVotingPhase) {
+    	 _successful = false;
+    	 _error = "The voting phase is already finished"
+       return;
+     }
+     */
+
+     // Make sure the sender can vote, and hasn't already voted.
+     if(isRegistered(addressToDoNullVote) && !hasCastVote(addressToDoNullVote)) {
+        
+       // Verify the ZKP for the vote being cast
+       if(verifyZKP(nullVote, r, vG, reconstructedKey)) {
+           
+         uint c = addressid[addressToDoNullVote];
+           
+    	 voterMapBis[c].vote[0] = nullVote[0];
+    	 voterMapBis[c].vote[1] = nullVote[1];
+
+    	 voterMapBis[c].voteCast = true;
+
+         totalvoted += 1;
+
+    	 _successful = true;
+       } else {
+      	 _successful = false;
+    	 _error = "Verification of the ZKP failed";
+       }
+     } else {
+    	 _successful = false;
+    	 _error = "The voter is not registered or has already cast his vote";
+     }
+     
+     IsVoteCastEvent(addressToDoNullVote, _successful, _error);
+     
+  }
 
   // Assuming all votes have been submitted. We can leak the tally.
   // We assume Election Authority performs this function. It could be anyone.
@@ -970,8 +931,8 @@ contract AnonymousVoting is owned {
      uint[3] memory temp;
      uint[2] memory vote;
 
-     // Sum all votes
-     for(uint i=0; i<totalregistered; i++) {
+     // Sum all votes : map is 1 to n ...
+     for(uint i=1; i<=totalregistered; i++) {
 
          // Confirm all votes have been cast...
          if(!voterMapBis[i].voteCast) {
@@ -980,7 +941,7 @@ contract AnonymousVoting is owned {
 
          vote = voterMapBis[i].vote;
 
-         if(i==0) {
+         if(i==1) {
            temp[0] = vote[0];
            temp[1] = vote[1];
            temp[2] = 1;
@@ -1045,10 +1006,21 @@ contract AnonymousVoting is owned {
 
   // Parameters xG, r where r = v - xc, and vG.
   // Verify that vG = rG + xcG!
-  function verifyZKP(uint[2] xG, uint r, uint[3] vG) returns (bool){
+  function verifyZKP(uint[2] xG, uint r, uint[3] vG, uint[2] baseZKP) returns (bool){
       uint[2] memory G;
       G[0] = Gx;
       G[1] = Gy;
+      
+      if(baseZKP[0]==0 && baseZKP[1]==0) {
+          G[0] = Gx;
+          G[1] = Gy;
+      } else {
+          if(!Secp256k1.isPubKey(baseZKP)) {
+            return false; //Must be on the curve!
+          }
+          G[0] = baseZKP[0];
+          G[1] = baseZKP[1];
+      }
 
       // Check both keys are on the curve.
       if(!Secp256k1.isPubKey(xG) || !Secp256k1.isPubKey(vG)) {
