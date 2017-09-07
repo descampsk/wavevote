@@ -432,12 +432,9 @@ contract AnonymousVoting is owned {
   
   //WARNING : begin to uint 1 ! 0 is used for the empty object
   mapping (address => uint) public addressid; // Address to Counter
-  //mapping (address => uint) public addressidToRegister;
-  //mapping (uint => Voter) public voters;
-  //mapping (address => bool) public registered; // Address registered?
-  //WARNING : begin to uint 1 ! 0 is used for the empty object
   mapping (uint => VoterBis) public voterMapBis;
-  //mapping (address => bool) public votecast; // Address voted?
+  
+  mapping (address => bool) public hasReceivedOneEther;
 
   
   address[] public addressesToRegister;
@@ -448,13 +445,6 @@ contract AnonymousVoting is owned {
       uint[2] personalPublicKey;
   }
   
-  /*
-  struct Voter {
-      address addr;
-      uint[2] registeredkey;
-      uint[2] reconstructedkey;
-      uint[2] vote;
-  }*/
   
   struct VoterBis {
 	  address addr;
@@ -551,13 +541,28 @@ contract AnonymousVoting is owned {
   // finish their entire workload in 1 transaction, then
   // it does the maximum. This way we can chain transactions
   // to complete the job...
-  function AnonymousVoting(uint _gap) { //}, address _charity) {
+  function AnonymousVoting(uint _gap) payable { //}, address _charity) {
     G[0] = Gx;
     G[1] = Gy;
     state = State.SETUP;
     question = "No question set";
     gap = _gap; // Minimum gap period between stages
     //charity = _charity;
+  }
+  
+  function addEther() payable {
+	  
+  }
+  
+  function sendOneEtherToVoter(address addr) returns (bool _successful, string _error) {
+	  if(hasReceivedOneEther[addr]) {
+		  _successful = false;
+		  _error = "This account has already received one ether";
+	  } else {
+		  hasReceivedOneEther[addr] = true;
+		  _successful = true;
+		  addr.transfer(1 ether);
+	  }
   }
 
   // Owner of contract declares that eligible addresses begin round 1 of the protocol

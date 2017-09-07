@@ -858,4 +858,19 @@ contract LocalCrypto {
       }
   
   }
+  
+  function buildVotingPrivateKey(uint aPrivateKey, uint[2] bPublicKey) const returns (uint _privateKey, uint[2] _publicKey) {
+	  uint[3] memory temp = Secp256k1_noconflict._mul(aPrivateKey,bPublicKey);
+	  ECCMath_noconflict.toZ1(temp, pp);
+	  
+      bytes32 b_c = sha256(temp);
+      uint newPrivateKey = uint(b_c);
+      
+	  uint[3] memory temp2 = Secp256k1_noconflict._mul(newPrivateKey,G);
+	  ECCMath_noconflict.toZ1(temp2, pp);
+    	
+	  _privateKey = newPrivateKey;
+	  _publicKey[0] = temp2[0];
+	  _publicKey[1] = temp2[1];
+  }
 }

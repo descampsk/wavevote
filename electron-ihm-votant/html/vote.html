@@ -48,6 +48,7 @@
                    <br>
                    <p id="questionRegistration"> Would you like to register for this vote?</p>
                    <input id="registerbutton" class="action-button" type="button" value="Ask for registration" onclick="askForRegistration();">
+                   <input id="askEtherbutton" class="action-button" type="button" value="Ask for one Ether" onclick="askOneEther();">
                    <p hidden id = "submitregistration">Waiting for an administrator to confirm your registration.</p>
                    <br>
                    <p id="registerby"></p>
@@ -98,10 +99,10 @@
     </form>
 	<form id = msform2>
 		<fieldset id="test">
-            <h2> Création ou import d'un compte Ethereum</h2>
+            <h2> Creation of an ethereum account: </h2>
 			<div id="dropdown2">
-                <button onclick="openNewPasswordBox();" class="action-button">Création</button>
-                <button onclick="importEthereumAccount();" class="action-button">Import</button>
+                <button onclick="openNewPasswordBox();" class="action-button">Create</button>
+                <button onclick="reloadPage();" class="action-button">Reload the page</button>
             </div>
         </fieldset>
 	</form>
