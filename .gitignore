@@ -29,3 +29,4 @@ electron-ihm-votant/node_modules/
 anonymousvoting/target/
 anonymousvoting/target/maven-archiver/
 electron-ihm-votant/out/
+electron-ihm-votant/db/

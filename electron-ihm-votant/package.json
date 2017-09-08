@@ -25,27 +25,25 @@
     "electron-prebuilt-compile": "1.6.12"
   },
   "dependencies": {
-    "bignumber.js": "^4.0.3",
-    "electron-compile": "^6.4.1",
-    "electron-compilers": "^5.9.0",
-    "elliptic": "^6.4.0",
-    "jquery": "^3.2.1",
-    "nedb": "^1.8.0",
-    "node-jre": "^0.2.1",
-    "web3": "0.20.0",
-    "winston": "^2.3.1",
     "babel-plugin-transform-async-to-generator": "^6.24.1",
     "babel-preset-env": "^1.6.0",
     "babel-preset-react": "^6.24.1",
+    "bignumber.js": "^4.0.3",
+    "electron-compile": "^6.4.1",
+    "electron-compilers": "^5.9.0",
     "electron-forge": "^4.0.0",
-    "electron-prebuilt-compile": "1.6.12"
+    "electron-prebuilt-compile": "1.6.12",
+    "elliptic": "^6.4.0",
+    "jquery": "^3.2.1",
+    "nedb": "^1.8.0",
+    "web3": "0.20.0",
+    "winston": "^2.3.1"
   },
   "config": {
     "forge": {
       "make_targets": {
         "win32": [
-          "zip",
-          "appx"
+          "zip"
         ]
       },
       "electronPackagerConfig": {},

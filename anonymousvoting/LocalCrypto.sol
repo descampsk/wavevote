@@ -466,22 +466,8 @@ contract LocalCrypto {
   // c = H(g, g^{v}, g^{x});
   // r = v - xz (mod p);
   // return(r,vG)
-  function createZKP(uint x, uint v, uint[2] xG, uint[2] baseZKP) constant returns (uint[4] res) {
-
-      uint[2] memory G;
+  function createZKP(uint x, uint v, uint[2] xG) constant returns (uint[4] res) {
       
-      if(baseZKP[0]==0 && baseZKP[1]==0) {
-          G[0] = Gx;
-          G[1] = Gy;
-      } else {
-          if(!Secp256k1_noconflict.isPubKey(baseZKP)) {
-              throw; //Must be on the curve!
-          }
-          G[0] = baseZKP[0];
-          G[1] = baseZKP[1];
-      }
-
-
       if(!Secp256k1_noconflict.isPubKey(xG)) {
           throw; //Must be on the curve!
       }
@@ -508,6 +494,46 @@ contract LocalCrypto {
       res[3] = vG[2];
       return;
   }
+  
+  // vG (blinding value), xG (public key), x (what we are proving)
+  // c = H(g, g^{v}, g^{x});
+  // r = v - xz (mod p);
+  // return(r,vG)
+  function createZKPNullVote(uint x, uint v, uint[2] yG) constant returns (uint[7] res) {
+
+      if(!Secp256k1_noconflict.isPubKey(yG)) {
+          throw; //Must be on the curve!
+      }
+
+      // Get g^{yi*v}
+      uint[3] memory yivG = Secp256k1_noconflict._mul(v, yG);
+      // Convert to Affine Co-ordinates
+      ECCMath_noconflict.toZ1(yivG, pp);
+      
+      // Get g^{v}
+      uint[3] memory vG = Secp256k1_noconflict._mul(v, G);
+      // Convert to Affine Co-ordinates
+      ECCMath_noconflict.toZ1(vG, pp);
+
+      // Get c = H(g, g^{x}, g^{v});
+      bytes32 b_c = sha256(msg.sender, Gx, Gy, yG, vG, yivG);
+      uint c = uint(b_c);
+
+      // Get 'r' the zkp
+      uint xc = mulmod(x,c,nn);
+
+      // v - xc
+      uint r = submod(v,xc);
+
+      res[0] = r;
+      res[1] = vG[0];
+      res[2] = vG[1];
+      res[3] = vG[2];
+      res[4] = yivG[0];
+      res[5] = yivG[1];
+      res[6] = yivG[2];
+      return;
+  }
 
   // a - b = c;
   function submod(uint a, uint b) returns (uint){
@@ -526,21 +552,7 @@ contract LocalCrypto {
 
   // Parameters xG, r where r = v - xc, and vG.
   // Verify that vG = rG + xcG!
-  function verifyZKP(uint[2] xG, uint r, uint[3] vG, uint[2] baseZKP) constant returns (bool _successful, string _error){
-      uint[2] memory G;
-      
-      if(baseZKP[0]==0 && baseZKP[1]==0) {
-          G[0] = Gx;
-          G[1] = Gy;
-      } else {
-          if(!Secp256k1_noconflict.isPubKey(baseZKP)) {
-          	_successful = false;
-        	_error = "baseZKP isnt a PubKey";
-            return; //Must be on the curve!
-          }
-          G[0] = baseZKP[0];
-          G[1] = baseZKP[1];
-      }
+  function verifyZKP(uint[2] xG, uint r, uint[3] vG) constant returns (bool _successful, string _error){
 
       // Check both keys are on the curve.
       if(!Secp256k1_noconflict.isPubKey(xG) || !Secp256k1_noconflict.isPubKey(vG)) {
@@ -570,7 +582,52 @@ contract LocalCrypto {
       } else {
     	  _successful = false;
     	  _error = "Error : equality is false.";
-    	  //_error = "rGxcG[0]!=vG[0] : " + rGxcG[0] + "!=" + vG[0] + " or rGxcG[1]!=vG[1] : " + rGxcG[1] + "!=" + vG[1];
+         return;
+      }
+  }
+  
+  // Parameters xG, r where r = v - xc, and vG.
+  // Verify that vG = rG + xcG!
+  // And that yivG = ryiG + c xyiG
+  function verifyZKPNullVote(uint[2] xG, uint[2] yiG, uint[2] yixG, uint r, uint[3] vG, uint[3] yivG) constant returns (bool _successful, string _error){
+	  
+      // Check both keys are on the curve.
+      if(!Secp256k1_noconflict.isPubKey(xG) || !Secp256k1_noconflict.isPubKey(vG) || !Secp256k1_noconflict.isPubKey(yixG) || !Secp256k1_noconflict.isPubKey(yivG)) {
+    	_successful = false;
+    	_error = "xG or vG or yiG or yivG isnt a PubKey";
+        return; //Must be on the curve!
+      }
+
+      // Get c = H(g, g^{x}, g^{v});
+      uint c = uint(sha256(msg.sender, Gx, Gy, yiG, vG, yivG));
+
+      // Get g^{r}, and g^{xc}
+      uint[3] memory temp1 = Secp256k1_noconflict._mul(r, G);
+      uint[3] memory temp2 = Secp256k1_noconflict._mul(c, xG);
+
+      // Add both points together
+      uint[3] memory rGxcG = Secp256k1_noconflict._add(temp1,temp2);
+
+      // Convert to Affine Co-ordinates
+      ECCMath_noconflict.toZ1(rGxcG, pp);
+      
+      // Get g^{yi*r}, and g^{yix*c}
+      uint[3] memory temp1 = Secp256k1_noconflict._mul(r, yiG);
+      uint[3] memory temp2 = Secp256k1_noconflict._mul(c, yixG);
+
+      // Add both points together
+      uint[3] memory ryiGyixcG = Secp256k1_noconflict._add(temp1,temp2);
+
+      // Convert to Affine Co-ordinates
+      ECCMath_noconflict.toZ1(ryiGyixcG, pp);
+
+      // Verify. Do they match?
+      if(rGxcG[0] == vG[0] && rGxcG[1] == vG[1] && ryiGyixcG[0] == yivG[0] && ryiGyixcG[1] == yivG[1]) {
+    	  _successful = true;
+    	  return;
+      } else {
+    	  _successful = false;
+    	  _error = "Error : equality is false.";
          return;
       }
   }
@@ -859,7 +916,7 @@ contract LocalCrypto {
   
   }
   
-  function buildVotingPrivateKey(uint aPrivateKey, uint[2] bPublicKey) const returns (uint _privateKey, uint[2] _publicKey) {
+  function buildVotingPrivateKey(uint aPrivateKey, uint[2] bPublicKey) constant returns (uint _privateKey, uint[2] _publicKey) {
 	  uint[3] memory temp = Secp256k1_noconflict._mul(aPrivateKey,bPublicKey);
 	  ECCMath_noconflict.toZ1(temp, pp);
 	  

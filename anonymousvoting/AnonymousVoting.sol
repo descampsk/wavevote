@@ -727,8 +727,7 @@ contract AnonymousVoting is owned {
   // Called by the administrator to register a voter
   function registerAccount(address accountToRegister, uint[2] adminPublicKey, uint[2] xG, uint[3] vG, uint r) inState(State.SIGNUP) onlyOwner payable returns (bool _successful, string _error) {
 	  
-	uint256[2] memory nullArray;
-	
+	uint256[2] memory nullArray;  
 	  
      // HARD DEADLINE
      if(block.timestamp > finishSignupPhase) {
@@ -738,7 +737,7 @@ contract AnonymousVoting is owned {
      
     //TODO : doit vérifier que xG est unique !!!
 	if (!isRegistered(accountToRegister)) {
-        if(verifyZKP(xG,r,vG, nullArray) ) {
+        if(verifyZKP(xG,r,vG) ) {
             // Update voter's registration
             addresses.push(accountToRegister);	
             totalregistered += 1;
@@ -884,7 +883,7 @@ contract AnonymousVoting is owned {
   
   event IsVoteCastEvent(address indexed _from, bool _isVoteCast, string _error);
   
-  function submitNullVote(address addressToDoNullVote, uint[2] nullVote, uint[2] reconstructedKey, uint[3] vG, uint r) inState(State.VOTE) onlyOwner returns (bool _successful, string _error) {
+  function submitNullVote(address addressToDoNullVote, uint[2] nullVote, uint[3] vG, uint[3] yvG, uint r) inState(State.VOTE) onlyOwner returns (bool _successful, string _error) {
      // HARD DEADLINE
 	  
 	  //A modifier pour pouvoir lancer la fonction qu'après la fin du vote
@@ -900,10 +899,12 @@ contract AnonymousVoting is owned {
      // Make sure the sender can vote, and hasn't already voted.
      if(isRegistered(addressToDoNullVote) && !hasCastVote(addressToDoNullVote)) {
         
+    	uint c = addressid[addressToDoNullVote];
+    	uint[2] xG = voterMapBis[c].registeredkey;
+    	uint[2] yG = voterMapBis[c].reconstructedkey;
+    	
        // Verify the ZKP for the vote being cast
-       if(verifyZKP(nullVote, r, vG, reconstructedKey)) {
-           
-         uint c = addressid[addressToDoNullVote];
+       if(verifyZKPNullVote(xG, yG, nullVote, r, vG, yvG)) {
            
     	 voterMapBis[c].vote[0] = nullVote[0];
     	 voterMapBis[c].vote[1] = nullVote[1];
@@ -1011,22 +1012,7 @@ contract AnonymousVoting is owned {
 
   // Parameters xG, r where r = v - xc, and vG.
   // Verify that vG = rG + xcG!
-  function verifyZKP(uint[2] xG, uint r, uint[3] vG, uint[2] baseZKP) returns (bool){
-      uint[2] memory G;
-      G[0] = Gx;
-      G[1] = Gy;
-      
-      if(baseZKP[0]==0 && baseZKP[1]==0) {
-          G[0] = Gx;
-          G[1] = Gy;
-      } else {
-          if(!Secp256k1.isPubKey(baseZKP)) {
-            return false; //Must be on the curve!
-          }
-          G[0] = baseZKP[0];
-          G[1] = baseZKP[1];
-      }
-
+  function verifyZKP(uint[2] xG, uint r, uint[3] vG) returns (bool){
       // Check both keys are on the curve.
       if(!Secp256k1.isPubKey(xG) || !Secp256k1.isPubKey(vG)) {
         return false; //Must be on the curve!
@@ -1049,6 +1035,47 @@ contract AnonymousVoting is owned {
       // Verify. Do they match?
       if(rGxcG[0] == vG[0] && rGxcG[1] == vG[1]) {
          return true;
+      } else {
+         return false;
+      }
+  }
+  
+//Parameters xG, r where r = v - xc, and vG.
+  // Verify that vG = rG + xcG!
+  // And that yivG = ryiG + c xyiG
+  function verifyZKPNullVote(uint[2] xG, uint[2] yiG, uint[2] yixG, uint r, uint[3] vG, uint[3] yivG) constant returns (bool){
+	  
+      // Check both keys are on the curve.
+      if(!Secp256k1.isPubKey(xG) || !Secp256k1.isPubKey(vG) || !Secp256k1.isPubKey(yixG) || !Secp256k1.isPubKey(yivG)) {
+        return false; //Must be on the curve!
+      }
+
+      // Get c = H(g, g^{x}, g^{v});
+      uint c = uint(sha256(msg.sender, Gx, Gy, yiG, vG, yivG));
+
+      // Get g^{r}, and g^{xc}
+      uint[3] memory temp1 = Secp256k1._mul(r, G);
+      uint[3] memory temp2 = Secp256k1._mul(c, xG);
+
+      // Add both points together
+      uint[3] memory rGxcG = Secp256k1._add(temp1,temp2);
+
+      // Convert to Affine Co-ordinates
+      ECCMath.toZ1(rGxcG, pp);
+      
+      // Get g^{yi*r}, and g^{yix*c}
+      temp1 = Secp256k1._mul(r, yiG);
+      temp2 = Secp256k1._mul(c, yixG);
+
+      // Add both points together
+      uint[3] memory ryiGyixcG = Secp256k1._add(temp1,temp2);
+
+      // Convert to Affine Co-ordinates
+      ECCMath.toZ1(ryiGyixcG, pp);
+
+      // Verify. Do they match?
+      if(rGxcG[0] == vG[0] && rGxcG[1] == vG[1] && ryiGyixcG[0] == yivG[0] && ryiGyixcG[1] == yivG[1]) {
+    	  return true;
       } else {
          return false;
       }
