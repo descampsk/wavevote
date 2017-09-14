@@ -102,7 +102,8 @@
             <h2> Creation of an ethereum account: </h2>
 			<div id="dropdown2">
                 <button onclick="openNewPasswordBox();" class="action-button">Create</button>
-                <button onclick="reloadPage();" class="action-button">Reload the page</button>
+                <a id="pageVotant" href="vote.html" class="action-button">Reload the page</a>
+                <a id="pageAdmin" href="admin.html" class="action-button">Page Admin</a>
             </div>
         </fieldset>
 	</form>
@@ -116,6 +117,7 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster --> 
+    <script src="../js/helper.js"></script> 
     <script src="../js/vote.js"></script> 
     <script>var jQuery = require('jQuery')</script>
     <script src="../js/jquery.min.js"></script>

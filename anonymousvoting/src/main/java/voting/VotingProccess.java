@@ -145,7 +145,7 @@ public class VotingProccess {
     	g.initialize(ecSpec, new SecureRandom());
     	
     	ECCurve curve = ecSpec.getCurve();
-    	ECPoint xG2 = curve.createPoint(new BigInteger("95787470013882240377780579361846477715076442832980715937919592583391890323206"), new BigInteger("60955581105196326129778580802235693220501564381302441236987645503202198387523"));
+    	ECPoint yG = curve.createPoint(new BigInteger("71213400779081587010882576669022870520665304485879622120469606453693533970759"), new BigInteger("1717324599004896832406726306555516001080841530770045975485355910798919137348"));
     	ECPoint votePoint1 = curve.createPoint(new BigInteger("56321406392798902601463525060233516822248532674269807233234267998287529646083"), new BigInteger("16397007917345963904976872491420336079325640164272097739632189698676522567322"));
     	BigInteger Xpri1 = new BigInteger("73684597056470802520640839675442817373247702535850643999083350831860052477001");
     	
@@ -161,19 +161,11 @@ public class VotingProccess {
     	String address2 = "0xa76512bcf54f1994a451c5b295d0f749138d59aa";
     	String address3 = "0xc3c98a47af44aba07cdc4380e76e26a25abc468a";
     	
-    	System.out.println(xG1.isValid());
-    	System.out.println(votePoint1.isValid());
-    	System.out.println(xG2.isValid());
-    	System.out.println(votePoint2.isValid());
-    	ECPoint result = (xG2.negate().subtract(xG3)).normalize();
-    	ECPoint result2 = (xG1.multiply(privateKey)).normalize();
-    	ECPoint result3 = (xG1.subtract(xG3)).normalize();
-    	System.out.println(result.getRawXCoord().toBigInteger());
-    	System.out.println(result.getRawYCoord().toBigInteger());
-    	System.out.println(result2.getRawXCoord().toBigInteger());
-    	System.out.println(result2.getRawYCoord().toBigInteger());
-    	System.out.println(result3.getRawXCoord().toBigInteger());
-    	System.out.println(result3.getRawYCoord().toBigInteger());
+    	ECPoint xyG = yG.multiply(new BigInteger("44660597409862820008644069279482295386872371240514327110804268511439402332333")).normalize();
+    	ECPoint gvi2 = ecSpec.getG().multiply(new BigInteger("256")).normalize();
+    	ECPoint xyGG = xyG.add(gvi2).normalize();
+    	System.out.println("xyG_x : " + xyGG.getRawXCoord().toBigInteger());
+    	System.out.println("xyG_y : " + xyGG.getRawYCoord().toBigInteger());
     	
     	/*
     	System.out.println(yG1);
@@ -198,15 +190,6 @@ public class VotingProccess {
     	for(int i=0;i<nombre_votants;i++) {
     		key_list.add(g.generateKeyPair());
     	}
-    	
-    	
-    	KeyPair keypair1 = g.generateKeyPair();
-    	KeyPair keypair2 = g.generateKeyPair();
-    	
-    	ECPrivateKey privatekey1 = (ECPrivateKey) keypair1.getPrivate();
-    	ECPrivateKey privatekey2 = (ECPrivateKey) keypair2.getPrivate();
-    	
-    	BigInteger sommePrivateKey = (privatekey1.getD().add(privatekey2.getD()));
     	
     	//Fin du round 1 : on calcule g^yi pour chaque xi
     	List<ECPoint> gyi_list = new ArrayList<ECPoint>();

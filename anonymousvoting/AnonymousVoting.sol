@@ -383,7 +383,6 @@ library Secp256k1 {
 
 }
 
-
 contract owned {
     address public owner;
 
@@ -424,7 +423,7 @@ contract AnonymousVoting is owned {
   uint constant nn = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
 
   uint[2] G;
-
+  
   //Every address has an index
   //This makes looping in the program easier.
   address[] public addresses;
@@ -509,6 +508,10 @@ contract AnonymousVoting is owned {
 	  uint index = addressid[_address];
 	  return voterMapBis[index].voteCast; 
   }
+  
+  function getTotalAnswers() constant returns (uint) {
+	  return answerList.length;
+  }
 
   // List of timers that each phase MUST end by an explicit time in UNIX timestamp.
   // Ethereum works in SECONDS. Not milliseconds.
@@ -520,7 +523,11 @@ contract AnonymousVoting is owned {
   uint public totalregistered; //Total number of participants that have submited a voting key
   uint public totalvoted;
 
+  
+
   string public question;
+  bytes32[] public answerList;
+
   uint[2] public finaltally; // Final tally
   uint public gap; // Minimum amount of time between time stamps.
 
@@ -568,7 +575,7 @@ contract AnonymousVoting is owned {
   // Owner of contract declares that eligible addresses begin round 1 of the protocol
   // Time is the number of 'blocks' we must wait until we can move onto round 2.
   //function beginSignUp(string _question, bool enableCommitmentPhase, uint _finishSignupPhase, uint _endSignupPhase, uint _endCommitmentPhase, uint _endVotingPhase, uint _endRefundPhase, uint _depositrequired) inState(State.SETUP) onlyOwner payable returns (bool){
-  function beginSignUp(string _question, uint _finishSignupPhase, uint _endSignupPhase, uint _endVotingPhase) inState(State.SETUP) onlyOwner payable returns (bool){
+  function beginSignUp(string _question, bytes32[] _answerListBytes, uint _finishSignupPhase, uint _endSignupPhase, uint _endVotingPhase) inState(State.SETUP) onlyOwner payable returns (bool){
     // We have lots of timers. let's explain each one
     // _finishSignUpPhase - Voters should be signed up before this timer
 
@@ -614,6 +621,7 @@ contract AnonymousVoting is owned {
       endSignupPhase = _endSignupPhase;
       endVotingPhase = _endVotingPhase;
       question = _question;
+      answerList = _answerListBytes;
 
       return true;
     }
@@ -685,7 +693,8 @@ contract AnonymousVoting is owned {
          //votecast[addr] = false; // Remove that vote was cast
       }
       
-      delete addresses;   
+      delete addresses;  
+      delete answerList;
 
       // Reset timers.
       finishSignupPhase = 0;
@@ -849,7 +858,7 @@ contract AnonymousVoting is owned {
   }  
 
   // Given the 1 out of 2 ZKP - record the users vote!
-  function submitVote(uint[4] params, uint[2] y, uint[2] a1, uint[2] b1, uint[2] a2, uint[2] b2) inState(State.VOTE) returns (bool) {
+  function submitVoteOld(uint[4] params, uint[2] y, uint[2] a1, uint[2] b1, uint[2] a2, uint[2] b2) inState(State.VOTE) returns (bool) {
 
      // HARD DEADLINE
      if(block.timestamp > endVotingPhase) {
@@ -875,6 +884,32 @@ contract AnonymousVoting is owned {
 
          return true;
        }
+     }
+
+     // Either vote has already been cast, or ZKP verification failed.
+     return false;
+  }
+  
+  function submitVote(uint[2] vote) inState(State.VOTE) returns (bool) {
+
+     // HARD DEADLINE
+     if(block.timestamp > endVotingPhase) {
+       return;
+     }
+
+     // Make sure the sender can vote, and hasn't already voted.
+     if(isRegistered(msg.sender) && !hasCastVote(msg.sender)) {
+        
+         uint c = addressid[msg.sender];
+           
+    	 voterMapBis[c].vote[0] = vote[0];
+    	 voterMapBis[c].vote[1] = vote[1];
+
+    	 voterMapBis[c].voteCast = true;
+
+         totalvoted += 1;
+
+         return true;
      }
 
      // Either vote has already been cast, or ZKP verification failed.

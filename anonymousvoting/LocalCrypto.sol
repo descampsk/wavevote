@@ -612,8 +612,8 @@ contract LocalCrypto {
       ECCMath_noconflict.toZ1(rGxcG, pp);
       
       // Get g^{yi*r}, and g^{yix*c}
-      uint[3] memory temp1 = Secp256k1_noconflict._mul(r, yiG);
-      uint[3] memory temp2 = Secp256k1_noconflict._mul(c, yixG);
+      temp1 = Secp256k1_noconflict._mul(r, yiG);
+      temp2 = Secp256k1_noconflict._mul(c, yixG);
 
       // Add both points together
       uint[3] memory ryiGyixcG = Secp256k1_noconflict._add(temp1,temp2);
@@ -914,6 +914,35 @@ contract LocalCrypto {
     	  }
       }
   
+  }
+  
+  function createVote(uint[2] yG, uint x, uint choice, uint totalVoters) constant returns (uint[2] vote, uint _m, uint _vi, uint[3] _viG, uint[3] _xyG) {
+  	//On trouve m tel que 2^m>n
+  	uint m=1;
+  	while (2**m<=totalVoters) {
+  		m+=1;
+  	}
+  	
+  	_m = m;
+  	
+	uint vi = 2**(m*choice);
+	_vi = vi;
+	
+	uint[3] memory viG = Secp256k1_noconflict._mul(vi,G);
+	ECCMath_noconflict.toZ1(viG, pp);
+	
+	_viG = viG;
+	
+	uint[3] memory xyGviG = Secp256k1_noconflict._mul(x,yG);
+	ECCMath_noconflict.toZ1(xyGviG, pp);
+	
+	_xyG = xyGviG;
+	
+	xyGviG = Secp256k1_noconflict._add(xyGviG, viG);
+	ECCMath_noconflict.toZ1(xyGviG, pp);
+	
+	vote[0] = xyGviG[0];
+	vote[1] = xyGviG[1];
   }
   
   function buildVotingPrivateKey(uint aPrivateKey, uint[2] bPublicKey) constant returns (uint _privateKey, uint[2] _publicKey) {

@@ -41,6 +41,12 @@
         </div> 
         <div hidden id="registrationSetQuestion">
           <p>Question:  <input type='text' id='questioninput' value='Dummy Question?'/> </p>
+          <p>Total of answer :  <input type='number' id='totalAnswerInput' value='2'/> </p>
+          <p id="setUpAnswers"><button onclick="setUpAnswers()" class="btn btn-primary">Set up the answers</button></p>
+        </div>
+        <div hidden id="registrationSetAnswers">
+          <div id="answersList"></div>
+          <p id="return"><button onclick="returnSetQuestion()" class="btn btn-primary">Return</button></p>
           <p id="setUpTimeTable"><button onclick="setUpTimeTable()" class="btn btn-primary">Set up the timetable</button></p>
         </div>
         <div hidden id="listoftimers">
@@ -108,6 +114,7 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->  
+    <script src="../js/helper.js"></script> 
     <script src="../js/elliptic.js"></script>
     <script src="../js/admin.js"></script> 
     <script src="../js/jquery.min.js"></script>
