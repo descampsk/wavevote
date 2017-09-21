@@ -505,18 +505,18 @@ contract LocalCrypto {
           throw; //Must be on the curve!
       }
 
-      // Get g^{yi*v}
-      uint[3] memory yivG = Secp256k1_noconflict._mul(v, yG);
-      // Convert to Affine Co-ordinates
-      ECCMath_noconflict.toZ1(yivG, pp);
-      
       // Get g^{v}
       uint[3] memory vG = Secp256k1_noconflict._mul(v, G);
       // Convert to Affine Co-ordinates
       ECCMath_noconflict.toZ1(vG, pp);
+      
+      // Get g^{yi*v} = h^v
+      uint[3] memory vH = Secp256k1_noconflict._mul(v, yG);
+      // Convert to Affine Co-ordinates
+      ECCMath_noconflict.toZ1(vH, pp);
 
       // Get c = H(g, g^{x}, g^{v});
-      bytes32 b_c = sha256(msg.sender, Gx, Gy, yG, vG, yivG);
+      bytes32 b_c = sha256(msg.sender, Gx, Gy, yG, vG, vH);
       uint c = uint(b_c);
 
       // Get 'r' the zkp
@@ -529,9 +529,9 @@ contract LocalCrypto {
       res[1] = vG[0];
       res[2] = vG[1];
       res[3] = vG[2];
-      res[4] = yivG[0];
-      res[5] = yivG[1];
-      res[6] = yivG[2];
+      res[4] = vH[0];
+      res[5] = vH[1];
+      res[6] = vH[2];
       return;
   }
 
@@ -587,42 +587,58 @@ contract LocalCrypto {
   }
   
   // Parameters xG, r where r = v - xc, and vG.
-  // Verify that vG = rG + xcG!
-  // And that yivG = ryiG + c xyiG
-  function verifyZKPNullVote(uint[2] xG, uint[2] yiG, uint[2] yixG, uint r, uint[3] vG, uint[3] yivG) constant returns (bool _successful, string _error){
+  // Verify that vG = rG + xcG
+  // And that vH = rH + (y/G)^c
+  function verifyZKPNullVote(uint[2] xG, uint[2] yG, uint[2] voteNull, uint r, uint[3] vG, uint[3] vH) constant returns (bool _successful, string _error, uint[2] temp_affine){
 	  
       // Check both keys are on the curve.
-      if(!Secp256k1_noconflict.isPubKey(xG) || !Secp256k1_noconflict.isPubKey(vG) || !Secp256k1_noconflict.isPubKey(yixG) || !Secp256k1_noconflict.isPubKey(yivG)) {
+      if(!Secp256k1_noconflict.isPubKey(xG) || !Secp256k1_noconflict.isPubKey(vG) || !Secp256k1_noconflict.isPubKey(voteNull) || !Secp256k1_noconflict.isPubKey(vH)) {
     	_successful = false;
     	_error = "xG or vG or yiG or yivG isnt a PubKey";
         return; //Must be on the curve!
       }
 
       // Get c = H(g, g^{x}, g^{v});
-      uint c = uint(sha256(msg.sender, Gx, Gy, yiG, vG, yivG));
+      uint c = uint(sha256(msg.sender, Gx, Gy, yG, vG, vH));
 
       // Get g^{r}, and g^{xc}
       uint[3] memory temp1 = Secp256k1_noconflict._mul(r, G);
       uint[3] memory temp2 = Secp256k1_noconflict._mul(c, xG);
 
       // Add both points together
-      uint[3] memory rGxcG = Secp256k1_noconflict._add(temp1,temp2);
-
-      // Convert to Affine Co-ordinates
-      ECCMath_noconflict.toZ1(rGxcG, pp);
+      temp1 = Secp256k1_noconflict._add(temp1,temp2);
+      ECCMath_noconflict.toZ1(temp1, pp);
       
-      // Get g^{yi*r}, and g^{yix*c}
-      temp1 = Secp256k1_noconflict._mul(r, yiG);
-      temp2 = Secp256k1_noconflict._mul(c, yixG);
+      if (temp1[0] != vG[0] || temp1[1] != vG[1]) {
+          _successful = false;
+          _error = "vG != rG*xcG";
+          return;
+      }
+      
+      // Get g^{yi*r}
+      temp1 = Secp256k1_noconflict._mul(r, yG);
+      
+      
+      // Get g^{yix}/G*c
+      // Negate the 'y' co-ordinate of G
+      temp2[0] = G[0];
+      temp2[1] = pp - G[1];
+      temp2[2] = 1;
+      
+      temp2 = Secp256k1_noconflict._addMixed(temp2,voteNull);
+      ECCMath_noconflict.toZ1(temp2, pp);
+      //uint[2] memory temp_affine;
+      temp_affine[0] = temp2[0];
+      temp_affine[1] = temp2[1];
+      
+      temp2 = Secp256k1_noconflict._mul(c, temp_affine);
 
       // Add both points together
       uint[3] memory ryiGyixcG = Secp256k1_noconflict._add(temp1,temp2);
-
-      // Convert to Affine Co-ordinates
       ECCMath_noconflict.toZ1(ryiGyixcG, pp);
 
       // Verify. Do they match?
-      if(rGxcG[0] == vG[0] && rGxcG[1] == vG[1] && ryiGyixcG[0] == yivG[0] && ryiGyixcG[1] == yivG[1]) {
+      if(ryiGyixcG[0] == vH[0] && ryiGyixcG[1] == vH[1]) {
     	  _successful = true;
     	  return;
       } else {
@@ -634,6 +650,7 @@ contract LocalCrypto {
   
   function createNullVote(uint[2] yG, uint x) constant returns (uint[2] res) {
       uint[3] memory temp1 = Secp256k1_noconflict._mul(x,yG);
+      Secp256k1_noconflict._addMixedM(temp1,G);
       ECCMath_noconflict.toZ1(temp1, pp);
 
       // Store y_x and y_y
@@ -882,38 +899,34 @@ contract LocalCrypto {
       return true;
     }
   
-  function checkVote(uint x, uint[2] _yG, uint[2] _voteCrypted) constant returns(uint[3] temp1_bis, uint[3] temp2_bis, uint temp4) {
-      //uint index = addressid[msg.sender];
-      //uint[2] yG = voters[index].reconstructedkey;
-      //uint[2] voteCrypted = voters[index].vote;
-      
-      uint[2] memory yG = _yG;
-      uint[2] memory voteCrypted = _voteCrypted;
-	  
+  function checkVote(uint x, uint[2] yG, uint[2] voteCrypted, uint totalVoter, uint totalCandidat) constant returns(bool _successful, string _message, uint _result) {
       //On calcule g^yixi
 	  uint[3] memory temp1 = Secp256k1_noconflict._mul(x,yG);
 	  ECCMath_noconflict.toZ1(temp1, pp);
 	  
-	  temp1_bis[0] = temp1[0];
-	  temp1_bis[1] = temp1[1];
-	  temp1_bis[2] = temp1[2];
-      
-    //On regarde si g^xiyi = vote
-      if (temp1[0] == voteCrypted[0] && temp1[1] == voteCrypted[1]) {
-    	  temp4 = 0;
-      } else {
-    	  uint[3] memory temp2 = Secp256k1_noconflict._addMixed(temp1, G);
-    	  ECCMath_noconflict.toZ1(temp2, pp);
-    	  temp2_bis[0] = temp2[0];
-    	  temp2_bis[1] = temp2[1];
-    	  temp2_bis[2] = temp2[2];
-    	  if (temp2[0] == voteCrypted[0] && temp2[1] == voteCrypted[1]) {
-    		  temp4 = 1;
-    	  } else {
-    		  temp4 = 10;
-    	  }
-      }
-  
+	  	//On trouve m tel que 2^m>n
+	  	uint m=1;
+	  	while (2**m<=totalVoter) {
+	  		m+=1;
+	  	}
+	  	
+	  	uint[3] memory result;
+	  	//On additione g^(2^i*m)
+		for(uint i=0;i<totalCandidat;i++) {
+			uint vi = 2**(m*i);
+			result = Secp256k1_noconflict._mul(vi,G);
+			result = Secp256k1_noconflict._add(result, temp1);
+			ECCMath_noconflict.toZ1(result, pp);
+			if(result[0] == voteCrypted[0] && result[1] == voteCrypted[1]) {
+				_successful = true;
+				_result = i;
+				return;
+			}
+		}
+	  	
+		_successful = false;
+		_message = "Error : impossible to find your vote";
+		return;
   }
   
   function createVote(uint[2] yG, uint x, uint choice, uint totalVoters) constant returns (uint[2] vote, uint _m, uint _vi, uint[3] _viG, uint[3] _xyG) {
