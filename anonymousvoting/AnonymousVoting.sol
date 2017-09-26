@@ -896,30 +896,48 @@ contract AnonymousVoting is owned {
       
   }
   
-  function submitVote(uint[2] vote) inState(State.VOTE) returns (bool) {
+  function submitVote(uint[3] y, uint[2][10] diAndriList, uint[2][10] aList,  uint[2][10] bList) inState(State.VOTE) returns (bool _successful, string _message) {
 
      // HARD DEADLINE
      if(block.timestamp > endVotingPhase) {
+    	 _successful = false;
+    	 _message = "The vote is closed. You can't vote anymore";
        return;
      }
 
      // Make sure the sender can vote, and hasn't already voted.
      if(isRegistered(msg.sender) && !hasCastVote(msg.sender)) {
-        
-         uint c = addressid[msg.sender];
+    	 
+	 	uint c = addressid[msg.sender];
+		uint[2] xG = voterMapBis[c].registeredkey;
+		uint[2] yG = voterMapBis[c].reconstructedkey;
+		uint[2][2] memory res2D;
+		res2D[0] = xG;
+		res2D[1] = yG;
+		
+		//Check the ZKP
+		(_successful, _message) = verifyZKPVote(y, res2D, diAndriList, aList,  bList);
+		if(_successful) {
+	    	 voterMapBis[c].vote[0] = y[0];
+	    	 voterMapBis[c].vote[1] = y[1];
+
+	    	 voterMapBis[c].voteCast = true;
+
+	         totalvoted += 1;
+
+	    	 _successful = true;
+	    	 _message = "You cast your vote with success";
+	         return;
+		} else {
+			return;
+		}
            
-    	 voterMapBis[c].vote[0] = vote[0];
-    	 voterMapBis[c].vote[1] = vote[1];
 
-    	 voterMapBis[c].voteCast = true;
-
-         totalvoted += 1;
-
-         return true;
+     } else {
+    	 _successful = false;
+    	 _message = "You have already cast your vote";
+       return;
      }
-
-     // Either vote has already been cast, or ZKP verification failed.
-     return false;
   }
   
   event IsVoteCastEvent(address indexed _from, bool _isVoteCast, string _error);
@@ -1212,89 +1230,87 @@ contract AnonymousVoting is owned {
       }
   }
   
-  // We verify that the ZKP is of 0 or 1.
-  function verify1outof2ZKP(uint[4] params, uint[2] y, uint[2] a1, uint[2] b1, uint[2] a2, uint[2] b2) returns (bool) {
-      uint[2] memory temp1;
-      uint[3] memory temp2;
-      uint[3] memory temp3;
-
-      // Voter Index
-      uint i = uint(addressid[msg.sender]);
-
-      // We already have them stored...
-      // TODO: Decide if this should be in SubmitVote or here...
-      uint[2] memory yG = voterMapBis[i].reconstructedkey;
-      uint[2] memory xG = voterMapBis[i].registeredkey;
-
-      // Make sure we are only dealing with valid public keys!
-      if(!Secp256k1.isPubKey(xG) || !Secp256k1.isPubKey(yG) || !Secp256k1.isPubKey(y) || !Secp256k1.isPubKey(a1) ||
-         !Secp256k1.isPubKey(b1) || !Secp256k1.isPubKey(a2) || !Secp256k1.isPubKey(b2)) {
-         return false;
-      }
-
-      // Does c =? d1 + d2 (mod n)
-      if(uint(sha256(msg.sender, xG, y, a1, b1, a2, b2)) != addmod(params[0],params[1],nn)) {
-        return false;
-      }
-
-      // a1 =? g^{r1} * x^{d1}
-      temp2 = Secp256k1._mul(params[2], G);
-      temp3 = Secp256k1._add(temp2, Secp256k1._mul(params[0], xG));
-      ECCMath.toZ1(temp3, pp);
-
-      if(a1[0] != temp3[0] || a1[1] != temp3[1]) {
-        return false;
-      }
-
-      //b1 =? h^{r1} * y^{d1} (temp = affine 'y')
-      temp2 = Secp256k1._mul(params[2],yG);
-      temp3 = Secp256k1._add(temp2, Secp256k1._mul(params[0], y));
-      ECCMath.toZ1(temp3, pp);
-
-      if(b1[0] != temp3[0] || b1[1] != temp3[1]) {
-        return false;
-      }
-
-      //a2 =? g^{r2} * x^{d2}
-      temp2 = Secp256k1._mul(params[3],G);
-      temp3 = Secp256k1._add(temp2, Secp256k1._mul(params[1], xG));
-      ECCMath.toZ1(temp3, pp);
-
-      if(a2[0] != temp3[0] || a2[1] != temp3[1]) {
-        return false;
-      }
-
-      // Negate the 'y' co-ordinate of g
-      temp1[0] = G[0];
-      temp1[1] = pp - G[1];
-
-      // get 'y'
-      temp3[0] = y[0];
-      temp3[1] = y[1];
-      temp3[2] = 1;
-
-      // y-g
-      temp2 = Secp256k1._addMixed(temp3,temp1);
-
-      // Return to affine co-ordinates
-      ECCMath.toZ1(temp2, pp);
-      temp1[0] = temp2[0];
-      temp1[1] = temp2[1];
-
-      // (y-g)^{d2}
-      temp2 = Secp256k1._mul(params[1],temp1);
-
-      // Now... it is h^{r2} + temp2..
-      temp3 = Secp256k1._add(Secp256k1._mul(params[3],yG),temp2);
-
-      // Convert to Affine Co-ordinates
-      ECCMath.toZ1(temp3, pp);
-
-      // Should all match up.
-      if(b2[0] != temp3[0] || b2[1] != temp3[1]) {
-        return false;
-      }
-
-      return true;
-    }
+  /*
+   * uint[2][2] res2D : 
+   * 0 => xG
+   * 1 => yG
+   * 
+   * uint[2][] diAndRiList;
+   * 0 => diList
+   * 1 => riList
+   * 
+   * We verify that the vote is well constructed
+   */
+	function verifyZKPVote(uint[3] y, uint[2][2] res2D, uint[2][10] diAndriList, uint[2][10] aList,  uint[2][10] bList) returns (bool _successful, string _message) {
+		
+	  	//Calcul de m
+		uint m=1;
+	  	while (2**m<=totalregistered) {
+	  		m+=1;
+	  	}
+	  	
+	  	uint[3] memory temp1;
+	  	uint[3] memory temp2;
+	  	uint[2] memory temp_affine;
+	  	
+		uint sumDi = 0;
+    	for(uint i=0;i<getTotalAnswers();i++) {
+    		//Calcul de 1/Gi
+    		uint[3] memory negateGi = Secp256k1._mul(2**(m*i),G);
+    		ECCMath.toZ1(negateGi, pp);
+    		negateGi[0] = negateGi[0];
+    		negateGi[1] = pp-negateGi[1];
+    		negateGi[2] = 1;
+    		
+    		sumDi=addmod(sumDi, diAndriList[i][0],nn);
+        	
+            //ai = riGdixG
+    		//Calcul riG
+			temp1 = Secp256k1._mul(diAndriList[i][1],G);
+			//Calcul dixG
+			temp2 = Secp256k1._mul(diAndriList[i][0],res2D[0]);
+			temp1 = Secp256k1._add(temp1, temp2);
+			ECCMath.toZ1(temp1, pp);
+            
+            if(temp1[0]!=aList[i][0] || temp1[1]!=aList[i][1]) {
+            	_successful = false;
+            	_message = "The verification of the zkp failed : ai failed";
+            	return;
+            }
+            
+			//bi = riyG*(y/Gi)^di
+            //temp1=riyG
+			temp1 = Secp256k1._mul(diAndriList[i][1], res2D[1]);
+			//temp2 = y/Gi
+			temp2 = Secp256k1._add(y,negateGi);
+			ECCMath.toZ1(temp2, pp);
+			temp_affine[0] = temp2[0];
+			temp_affine[1] = temp2[1];
+			//temp2=(y/gi)^di
+			temp2 = Secp256k1._mul(diAndriList[i][0],temp_affine);
+			//temp2 = riyG + (y/Gi)^di
+			temp2 = Secp256k1._add(temp1, temp2);
+			ECCMath.toZ1(temp2, pp);
+            
+            if(temp2[0]!=bList[i][0] || temp2[1]!=bList[i][1]) {
+            	_successful = false;
+            	_message = "The verification of the zkp failed : bi failed";
+            	return;
+            }
+    	} 
+        
+    	// c = H(y,a1,b1,a2,b2)	
+        //uint c = uint(sha256(msg.sender, res2D[0], res2D[1], aList[0], bList[0], aList[1], bList[1], aList[2], bList[2], aList[3], bList[3], aList[4], bList[4], aList[5], bList[5], aList[6], bList[6], aList[7], bList[7], aList[8], bList[8], aList[9], bList[9]));
+    	uint c = uint(sha256(msg.sender, res2D, aList, bList));
+    	
+        if(c!=sumDi) {
+        	_successful = false;
+        	_message = "The verification of the zkp failed : c failed";
+        	return;
+        }
+		
+    	_successful = true;
+    	_message = "The verification of the zkp is a success";
+    	return;
+	}
 }

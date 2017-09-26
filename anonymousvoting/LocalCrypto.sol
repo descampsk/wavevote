@@ -785,23 +785,23 @@ contract LocalCrypto {
   	
   	tempUint[4]=0;
 	//Calcul des ai
-  	//On boucle de 1 à totalAnswers
-	for(uint i=1;i<=res1D[3];i++) {
+  	//On boucle de 0 à totalAnswers-1
+	for(uint i=0;i<res1D[3];i++) {
 		
 		//Si i!=vote
 		if(i!=res1D[2]) {
 			
 			//tempUint[2] = diAndriList[1][i-1-tempUint[4]];
 			//tempUint[1] = diAndriList[0][i-1-tempUint[4]];
-			tempUint[2] = diAndriList[i-1-tempUint[4]][1];
-			tempUint[1] = diAndriList[i-1-tempUint[4]][0];
+			tempUint[2] = diAndriList[i-tempUint[4]][1];
+			tempUint[1] = diAndriList[i-tempUint[4]][0];
 
 			//ai = riG + dixG
 			temp1 = Secp256k1_noconflict._mul(tempUint[2],G);
 			temp2 = Secp256k1_noconflict._mul(tempUint[1],res2D[0]);
 			temp1 = Secp256k1_noconflict._add(temp1, temp2);
 			ECCMath_noconflict.toZ1(temp1, pp);
-			_aList[i-1] = [temp1[0], temp1[1]];
+			_aList[i] = [temp1[0], temp1[1]];
 			
 			
 			//b1 = r1yG*(y/Gi)^d1
@@ -822,7 +822,7 @@ contract LocalCrypto {
 			//temp2 = riyG + (y/Gi)^di
 			temp2 = Secp256k1_noconflict._add(temp1, temp2);
 			ECCMath_noconflict.toZ1(temp2, pp);
-			_bList[i-1] = [temp2[0], temp2[1]];
+			_bList[i] = [temp2[0], temp2[1]];
 			
 			
 	    	
@@ -833,12 +833,12 @@ contract LocalCrypto {
 			//ai = wG
 			temp1 = Secp256k1_noconflict._mul(res1D[1],G);
 			ECCMath_noconflict.toZ1(temp1, pp);
-			_aList[i-1] = [temp1[0], temp1[1]];
+			_aList[i] = [temp1[0], temp1[1]];
 
 			//bi = wyG
 			temp2 = Secp256k1_noconflict._mul(res1D[1],res2D[1]);
 			ECCMath_noconflict.toZ1(temp2, pp);
-			_bList[i-1] = [temp2[0], temp2[1]];
+			_bList[i] = [temp2[0], temp2[1]];
 
 		}
 	}
@@ -854,18 +854,18 @@ contract LocalCrypto {
 	
 	
 	tempUint[4]=0;
-	for(i=1;i<=res1D[3];i++) {
+	for(i=0;i<res1D[3];i++) {
 		if(i==res1D[2]) {
 			tempUint[4]=1;
 			//dVote = c - summDi
 			tempUint[5] = submod(tempUint[7], tempUint[3]);
 			//rVote = w-x*dVote
 			tempUint[6] = submod(res1D[1], mulmod(res1D[0],tempUint[5],nn));
-			_dAndrList[i-1] = [tempUint[5],tempUint[6]];
+			_dAndrList[i] = [tempUint[5],tempUint[6]];
 		} else {
-			tempUint[5] = diAndriList[i-1-tempUint[4]][0];
-			tempUint[6] = diAndriList[i-1-tempUint[4]][1];
-			_dAndrList[i-1] = [tempUint[5], tempUint[6]];
+			tempUint[5] = diAndriList[i-tempUint[4]][0];
+			tempUint[6] = diAndriList[i-tempUint[4]][1];
+			_dAndrList[i] = [tempUint[5], tempUint[6]];
 		}
 	}
 	
@@ -881,7 +881,6 @@ contract LocalCrypto {
    * uint[2][2] res2D : 
    * 0 => xG
    * 1 => yG
-   * 2 => y
    * 
    * uint[2][] diAndRiList;
    * 0 => diList
@@ -891,7 +890,7 @@ contract LocalCrypto {
 		
 	  	//Calcul de m
 		uint m=1;
-	  	while (2**m<=totalVoters) {
+	  	while (2**m<=res1D[1]) {
 	  		m+=1;
 	  	}
 	  	
@@ -900,9 +899,9 @@ contract LocalCrypto {
 	  	uint[2] memory temp_affine;
 	  	
 		uint sumDi = 0;
-    	for(uint i=0;i<totalAnswers;i++) {
+    	for(uint i=0;i<res1D[0];i++) {
     		//Calcul de 1/Gi
-    		uint[3] memory negateGi = Secp256k1_noconflict._mul(2**(m*(i+1)),G);
+    		uint[3] memory negateGi = Secp256k1_noconflict._mul(2**(m*i),G);
     		ECCMath_noconflict.toZ1(negateGi, pp);
     		negateGi[0] = negateGi[0];
     		negateGi[1] = pp-negateGi[1];

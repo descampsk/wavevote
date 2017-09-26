@@ -316,52 +316,40 @@ function createAccountEthereum() {
 			}
 	        
 	        
-	        //var x = new BigNumber(document.getElementById('privateKey').value);
+			//On initie la variable res1D
 	        var w = new BigNumber(ec.genKeyPair().getPrivate().toString());
-	        var r = new BigNumber(ec.genKeyPair().getPrivate().toString());
-	        var d = new BigNumber(ec.genKeyPair().getPrivate().toString());
-	
-	        var choice_text;
-	        
 	        var totalVoter = anonymousvotingAddr.totalregistered();
-	        
-	        console.log(yG[0].toString(10));
-	        console.log(yG[1].toString(10));
-	        console.log(x.toString(10));
-	        console.log(choice);
-	        console.log(totalVoter);
-	        
-	        var vote = cryptoAddr.createVote(yG, x, choice, totalVoter);
-	        console.log(vote);
-	        
-	        /*
-	        var result;
-	        if (choice == 1) {
-	            choice_text = "YES";
-	            result = cryptoAddr.create1outof2ZKPYesVote.call(xG, yG, w, r, d, x, {
-	                from: web3.eth.accounts[accounts_index]
-	            });
-	        } else {
-	            choice_text = "NO";
-	            result = cryptoAddr.create1outof2ZKPNoVote.call(xG, yG, w, r, d, x, {
-	                from: web3.eth.accounts[accounts_index]
-	            });
-	        }
-	
-	        var y = [result[0][0], result[0][1]];
-	        var a1 = [result[0][2], result[0][3]];
-	        var b1 = [result[0][4], result[0][5]];
-	        var a2 = [result[0][6], result[0][7]];
-	        var b2 = [result[0][8], result[0][9]];
-	
-	        var params = [result[1][0], result[1][1], result[1][2], result[1][3]];
-	        result = anonymousvotingAddr.verify1outof2ZKP.call(params, y, a1, b1, a2, b2, {
-	            from: web3.eth.accounts[accounts_index]
-	        });
-	        */
+	        var totalAnswers = anonymousvotingAddr.getTotalAnswers();
+	        var res1D = [x,w,choice,totalAnswers,totalVoter];
+	       
+	    	//Init de res2D
+	    	var res2D = [xG,yG];
+	    	
+	    	//On instancie les nombres aléatoires : il en faut totalAnswers-1 
+	    	var diAndRiList = new Array();
+	    	for(var i=0;i<totalAnswers-1;i++) {
+	    		var di = new BigNumber(ec.genKeyPair().getPrivate().toString());
+	    		var ri = new BigNumber(ec.genKeyPair().getPrivate().toString());
+	    		diAndRiList.push([di,ri]);
+	    	}
+	    	 	
+	    	var result = cryptoAddr.generateZKP.call(res1D, res2D, diAndRiList, {
+                from: web3.eth.accounts[accounts_index]
+            });  
+	    	console.log(result);
+	    	
+			res1D = [totalAnswers, totalVoter];
+			var y = result[0];
+			var aList = result[1];
+			var bList = result[2];
+			var dAndrList = result[3];
+			var resultVerif = cryptoAddr.verifyZKPVote.call(res1D, y, res2D, dAndrList, aList, bList, {
+                from: web3.eth.accounts[accounts_index]
+            });
+			console.log(resultVerif);
 	
 	        // Let's make sure the zero knowledge proof checked out...
-	        if (true) {
+	        if (resultVerif[0]) {
 	
 	            var castvote = false;
 	
@@ -373,15 +361,15 @@ function createAccountEthereum() {
 	                
 	                if (castvote) {
 	                    web3.personal.unlockAccount(addr, password);
-	                    var res = anonymousvotingAddr.submitVote.call(vote[0], {//params, y, a1, b1, a2, b2, {
+	                    var res = anonymousvotingAddr.submitVote.call(y, dAndrList, aList, bList, {
 	                        from: web3.eth.accounts[accounts_index]
 	                    });
 	                    
-	                    if(res) {
+	                    if(res[0]) {
 	                    	try {
-	                    	anonymousvotingAddr.submitVote.sendTransaction(vote[0], {//params, y, a1, b1, a2, b2, {
+	                    	anonymousvotingAddr.submitVote.sendTransaction(y, dAndrList, aList, bList, {
 	                            from: web3.eth.accounts[accounts_index],
-	                            gas: 4200000, 
+	                            gas: 9000000, 
 	                            value: 0
 	                        });
 	                    	
@@ -403,15 +391,13 @@ function createAccountEthereum() {
 	                    	alert("Error during the transaction of your vote");
 	                    }
 	                    } else {
-	                    	alert("Error during the transaction of your vote");
-	                    }
-	                    
-	                    
-	                    
+	                    	alert(res[1]);
+	                    }             
 	                }
 	            }
 	        } else {
-	            alert("Vote was not computed successfully... Please check that you have uploaded the correct voting codes and unlocked the correct account");
+	        	console.log(resultVerif[1]);
+	            alert(resultVerif[1]);
 	        }
     	} catch(e) {
     		console.log(e);

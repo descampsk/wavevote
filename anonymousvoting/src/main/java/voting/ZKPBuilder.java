@@ -120,7 +120,7 @@ public class ZKPBuilder {
 		addIn(sha256, y);
 		
 		//Calcul des ai
-		for(Integer i=1;i<=nombreCandidat;i++) {
+		for(Integer i=0;i<nombreCandidat;i++) {
 			vi = Math.pow(2, m*i);
 			Gi = ecSpec.getG().multiply(new BigInteger(String.valueOf((long) vi))).normalize();
 			GList.add(Gi);
@@ -180,7 +180,7 @@ public class ZKPBuilder {
         BigInteger dVote = c.subtract(sommeDi).mod(nn);
         BigInteger rVote = w.subtract(x.multiply(dVote)).mod(nn);
    
-		for(Integer i=1;i<=nombreCandidat;i++) {
+		for(Integer i=0;i<nombreCandidat;i++) {
 			if(new BigInteger(i.toString()).equals(vote)) {
 	        	dList.add(dVote);
 	        	rList.add(rVote);
@@ -388,7 +388,7 @@ public class ZKPBuilder {
 		System.out.println("x : " + x);
 		System.out.println("w : " + w);
 		
-		HashMap<String, Object> map2 = zkpBuilder.generateZKP(xG, x, yG, w, new BigInteger("1"), nombreCandidat, g);
+		HashMap<String, Object> map2 = zkpBuilder.generateZKP(xG, x, yG, w, new BigInteger("4"), nombreCandidat, g);
 		System.out.println(map2);
 
 		
