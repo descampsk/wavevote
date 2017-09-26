@@ -505,18 +505,18 @@ contract LocalCrypto {
           throw; //Must be on the curve!
       }
 
-      // Get g^{yi*v}
-      uint[3] memory yivG = Secp256k1_noconflict._mul(v, yG);
-      // Convert to Affine Co-ordinates
-      ECCMath_noconflict.toZ1(yivG, pp);
-      
       // Get g^{v}
       uint[3] memory vG = Secp256k1_noconflict._mul(v, G);
       // Convert to Affine Co-ordinates
       ECCMath_noconflict.toZ1(vG, pp);
+      
+      // Get g^{yi*v} = h^v
+      uint[3] memory vH = Secp256k1_noconflict._mul(v, yG);
+      // Convert to Affine Co-ordinates
+      ECCMath_noconflict.toZ1(vH, pp);
 
       // Get c = H(g, g^{x}, g^{v});
-      bytes32 b_c = sha256(msg.sender, Gx, Gy, yG, vG, yivG);
+      bytes32 b_c = sha256(msg.sender, Gx, Gy, yG, vG, vH);
       uint c = uint(b_c);
 
       // Get 'r' the zkp
@@ -529,9 +529,9 @@ contract LocalCrypto {
       res[1] = vG[0];
       res[2] = vG[1];
       res[3] = vG[2];
-      res[4] = yivG[0];
-      res[5] = yivG[1];
-      res[6] = yivG[2];
+      res[4] = vH[0];
+      res[5] = vH[1];
+      res[6] = vH[2];
       return;
   }
 
@@ -587,42 +587,58 @@ contract LocalCrypto {
   }
   
   // Parameters xG, r where r = v - xc, and vG.
-  // Verify that vG = rG + xcG!
-  // And that yivG = ryiG + c xyiG
-  function verifyZKPNullVote(uint[2] xG, uint[2] yiG, uint[2] yixG, uint r, uint[3] vG, uint[3] yivG) constant returns (bool _successful, string _error){
+  // Verify that vG = rG + xcG
+  // And that vH = rH + (y/G)^c
+  function verifyZKPNullVote(uint[2] xG, uint[2] yG, uint[2] voteNull, uint r, uint[3] vG, uint[3] vH) constant returns (bool _successful, string _error, uint[2] temp_affine){
 	  
       // Check both keys are on the curve.
-      if(!Secp256k1_noconflict.isPubKey(xG) || !Secp256k1_noconflict.isPubKey(vG) || !Secp256k1_noconflict.isPubKey(yixG) || !Secp256k1_noconflict.isPubKey(yivG)) {
+      if(!Secp256k1_noconflict.isPubKey(xG) || !Secp256k1_noconflict.isPubKey(vG) || !Secp256k1_noconflict.isPubKey(voteNull) || !Secp256k1_noconflict.isPubKey(vH)) {
     	_successful = false;
     	_error = "xG or vG or yiG or yivG isnt a PubKey";
         return; //Must be on the curve!
       }
 
       // Get c = H(g, g^{x}, g^{v});
-      uint c = uint(sha256(msg.sender, Gx, Gy, yiG, vG, yivG));
+      uint c = uint(sha256(msg.sender, Gx, Gy, yG, vG, vH));
 
       // Get g^{r}, and g^{xc}
       uint[3] memory temp1 = Secp256k1_noconflict._mul(r, G);
       uint[3] memory temp2 = Secp256k1_noconflict._mul(c, xG);
 
       // Add both points together
-      uint[3] memory rGxcG = Secp256k1_noconflict._add(temp1,temp2);
-
-      // Convert to Affine Co-ordinates
-      ECCMath_noconflict.toZ1(rGxcG, pp);
+      temp1 = Secp256k1_noconflict._add(temp1,temp2);
+      ECCMath_noconflict.toZ1(temp1, pp);
       
-      // Get g^{yi*r}, and g^{yix*c}
-      uint[3] memory temp1 = Secp256k1_noconflict._mul(r, yiG);
-      uint[3] memory temp2 = Secp256k1_noconflict._mul(c, yixG);
+      if (temp1[0] != vG[0] || temp1[1] != vG[1]) {
+          _successful = false;
+          _error = "vG != rG*xcG";
+          return;
+      }
+      
+      // Get g^{yi*r}
+      temp1 = Secp256k1_noconflict._mul(r, yG);
+      
+      
+      // Get g^{yix}/G*c
+      // Negate the 'y' co-ordinate of G
+      temp2[0] = G[0];
+      temp2[1] = pp - G[1];
+      temp2[2] = 1;
+      
+      temp2 = Secp256k1_noconflict._addMixed(temp2,voteNull);
+      ECCMath_noconflict.toZ1(temp2, pp);
+      //uint[2] memory temp_affine;
+      temp_affine[0] = temp2[0];
+      temp_affine[1] = temp2[1];
+      
+      temp2 = Secp256k1_noconflict._mul(c, temp_affine);
 
       // Add both points together
       uint[3] memory ryiGyixcG = Secp256k1_noconflict._add(temp1,temp2);
-
-      // Convert to Affine Co-ordinates
       ECCMath_noconflict.toZ1(ryiGyixcG, pp);
 
       // Verify. Do they match?
-      if(rGxcG[0] == vG[0] && rGxcG[1] == vG[1] && ryiGyixcG[0] == yivG[0] && ryiGyixcG[1] == yivG[1]) {
+      if(ryiGyixcG[0] == vH[0] && ryiGyixcG[1] == vH[1]) {
     	  _successful = true;
     	  return;
       } else {
@@ -634,286 +650,71 @@ contract LocalCrypto {
   
   function createNullVote(uint[2] yG, uint x) constant returns (uint[2] res) {
       uint[3] memory temp1 = Secp256k1_noconflict._mul(x,yG);
-      ECCMath_noconflict.toZ1(temp1, pp);
-
-      // Store y_x and y_y
-      res[0] = temp1[0];
-      res[1] = temp1[1];
-  }
-
-  // random 'w', 'r1', 'd1'
-  function create1outof2ZKPNoVote(uint[2] xG, uint[2] yG, uint w, uint r2, uint d2, uint x) returns (uint[10] res, uint[4] res2){
-      uint[2] memory temp_affine1;
-      uint[2] memory temp_affine2;
-
-      // y = h^{x} * g
-      uint[3] memory temp1 = Secp256k1_noconflict._mul(x,yG);
-      ECCMath_noconflict.toZ1(temp1, pp);
-
-      // Store y_x and y_y
-      res[0] = temp1[0];
-      res[1] = temp1[1];
-
-      // a1 = g^{w}
-      temp1 = Secp256k1_noconflict._mul(w,G);
-      ECCMath_noconflict.toZ1(temp1, pp);
-
-      // Store a1_x and a1_y
-      res[2] = temp1[0];
-      res[3] = temp1[1];
-
-      // b1 = h^{w} (where h = g^{y})
-      temp1 = Secp256k1_noconflict._mul(w, yG);
-      ECCMath_noconflict.toZ1(temp1, pp);
-
-      res[4] = temp1[0];
-      res[5] = temp1[1];
-
-      // a2 = g^{r2} * x^{d2}
-      temp1 = Secp256k1_noconflict._mul(r2,G);
-      temp1 = Secp256k1_noconflict._add(temp1, Secp256k1_noconflict._mul(d2,xG));
-      ECCMath_noconflict.toZ1(temp1, pp);
-
-      res[6] = temp1[0];
-      res[7] = temp1[1];
-
-      // Negate the 'y' co-ordinate of G
-      temp_affine1[0] = G[0];
-      temp_affine1[1] = pp - G[1];
-
-      // We need the public key y in affine co-ordinates
-      temp_affine2[0] = res[0];
-      temp_affine2[1] = res[1];
-
-      // We should end up with y^{d2} + g^{d2} .... (but we have the negation of g.. so y-g).
-      temp1 = Secp256k1_noconflict._add(Secp256k1_noconflict._mul(d2,temp_affine2), Secp256k1_noconflict._mul(d2,temp_affine1));
-
-      // Now... it is h^{r2} + temp2..
-      temp1 = Secp256k1_noconflict._add(Secp256k1_noconflict._mul(r2,yG),temp1);
-
-      // Convert to Affine Co-ordinates
-      ECCMath_noconflict.toZ1(temp1, pp);
-
-      res[8] = temp1[0];
-      res[9] = temp1[1];
-
-      // Get c = H(i, xG, Y, a1, b1, a2, b2);
-      bytes32 b_c = sha256(msg.sender, xG, res);
-
-      // d1 = c - d2 mod q
-      temp1[0] = submod(uint(b_c),d2);
-
-      // r1 = w - (x * d1)
-      temp1[1] = submod(w, mulmod(x,temp1[0],nn));
-
-      /* We return the following
-      * res[0] = y_x;
-      * res[1] = y_y;
-      * res[2] = a1_x;
-      * res[3] = a1_y;
-      * res[4] = b1_x;
-      * res[5] = b1_y;
-      * res[6] = a2_x;
-      * res[7] = a2_y;
-      * res[8] = b2_x;
-      * res[9] = b2_y;
-      * res[10] = d1;
-      * res[11] = d2;
-      * res[12] = r1;
-      * res[13] = r2;
-      */
-      res2[0] = temp1[0];
-      res2[1] = d2;
-      res2[2] = temp1[1];
-      res2[3] = r2;
-  }
-
-  // random 'w', 'r1', 'd1'
-  // TODO: Make constant
-  function create1outof2ZKPYesVote(uint[2] xG, uint[2] yG, uint w, uint r1, uint d1, uint x) returns (uint[10] res, uint[4] res2) {
-      // y = h^{x} * g
-      uint[3] memory temp1 = Secp256k1_noconflict._mul(x,yG);
       Secp256k1_noconflict._addMixedM(temp1,G);
       ECCMath_noconflict.toZ1(temp1, pp);
+
+      // Store y_x and y_y
       res[0] = temp1[0];
       res[1] = temp1[1];
-
-      // a1 = g^{r1} * x^{d1}
-      temp1 = Secp256k1_noconflict._mul(r1,G);
-      temp1 = Secp256k1_noconflict._add(temp1, Secp256k1_noconflict._mul(d1,xG));
-      ECCMath_noconflict.toZ1(temp1, pp);
-      res[2] = temp1[0];
-      res[3] = temp1[1];
-
-      // b1 = h^{r1} * y^{d1} (temp = affine 'y')
-      temp1 = Secp256k1_noconflict._mul(r1,yG);
-
-      // Setting temp to 'y'
-      uint[2] memory temp;
-      temp[0] = res[0];
-      temp[1] = res[1];
-
-      temp1= Secp256k1_noconflict._add(temp1, Secp256k1_noconflict._mul(d1, temp));
-      ECCMath_noconflict.toZ1(temp1, pp);
-      res[4] = temp1[0];
-      res[5] = temp1[1];
-
-      // a2 = g^{w}
-      temp1 = Secp256k1_noconflict._mul(w,G);
-      ECCMath_noconflict.toZ1(temp1, pp);
-
-      res[6] = temp1[0];
-      res[7] = temp1[1];
-
-      // b2 = h^{w} (where h = g^{y})
-      temp1 = Secp256k1_noconflict._mul(w, yG);
-      ECCMath_noconflict.toZ1(temp1, pp);
-      res[8] = temp1[0];
-      res[9] = temp1[1];
-
-      // Get c = H(id, xG, Y, a1, b1, a2, b2);
-      // id is H(round, voter_index, voter_address, contract_address)...
-      bytes32 b_c = sha256(msg.sender, xG, res);
-      uint c = uint(b_c);
-
-      // d2 = c - d1 mod q
-      temp[0] = submod(c,d1);
-
-      // r2 = w - (x * d2)
-      temp[1] = submod(w, mulmod(x,temp[0],nn));
-
-      /* We return the following
-      * res[0] = y_x;
-      * res[1] = y_y;
-      * res[2] = a1_x;
-      * res[3] = a1_y;
-      * res[4] = b1_x;
-      * res[5] = b1_y;
-      * res[6] = a2_x;
-      * res[7] = a2_y;
-      * res[8] = b2_x;
-      * res[9] = b2_y;
-      * res[10] = d1;
-      * res[11] = d2;
-      * res[12] = r1;
-      * res[13] = r2;
-      */
-      res2[0] = d1;
-      res2[1] = temp[0];
-      res2[2] = r1;
-      res2[3] = temp[1];
   }
-
-  // We verify that the ZKP is of 0 or 1.
-  function verify1outof2ZKP(uint[4] params, uint[2] xG, uint[2] yG, uint[2] y, uint[2] a1, uint[2] b1, uint[2] a2, uint[2] b2) returns (bool) {
-      uint[2] memory temp1;
-      uint[3] memory temp2;
-      uint[3] memory temp3;
-
-      // Make sure we are only dealing with valid public keys!
-      if(!Secp256k1_noconflict.isPubKey(xG) || !Secp256k1_noconflict.isPubKey(yG) || !Secp256k1_noconflict.isPubKey(y) || !Secp256k1_noconflict.isPubKey(a1) ||
-         !Secp256k1_noconflict.isPubKey(b1) || !Secp256k1_noconflict.isPubKey(a2) || !Secp256k1_noconflict.isPubKey(b2)) {
-         return false;
-      }
-
-      // Does c =? d1 + d2 (mod n)
-      if(uint(sha256(msg.sender, xG, y, a1, b1, a2, b2)) != addmod(params[0],params[1],nn)) {
-        return false;
-      }
-
-      // a1 =? g^{r1} * x^{d1}
-      temp2 = Secp256k1_noconflict._mul(params[2], G);
-      temp3 = Secp256k1_noconflict._add(temp2, Secp256k1_noconflict._mul(params[0], xG));
-      ECCMath_noconflict.toZ1(temp3, pp);
-
-      if(a1[0] != temp3[0] || a1[1] != temp3[1]) {
-        return false;
-      }
-
-      //b1 =? h^{r1} * y^{d1} (temp = affine 'y')
-      temp2 = Secp256k1_noconflict._mul(params[2],yG);
-      temp3 = Secp256k1_noconflict._add(temp2, Secp256k1_noconflict._mul(params[0], y));
-      ECCMath_noconflict.toZ1(temp3, pp);
-
-      if(b1[0] != temp3[0] || b1[1] != temp3[1]) {
-        return false;
-      }
-
-      //a2 =? g^{r2} * x^{d2}
-      temp2 = Secp256k1_noconflict._mul(params[3],G);
-      temp3 = Secp256k1_noconflict._add(temp2, Secp256k1_noconflict._mul(params[1], xG));
-      ECCMath_noconflict.toZ1(temp3, pp);
-
-      if(a2[0] != temp3[0] || a2[1] != temp3[1]) {
-        return false;
-      }
-
-      // Negate the 'y' co-ordinate of g
-      temp1[0] = G[0];
-      temp1[1] = pp - G[1];
-
-      // get 'y'
-      temp3[0] = y[0];
-      temp3[1] = y[1];
-      temp3[2] = 1;
-
-      // y-g
-      temp2 = Secp256k1_noconflict._addMixed(temp3,temp1);
-
-      // Return to affine co-ordinates
-      ECCMath_noconflict.toZ1(temp2, pp);
-      temp1[0] = temp2[0];
-      temp1[1] = temp2[1];
-
-      // (y-g)^{d2}
-      temp2 = Secp256k1_noconflict._mul(params[1],temp1);
-
-      // Now... it is h^{r2} + temp2..
-      temp3 = Secp256k1_noconflict._add(Secp256k1_noconflict._mul(params[3],yG),temp2);
-
-      // Convert to Affine Co-ordinates
-      ECCMath_noconflict.toZ1(temp3, pp);
-
-      // Should all match up.
-      if(b2[0] != temp3[0] || b2[1] != temp3[1]) {
-        return false;
-      }
-
-      return true;
-    }
   
-  function checkVote(uint x, uint[2] _yG, uint[2] _voteCrypted) constant returns(uint[3] temp1_bis, uint[3] temp2_bis, uint temp4) {
-      //uint index = addressid[msg.sender];
-      //uint[2] yG = voters[index].reconstructedkey;
-      //uint[2] voteCrypted = voters[index].vote;
-      
-      uint[2] memory yG = _yG;
-      uint[2] memory voteCrypted = _voteCrypted;
-	  
+  function checkVote(uint x, uint[2] yG, uint[2] voteCrypted, uint totalVoter, uint totalCandidat) constant returns(bool _successful, string _message, uint _result) {
       //On calcule g^yixi
 	  uint[3] memory temp1 = Secp256k1_noconflict._mul(x,yG);
 	  ECCMath_noconflict.toZ1(temp1, pp);
 	  
-	  temp1_bis[0] = temp1[0];
-	  temp1_bis[1] = temp1[1];
-	  temp1_bis[2] = temp1[2];
-      
-    //On regarde si g^xiyi = vote
-      if (temp1[0] == voteCrypted[0] && temp1[1] == voteCrypted[1]) {
-    	  temp4 = 0;
-      } else {
-    	  uint[3] memory temp2 = Secp256k1_noconflict._addMixed(temp1, G);
-    	  ECCMath_noconflict.toZ1(temp2, pp);
-    	  temp2_bis[0] = temp2[0];
-    	  temp2_bis[1] = temp2[1];
-    	  temp2_bis[2] = temp2[2];
-    	  if (temp2[0] == voteCrypted[0] && temp2[1] == voteCrypted[1]) {
-    		  temp4 = 1;
-    	  } else {
-    		  temp4 = 10;
-    	  }
-      }
+	  	//On trouve m tel que 2^m>n
+	  	uint m=1;
+	  	while (2**m<=totalVoter) {
+	  		m+=1;
+	  	}
+	  	
+	  	uint[3] memory result;
+	  	//On additione g^(2^i*m)
+		for(uint i=0;i<totalCandidat;i++) {
+			uint vi = 2**(m*i);
+			result = Secp256k1_noconflict._mul(vi,G);
+			result = Secp256k1_noconflict._add(result, temp1);
+			ECCMath_noconflict.toZ1(result, pp);
+			if(result[0] == voteCrypted[0] && result[1] == voteCrypted[1]) {
+				_successful = true;
+				_result = i;
+				return;
+			}
+		}
+	  	
+		_successful = false;
+		_message = "Error : impossible to find your vote";
+		return;
+  }
   
+  function createVote(uint[2] yG, uint x, uint choice, uint totalVoters) constant returns (uint[2] vote, uint _m, uint _vi, uint[3] _viG, uint[3] _xyG) {
+  	//On trouve m tel que 2^m>n
+  	uint m=1;
+  	while (2**m<=totalVoters) {
+  		m+=1;
+  	}
+  	
+  	_m = m;
+  	
+	uint vi = 2**(m*choice);
+	_vi = vi;
+	
+	uint[3] memory viG = Secp256k1_noconflict._mul(vi,G);
+	ECCMath_noconflict.toZ1(viG, pp);
+	
+	_viG = viG;
+	
+	uint[3] memory xyGviG = Secp256k1_noconflict._mul(x,yG);
+	ECCMath_noconflict.toZ1(xyGviG, pp);
+	
+	_xyG = xyGviG;
+	
+	xyGviG = Secp256k1_noconflict._add(xyGviG, viG);
+	ECCMath_noconflict.toZ1(xyGviG, pp);
+	
+	vote[0] = xyGviG[0];
+	vote[1] = xyGviG[1];
   }
   
   function buildVotingPrivateKey(uint aPrivateKey, uint[2] bPublicKey) constant returns (uint _privateKey, uint[2] _publicKey) {
@@ -930,4 +731,236 @@ contract LocalCrypto {
 	  _publicKey[0] = temp2[0];
 	  _publicKey[1] = temp2[1];
   }
+
+  /*
+   * uint[5] res1D : 
+   * 0 => x
+   * 1 => w
+   * 2 => vote
+   * 3 => totalAnswers
+   * 4 => totalVoters
+   * 
+   * uint[2][2] res2D : 
+   * 0 => xG
+   * 1 => yG
+   * 
+   * uint[2][] diAndRiList;
+   * 0 => diList
+   * 1 => riList
+   */
+  function generateZKP(uint[5] res1D, uint[2][2] res2D, uint[2][] diAndriList) returns(uint[3] _y, uint[2][10] _aList,  uint[2][10] _bList, uint[2][10] _dAndrList) {
+		
+	if(diAndriList.length!=res1D[3]-1) {
+		//_successful = false;
+		//_message = "The length of diList or riList isn't equal of totalAnswers-1";
+		//return;
+	}
+	
+	uint[8] memory tempUint;
+	// 0 => m
+	// 1 => di
+	// 2 => ri
+	// 3 => sumDi
+	// 4 => voteEqualI
+	// 7 => c
+		
+  	//Calcul de m
+	tempUint[0]=1;
+  	while (2**tempUint[0]<=res1D[4]) {
+  		tempUint[0]+=1;
+  	}
+  	
+  	
+  	uint[3] memory temp1;
+  	uint[3] memory temp2;
+  	uint[2] memory temp_affine;
+		
+	//Calcul du vote
+	//y = yG+Gi
+  	temp1 = Secp256k1_noconflict._mul(2**(tempUint[0]*res1D[2]),G);
+  	temp2 = Secp256k1_noconflict._mul(res1D[0],res2D[1]);
+  	_y = Secp256k1_noconflict._add(temp1, temp2);
+  	ECCMath_noconflict.toZ1(_y, pp);
+
+  	
+  	tempUint[4]=0;
+	//Calcul des ai
+  	//On boucle de 1 à totalAnswers
+	for(uint i=1;i<=res1D[3];i++) {
+		
+		//Si i!=vote
+		if(i!=res1D[2]) {
+			
+			//tempUint[2] = diAndriList[1][i-1-tempUint[4]];
+			//tempUint[1] = diAndriList[0][i-1-tempUint[4]];
+			tempUint[2] = diAndriList[i-1-tempUint[4]][1];
+			tempUint[1] = diAndriList[i-1-tempUint[4]][0];
+
+			//ai = riG + dixG
+			temp1 = Secp256k1_noconflict._mul(tempUint[2],G);
+			temp2 = Secp256k1_noconflict._mul(tempUint[1],res2D[0]);
+			temp1 = Secp256k1_noconflict._add(temp1, temp2);
+			ECCMath_noconflict.toZ1(temp1, pp);
+			_aList[i-1] = [temp1[0], temp1[1]];
+			
+			
+			//b1 = r1yG*(y/Gi)^d1
+			temp1 = Secp256k1_noconflict._mul(tempUint[2], res2D[1]);
+			//Negation of Gi
+			temp2 = Secp256k1_noconflict._mul(2**(tempUint[0]*i),G);
+			ECCMath_noconflict.toZ1(temp2, pp);
+			temp2[0] = temp2[0];
+			temp2[1] = pp-temp2[1];
+			temp2[2] = 1;
+			//temp2 = y/Gi
+			temp2 = Secp256k1_noconflict._add(_y,temp2);
+			ECCMath_noconflict.toZ1(temp2, pp);
+			temp_affine[0] = temp2[0];
+			temp_affine[1] = temp2[1];
+			//temp2=(y/gi)^di
+			temp2 = Secp256k1_noconflict._mul(tempUint[1],temp_affine);
+			//temp2 = riyG + (y/Gi)^di
+			temp2 = Secp256k1_noconflict._add(temp1, temp2);
+			ECCMath_noconflict.toZ1(temp2, pp);
+			_bList[i-1] = [temp2[0], temp2[1]];
+			
+			
+	    	
+		} else {
+			
+			tempUint[4]=1;
+				
+			//ai = wG
+			temp1 = Secp256k1_noconflict._mul(res1D[1],G);
+			ECCMath_noconflict.toZ1(temp1, pp);
+			_aList[i-1] = [temp1[0], temp1[1]];
+
+			//bi = wyG
+			temp2 = Secp256k1_noconflict._mul(res1D[1],res2D[1]);
+			ECCMath_noconflict.toZ1(temp2, pp);
+			_bList[i-1] = [temp2[0], temp2[1]];
+
+		}
+	}
+
+	// c = H(y,a1,b1,a2,b2)	
+	tempUint[7] = uint(sha256(msg.sender, res2D, _aList, _bList));
+	//tempUint[7] = uint(sha256(msg.sender, res2D[0], res2D[1], _aList[0], _bList[0], _aList[1], _bList[1], _aList[2], _bList[2], _aList[3], _bList[3], _aList[4], _bList[4], _aList[5], _bList[5], _aList[6], _bList[6], _aList[7], _bList[7], _aList[8], _bList[8], _aList[9], _bList[9]));
+
+	tempUint[3] = 0;
+	for(i=0;i<diAndriList.length;i++) {
+		tempUint[3]= addmod(tempUint[3], diAndriList[i][0], nn);
+	}
+	
+	
+	tempUint[4]=0;
+	for(i=1;i<=res1D[3];i++) {
+		if(i==res1D[2]) {
+			tempUint[4]=1;
+			//dVote = c - summDi
+			tempUint[5] = submod(tempUint[7], tempUint[3]);
+			//rVote = w-x*dVote
+			tempUint[6] = submod(res1D[1], mulmod(res1D[0],tempUint[5],nn));
+			_dAndrList[i-1] = [tempUint[5],tempUint[6]];
+		} else {
+			tempUint[5] = diAndriList[i-1-tempUint[4]][0];
+			tempUint[6] = diAndriList[i-1-tempUint[4]][1];
+			_dAndrList[i-1] = [tempUint[5], tempUint[6]];
+		}
+	}
+	
+	return;
+  }
+  
+  
+  /*
+   * uint[2] res1D : 
+   * 0 => totalAnswers
+   * 1 => totalVoters
+   * 
+   * uint[2][2] res2D : 
+   * 0 => xG
+   * 1 => yG
+   * 2 => y
+   * 
+   * uint[2][] diAndRiList;
+   * 0 => diList
+   * 1 => riList
+   */
+	function verifyZKPVote(uint[2] res1D, uint[3] y, uint[2][2] res2D, uint[2][] diAndriList, uint[2][10] aList,  uint[2][10] bList) returns (bool _successful, string _message) {
+		
+	  	//Calcul de m
+		uint m=1;
+	  	while (2**m<=totalVoters) {
+	  		m+=1;
+	  	}
+	  	
+	  	uint[3] memory temp1;
+	  	uint[3] memory temp2;
+	  	uint[2] memory temp_affine;
+	  	
+		uint sumDi = 0;
+    	for(uint i=0;i<totalAnswers;i++) {
+    		//Calcul de 1/Gi
+    		uint[3] memory negateGi = Secp256k1_noconflict._mul(2**(m*(i+1)),G);
+    		ECCMath_noconflict.toZ1(negateGi, pp);
+    		negateGi[0] = negateGi[0];
+    		negateGi[1] = pp-negateGi[1];
+    		negateGi[2] = 1;
+    		
+    		sumDi=addmod(sumDi, diAndriList[i][0],nn);
+        	
+            //ai = riGdixG
+    		//Calcul riG
+			temp1 = Secp256k1_noconflict._mul(diAndriList[i][1],G);
+			//Calcul dixG
+			temp2 = Secp256k1_noconflict._mul(diAndriList[i][0],res2D[0]);
+			temp1 = Secp256k1_noconflict._add(temp1, temp2);
+			ECCMath_noconflict.toZ1(temp1, pp);
+            
+            if(temp1[0]!=aList[i][0] || temp1[1]!=aList[i][1]) {
+            	_successful = false;
+            	_message = "The verification of the zkp failed : ai failed";
+            	//_debug[0] = [temp1[0], temp1[1]];
+            	//_debug[1] = [aList[i][0], aList[i][1]];
+            	return;
+            }
+            
+			//bi = riyG*(y/Gi)^di
+            //temp1=riyG
+			temp1 = Secp256k1_noconflict._mul(diAndriList[i][1], res2D[1]);
+			//temp2 = y/Gi
+			temp2 = Secp256k1_noconflict._add(y,negateGi);
+			ECCMath_noconflict.toZ1(temp2, pp);
+			temp_affine[0] = temp2[0];
+			temp_affine[1] = temp2[1];
+			//temp2=(y/gi)^di
+			temp2 = Secp256k1_noconflict._mul(diAndriList[i][0],temp_affine);
+			//temp2 = riyG + (y/Gi)^di
+			temp2 = Secp256k1_noconflict._add(temp1, temp2);
+			ECCMath_noconflict.toZ1(temp2, pp);
+            
+            if(temp2[0]!=bList[i][0] || temp2[1]!=bList[i][1]) {
+            	_successful = false;
+            	//_debug[0] = [temp2[0], temp2[1]];
+            	//_debug[1] = [bList[i][0], bList[i][1]];
+            	_message = "The verification of the zkp failed : bi failed";
+            	return;
+            }
+    	} 
+        
+    	// c = H(y,a1,b1,a2,b2)	
+        //uint c = uint(sha256(msg.sender, res2D[0], res2D[1], aList[0], bList[0], aList[1], bList[1], aList[2], bList[2], aList[3], bList[3], aList[4], bList[4], aList[5], bList[5], aList[6], bList[6], aList[7], bList[7], aList[8], bList[8], aList[9], bList[9]));
+    	uint c = uint(sha256(msg.sender, res2D, aList, bList));
+    	
+        if(c!=sumDi) {
+        	_successful = false;
+        	_message = "The verification of the zkp failed : c failed";
+        	return;
+        }
+		
+    	_successful = true;
+    	_message = "The verification of the zkp is a success";
+    	return;
+	}
 }

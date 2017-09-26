@@ -1,73 +1,27 @@
-//Loging
- var winston = require('winston');
- winston.configure({
-	    transports: [
-	      new (winston.transports.File)({ 
-	    	  filename: 'log.log',
-	    	    handleExceptions: true,
-	    	    humanReadableUnhandledException: true
-	    	    })
-    ]
-  });
- winston.level = 'debug';
- winston.info("Hello");
- 
- 
-//create a function which returns true or false to recognize a development environment
- const isProd = () => process.env.NODE_ENV === 'production';
- console.log(isProd());
- console.log(process.env);
- //use that function to either use the development path OR the production prefix to your file location
- const directory = isProd() ? 'resources/app' : './';
- console.log(directory);
- 
  //This requires an environment variable, which we will get to in a moment.
  //require files joining that directory variable with the location within your package of files
  const databasePath = require('path').join(directory, '/db/adminKey.db');
+ const mailDataPath = require('path').join(directory, '/data/mail.csv');
  const javaPath = require('path').join(directory, '/java/');
  console.log(databasePath);
- 
-var web3;
+
+//Ouverture de la base de données
+var Datastore = require('nedb')
+var db = new Datastore({filename: databasePath, autoload: true, onload: function(error) {
+	console.log(error);
+}});
+
+var paramUrl = location.search.substring(1);
+var addrProvider = paramUrl.split('=')[1];
+
+document.getElementById('pageVotant').href="vote.html?addr=" + addrProvider;
+document.getElementById('pageAdmin').href="admin.html?addr=" + addrProvider;
+
 var password = "";
 var addressChosen = false;
 var addr = 0;
 var state = 0;
 var accountindex = 0;
-
-var $ = require('jQuery')
-var Web3 = require('web3');
-var BigNumber = require('bignumber.js');
-
-var paramUrl = location.search.substring(1);
-var addr = paramUrl.split('=')[1];
-document.getElementById('pageAdmin').href="admin.html?addr=" + addr;
-document.getElementById('pageVotant').href="vote.html?addr=" + addr;
-
-if (typeof web3 !== 'undefined') {
-  web3 = new Web3(web3.currentProvider);
-} else {
-  // set the provider you want from Web3.providers
-  web3 = new Web3(new Web3.providers.HttpProvider("http://" + addr));
-}
-
-// Anonymous Voting Contract
-var abi = [ { "constant": false, "inputs": [ { "name": "addr", "type": "address" } ], "name": "sendOneEtherToVoter", "outputs": [ { "name": "_successful", "type": "bool" }, { "name": "_error", "type": "string" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [], "name": "computeTally", "outputs": [], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "address" } ], "name": "hasReceivedOneEther", "outputs": [ { "name": "", "type": "bool", "value": false } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "address" } ], "name": "addressid", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "_address", "type": "address" } ], "name": "getPeopleToRegister", "outputs": [ { "name": "_registrationAsked", "type": "bool", "value": false }, { "name": "_personalPublicKey", "type": "uint256[2]", "value": [ "0", "0" ] } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "totalRegistrationAsked", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "xG", "type": "uint256[2]" }, { "name": "yiG", "type": "uint256[2]" }, { "name": "yixG", "type": "uint256[2]" }, { "name": "r", "type": "uint256" }, { "name": "vG", "type": "uint256[3]" }, { "name": "yivG", "type": "uint256[3]" } ], "name": "verifyZKPNullVote", "outputs": [ { "name": "", "type": "bool", "value": false } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "endSignupPhase", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "question", "outputs": [ { "name": "", "type": "string", "value": "No question set" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "address" } ], "name": "peopleToRegisterMap", "outputs": [ { "name": "addr", "type": "address", "value": "0x0000000000000000000000000000000000000000" }, { "name": "registrationAsked", "type": "bool", "value": false } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "finishSignupPhase", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "personalPublicKey", "type": "uint256[2]" } ], "name": "askForRegistration", "outputs": [ { "name": "_successful", "type": "bool" }, { "name": "_error", "type": "string" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "addressToDoNullVote", "type": "address" }, { "name": "nullVote", "type": "uint256[2]" }, { "name": "vG", "type": "uint256[3]" }, { "name": "yvG", "type": "uint256[3]" }, { "name": "r", "type": "uint256" } ], "name": "submitNullVote", "outputs": [ { "name": "_successful", "type": "bool" }, { "name": "_error", "type": "string" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [], "name": "finishRegistrationPhase", "outputs": [ { "name": "", "type": "bool" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "params", "type": "uint256[4]" }, { "name": "y", "type": "uint256[2]" }, { "name": "a1", "type": "uint256[2]" }, { "name": "b1", "type": "uint256[2]" }, { "name": "a2", "type": "uint256[2]" }, { "name": "b2", "type": "uint256[2]" } ], "name": "submitVote", "outputs": [ { "name": "", "type": "bool" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "gap", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [], "name": "deadlinePassed", "outputs": [ { "name": "", "type": "bool" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "totalvoted", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "params", "type": "uint256[4]" }, { "name": "y", "type": "uint256[2]" }, { "name": "a1", "type": "uint256[2]" }, { "name": "b1", "type": "uint256[2]" }, { "name": "a2", "type": "uint256[2]" }, { "name": "b2", "type": "uint256[2]" } ], "name": "verify1outof2ZKP", "outputs": [ { "name": "", "type": "bool" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "_address", "type": "address" } ], "name": "hasAskedForRegistration", "outputs": [ { "name": "", "type": "bool", "value": false } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [], "name": "addEther", "outputs": [], "payable": true, "type": "function" }, { "constant": true, "inputs": [], "name": "owner", "outputs": [ { "name": "", "type": "address", "value": "0x7a4e839863f5862352efd06ab89af8ec72a9e7a5" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "accountToRegister", "type": "address" }, { "name": "adminPublicKey", "type": "uint256[2]" }, { "name": "xG", "type": "uint256[2]" }, { "name": "vG", "type": "uint256[3]" }, { "name": "r", "type": "uint256" } ], "name": "registerAccount", "outputs": [ { "name": "_successful", "type": "bool" }, { "name": "_error", "type": "string" } ], "payable": true, "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "uint256" } ], "name": "voterMapBis", "outputs": [ { "name": "addr", "type": "address", "value": "0x0000000000000000000000000000000000000000" }, { "name": "registered", "type": "bool", "value": false }, { "name": "voteCast", "type": "bool", "value": false } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "uint256" } ], "name": "addressesToRegister", "outputs": [ { "name": "", "type": "address", "value": "0x" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "endVotingPhase", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "_address", "type": "address" } ], "name": "hasCastVote", "outputs": [ { "name": "", "type": "bool", "value": false } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "_address", "type": "address" } ], "name": "getVoterBis", "outputs": [ { "name": "_registered", "type": "bool", "value": false }, { "name": "_voteCast", "type": "bool", "value": false }, { "name": "_personalPublicKey", "type": "uint256[2]", "value": [ "0", "0" ] }, { "name": "_adminPublicKey", "type": "uint256[2]", "value": [ "0", "0" ] }, { "name": "_registeredkey", "type": "uint256[2]", "value": [ "0", "0" ] }, { "name": "_reconstructedkey", "type": "uint256[2]", "value": [ "0", "0" ] }, { "name": "_vote", "type": "uint256[2]", "value": [ "0", "0" ] } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "state", "outputs": [ { "name": "", "type": "uint8", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "_address", "type": "address" } ], "name": "isRegistered", "outputs": [ { "name": "", "type": "bool", "value": false } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "uint256" } ], "name": "finaltally", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [], "name": "totalregistered", "outputs": [ { "name": "", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "_question", "type": "string" }, { "name": "_finishSignupPhase", "type": "uint256" }, { "name": "_endSignupPhase", "type": "uint256" }, { "name": "_endVotingPhase", "type": "uint256" } ], "name": "beginSignUp", "outputs": [ { "name": "", "type": "bool" } ], "payable": true, "type": "function" }, { "constant": false, "inputs": [], "name": "forceCancelElection", "outputs": [], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "uint256" } ], "name": "addresses", "outputs": [ { "name": "", "type": "address", "value": "0x" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "newOwner", "type": "address" } ], "name": "transferOwnership", "outputs": [], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "xG", "type": "uint256[2]" }, { "name": "r", "type": "uint256" }, { "name": "vG", "type": "uint256[3]" } ], "name": "verifyZKP", "outputs": [ { "name": "", "type": "bool" } ], "payable": false, "type": "function" }, { "inputs": [ { "name": "_gap", "type": "uint256", "index": 0, "typeShort": "uint", "bits": "256", "displayName": "&thinsp;<span class=\"punctuation\">_</span>&thinsp;gap", "template": "elements_input_uint", "value": "0" } ], "payable": true, "type": "constructor" }, { "anonymous": false, "inputs": [ { "indexed": true, "name": "_from", "type": "address" }, { "indexed": false, "name": "_isVoteCast", "type": "bool" }, { "indexed": false, "name": "_error", "type": "string" } ], "name": "IsVoteCastEvent", "type": "event" } ];
-var anonymousvoting = web3.eth.contract(abi);
-var anonymousvotingAddr = anonymousvoting.at("0xe0ABCBc0d2Ad1a201f2DAD3A8c179326845CF0D8");
-
-// Local Crypto Contract
-var abi_crypto = [ { "constant": false, "inputs": [ { "name": "xG", "type": "uint256[2]" }, { "name": "yG", "type": "uint256[2]" }, { "name": "w", "type": "uint256" }, { "name": "r2", "type": "uint256" }, { "name": "d2", "type": "uint256" }, { "name": "x", "type": "uint256" } ], "name": "create1outof2ZKPNoVote", "outputs": [ { "name": "res", "type": "uint256[10]" }, { "name": "res2", "type": "uint256[4]" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "xG", "type": "uint256[2]" }, { "name": "yG", "type": "uint256[2]" }, { "name": "nullVote", "type": "uint256[2]" }, { "name": "r", "type": "uint256" }, { "name": "vG", "type": "uint256[3]" }, { "name": "yvG", "type": "uint256[3]" } ], "name": "verifyZKPNullVote", "outputs": [ { "name": "_successful", "type": "bool", "value": false }, { "name": "_error", "type": "string", "value": "xG or vG or yiG or yivG isnt a PubKey" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "a", "type": "uint256" }, { "name": "b", "type": "uint256" } ], "name": "submod", "outputs": [ { "name": "", "type": "uint256" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "x", "type": "uint256" }, { "name": "v", "type": "uint256" }, { "name": "xG", "type": "uint256[2]" } ], "name": "createZKP", "outputs": [ { "name": "res", "type": "uint256[4]", "value": [ "0", "0", "0", "0" ] } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "x", "type": "uint256" }, { "name": "v", "type": "uint256" }, { "name": "yiG", "type": "uint256[2]" } ], "name": "createZKPNullVote", "outputs": [ { "name": "res", "type": "uint256[7]", "value": [ "0", "0", "0", "0", "0", "0", "0" ] } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "yG", "type": "uint256[2]" }, { "name": "x", "type": "uint256" } ], "name": "createNullVote", "outputs": [ { "name": "res", "type": "uint256[2]", "value": [ "0", "0" ] } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "x", "type": "uint256" }, { "name": "_yG", "type": "uint256[2]" }, { "name": "_voteCrypted", "type": "uint256[2]" } ], "name": "checkVote", "outputs": [ { "name": "temp1_bis", "type": "uint256[3]", "value": [ "0", "0", "0" ] }, { "name": "temp2_bis", "type": "uint256[3]", "value": [ "0", "0", "0" ] }, { "name": "temp4", "type": "uint256", "value": "0" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "params", "type": "uint256[4]" }, { "name": "xG", "type": "uint256[2]" }, { "name": "yG", "type": "uint256[2]" }, { "name": "y", "type": "uint256[2]" }, { "name": "a1", "type": "uint256[2]" }, { "name": "b1", "type": "uint256[2]" }, { "name": "a2", "type": "uint256[2]" }, { "name": "b2", "type": "uint256[2]" } ], "name": "verify1outof2ZKP", "outputs": [ { "name": "", "type": "bool" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "xG", "type": "uint256[2]" }, { "name": "yG", "type": "uint256[2]" }, { "name": "w", "type": "uint256" }, { "name": "r1", "type": "uint256" }, { "name": "d1", "type": "uint256" }, { "name": "x", "type": "uint256" } ], "name": "create1outof2ZKPYesVote", "outputs": [ { "name": "res", "type": "uint256[10]" }, { "name": "res2", "type": "uint256[4]" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "aPrivateKey", "type": "uint256" }, { "name": "bPublicKey", "type": "uint256[2]" } ], "name": "buildVotingPrivateKey", "outputs": [ { "name": "_privateKey", "type": "uint256", "value": "0" }, { "name": "_publicKey", "type": "uint256[2]", "value": [ "0", "0" ] } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "xG", "type": "uint256[2]" }, { "name": "r", "type": "uint256" }, { "name": "vG", "type": "uint256[3]" } ], "name": "verifyZKP", "outputs": [ { "name": "_successful", "type": "bool", "value": false }, { "name": "_error", "type": "string", "value": "xG or vG isnt a PubKey" } ], "payable": false, "type": "function" }, { "inputs": [], "payable": false, "type": "constructor" }, { "anonymous": false, "inputs": [ { "indexed": false, "name": "x1", "type": "uint256" }, { "indexed": false, "name": "x2", "type": "uint256" } ], "name": "Debug", "type": "event" } ];
-var crypto_contract = web3.eth.contract(abi_crypto);
-var cryptoAddr = crypto_contract.at("0x602d7f2A74fD41b4b8D136Bdb3CcA53Bfd8Ee281");
-
-//Ouverture de la base de données
-var Datastore = require('nedb')
-var db = new Datastore({filename: databasePath, autoload: true});
-
-//Create and initialize EC context 
-//(better do it once and reuse it) 
-var EC = require('elliptic').ec;
-var ec = new EC('secp256k1');
 
 // Controls which times and dates are displayed by default
 // We need to ensure there is a 'minimum' gap between default times too.
@@ -218,14 +172,27 @@ function beginRegistration() {
   var endsignup = Math.floor(endsignup_val.getTime()/1000); // Ethereum works in seconds, not milliseconds.
   var endvote = Math.floor(endvote_val.getTime()/1000); // Ethereum works in seconds, not milliseconds.
   var question = document.getElementById('questioninput').value;
-
-  if(anonymousvotingAddr.beginSignUp.call(question, finishby, endsignup, endvote, {from:web3.eth.accounts[accountindex], value: 0 })) {
+  
+  var answersList = new Array();
+  answersList.push(web3.toHex("Null vote"));
+  var totalAnswer = document.getElementById('totalAnswerInput').value;
+  
+  for(var i=1;i<=totalAnswer;i++) {
+	  var answer = document.getElementById('answer' + i).value;
+	  
+	  answersList.push(web3.toHex(answer))
+  }
+  
+  console.log(answersList);
+  
+  if(anonymousvotingAddr.beginSignUp.call(question, answersList, finishby, endsignup, endvote, {from:web3.eth.accounts[accountindex], value: 0 })) {
 	  web3.personal.unlockAccount(addr, password);
-	  var res = anonymousvotingAddr.beginSignUp.sendTransaction(question, finishby, endsignup, endvote, {from:web3.eth.accounts[accountindex], gas: 4200000, value: 0 });
+	  var res = anonymousvotingAddr.beginSignUp.sendTransaction(question, answersList, finishby, endsignup, endvote, {from:web3.eth.accounts[accountindex], gas: 4200000, value: 0 });
      destorypickers();
      
      //Delete the database
      db.remove({}, { multi: true }, function (err, numRemoved) {
+    	 generateEachInscriptionKey();
      });
      
      document.getElementById("beginRegistrationbutton").innerHTML  = "Waiting for Ethereum to confirm that Registration has started";
@@ -241,6 +208,9 @@ function destorypickers() {
     $('#datetimepickerendsignup').datetimepicker('destroy');
     $('#datetimepickerendvote').datetimepicker('destroy');
 }
+
+var computationReconstructedKeyEvent = anonymousvotingAddr.ComputationReconstructedKeyEvent();
+
 // Allow the Election Authority to finish the registration phase...
 function finishRegistration() {
   if(!addressChosen) {
@@ -272,11 +242,50 @@ function finishRegistration() {
   
   try {
 	  web3.personal.unlockAccount(addr,password);
-	
-	  var res = anonymousvotingAddr.finishRegistrationPhase.sendTransaction({from:web3.eth.accounts[accountindex], gas: 4200000});
-	  document.getElementById("finishRegistration").innerHTML  = "Waiting for Ethereum to confirm that Registration has finished";
-	
-	  txlist("Finish Registration Phase: " + res);
+	  
+	  computationReconstructedKeyEvent.watch(function(error, result) {
+			if(error) {
+				console.log(error);
+				return;
+			} else {
+				console.log(result);
+			}
+			var success = result.args._successful;
+			if (success) {
+				var totalRecalculatedKey = anonymousvotingAddr.totalRecalculatedKey();
+				var totalRegistered = anonymousvotingAddr.totalregistered();
+				console.log(totalRegistered);
+				console.log(totalRecalculatedKey);
+				
+				if(totalRecalculatedKey.equals(totalRegistered)) {
+					computationReconstructedKeyEvent.stopWatching();
+				} else {
+					var res = anonymousvotingAddr.computeReconstructedKey.call(totalRecalculatedKey.add(1));
+					document.getElementById("finishRegistration").innerHTML  = "<p>Waiting for Ethereum to confirm that Registration has finished</p><p>" + totalRecalculatedKey + "/" + totalRegistered + " computations done.";
+					if(res[0]) {
+						anonymousvotingAddr.computeReconstructedKey.sendTransaction(totalRecalculatedKey.add(1), {from:web3.eth.accounts[accountindex], gas: 4200000});
+					} else {
+						console.log(res[1]),
+						alert(res[1]);
+					}		
+				}
+			} else {
+				var message = result.args._message;
+				console.log(message);
+				alert(message);
+			}
+		});
+		var res = anonymousvotingAddr.computeReconstructedKey.call(1);
+		if(res[0]) {
+			var totalRegistered = anonymousvotingAddr.totalregistered();
+			var tx = anonymousvotingAddr.computeReconstructedKey.sendTransaction(1, {from:web3.eth.accounts[accountindex], gas: 4200000});
+			document.getElementById("finishRegistration").innerHTML  = "<p>Waiting for Ethereum to confirm that Registration has finished</p><p>0/" + totalRegistered + " computations done.";
+			txlist("Finish Registration Phase: " + tx);
+		} else {
+			console.log(res[1]),
+			alert(res[1]);
+		}	
+	  
   } catch(e) {
 	  console.log(e);
 	  alert(e);
@@ -316,6 +325,7 @@ function tally() {
     	  }
     	  
     	  var nullVoteSent = 0;
+    	  var totalVoteToCast =  addressToDoNullVoteList.length;
 			isVoteCastEvent.watch(function(error, result) {
 				if(error) {
 					console.log(error);
@@ -327,45 +337,75 @@ function tally() {
 				if(success) {
 					nullVoteSent+=1;
 					console.log(nullVoteSent);
-					document.getElementById('tallybutton').innerHTML = "Please wait ...<br>Sending to Ethereum null votes: "+ nullVoteSent + "/" + addressToDoNullVoteList.length;
-					if(nullVoteSent==addressToDoNullVoteList.length) {
+					document.getElementById('tallybutton').innerHTML = "Please wait ...<br>Sending to Ethereum null votes: "+ nullVoteSent + "/" + totalVoteToCast;
+					if(addressToDoNullVoteList.length==0) {
 						isVoteCastEvent.stopWatching();
-						setTimeout(function() {
-							var res = anonymousvotingAddr.computeTally.sendTransaction({from:web3.eth.accounts[accountindex], gas: 4200000});
+						var res = anonymousvotingAddr.computeTally.call({from:web3.eth.accounts[accountindex], gas: 4000000});
+						console.log(res);
+						if(res[0]) {
+							res = anonymousvotingAddr.computeTally.sendTransaction({from:web3.eth.accounts[accountindex], gas: 9000000}, function(error, value) {
+								if(error) {
+									alert("Error : please consider a manual tallying");
+									console.error(error);
+								} else {
+									console.log(value);
+								}
+							});
 							document.getElementById("tallybutton").innerHTML  = "Waiting for Ethereum to confirm tally";
 							txlist("Compute Tally: " + res);
-						}, 5000);
+							setTimeout(function() {
+								var state = anonymousvotingAddr.state();
+								if(state!=3) {
+									alert("Ethereum has not confirm the tally : please consider a manual tallying");
+									document.getElementById("tallybutton").innerHTML  = "Ethereum has not confirm the tally : please consider a manual tallying";
+								}
+							}, 60000);
+						} else {
+							alert(res[1]);
+						}
+					} else {
+						  var addressToDoNullVote = addressToDoNullVoteList.pop();
+					      db.find({account: addressToDoNullVote}, function(err, docs) {
+					      	if(err) {
+					      		alert("Error : " + err);
+					      	}
+					      	if (!docs.length) {
+					      		alert("Error : no account with this address " + addressToDoNullVote + " found in the database!");
+					      	} else if (docs.length>1) {
+					      		alert("Error : two or more accounts with this address " + addressToDoNullVote + " found in the database!");
+					      	} else {
+					      		//delayProcessNullVoting(5000, docs[0].privateVotingKey, docs[0].account)
+					      		processNullVoting(docs[0].privateVotingKey, docs[0].account); 
+					      	}
+					      });
 					}
 				} else {
 					console.log(result.args._error);
 				}
 			});
-			
-			
-    	  for(var i=0;i<addressToDoNullVoteList.length;i++) {
-    		  var addressToDoNullVote = addressToDoNullVoteList[i];
-    		  document.getElementById('tallybutton').innerHTML = "Please wait ...<br>Sending to Ethereum null votes: "+ nullVoteSent + "/" + addressToDoNullVoteList.length;
-    	      db.find({account: addressToDoNullVote}, function(err, docs) {
-    	      	if(err) {
-    	      		alert("Error : " + err);
-    	      	}
-    	      	if (!docs.length) {
-    	      		alert("Error : no account with this address " + addressToDoNullVote + " found in the database!");
-    	      	} else if (docs.length>1) {
-    	      		alert("Error : two or more accounts with this address " + addressToDoNullVote + " found in the database!");
-    	      	} else {
-    	      		delayProcessNullVoting(5000, docs[0].privateVotingKey, docs[0].account)
-    	      		//processNullVoting(docs[0].privateVotingKey, docs[0].account); 
-    	      	}
-    	      });
-    	  }
+
+		  var addressToDoNullVote = addressToDoNullVoteList.pop();
+		  document.getElementById('tallybutton').innerHTML = "Please wait ...<br>Sending to Ethereum null votes: "+ nullVoteSent + "/" + totalVoteToCast;
+	      db.find({account: addressToDoNullVote}, function(err, docs) {
+	      	if(err) {
+	      		alert("Error : " + err);
+	      	}
+	      	if (!docs.length) {
+	      		alert("Error : no account with this address " + addressToDoNullVote + " found in the database!");
+	      	} else if (docs.length>1) {
+	      		alert("Error : two or more accounts with this address " + addressToDoNullVote + " found in the database!");
+	      	} else {
+	      		//delayProcessNullVoting(5000, docs[0].privateVotingKey, docs[0].account)
+	      		processNullVoting(docs[0].privateVotingKey, docs[0].account); 
+	      	}
+	      });
       }
   } else {
 	  try {
 		  var res = anonymousvotingAddr.computeTally.call({from:web3.eth.accounts[accountindex]});
 		  
 		  if (res) {
-			  anonymousvotingAddr.computeTally.sendTransaction({from:web3.eth.accounts[accountindex], gas: 4200000});
+			  anonymousvotingAddr.computeTally.sendTransaction({from:web3.eth.accounts[accountindex], gas: 9000000});
 			  document.getElementById("tallybutton").innerHTML  = "Waiting for Ethereum to confirm tally";
 			  txlist("Compute Tally: " + res);
 		  }
@@ -518,11 +558,33 @@ function createElectionConfigurationTextBox() {
 	}
 }
 
+function setUpAnswers() {
+    document.getElementById('registrationSetQuestion').setAttribute("hidden", true);
+    document.getElementById('registrationSetAnswers').removeAttribute("hidden");
+    
+    var question = document.getElementById('questioninput').value;
+    document.getElementById('title').innerHTML = question;
+    
+    var totalAnswer = document.getElementById('totalAnswerInput').value;
+    var innerHtlm = "";
+    for(var i=1;i<=totalAnswer;i++) {
+    	innerHtlm+= "<p> Answer " + i + " : <input type='text' id='answer" + i + "' value='Answer " + i + "'/> </p>";
+    }
+    document.getElementById('answersList').innerHTML = innerHtlm;
+    
+}
+
+function returnSetQuestion() {
+	document.getElementById('title').innerHTML = "Election Configuration";
+	document.getElementById('registrationSetQuestion').removeAttribute("hidden");
+	document.getElementById('registrationSetAnswers').setAttribute("hidden", true);
+}
+
 function setUpTimeTable() {
 	setInitialTimes();
     document.getElementById('title').innerHTML = "The Election Time Table";
     document.getElementById('section_desc').innerHTML = "";
-    document.getElementById('registrationSetQuestion').setAttribute("hidden", true);
+    document.getElementById('registrationSetAnswers').setAttribute("hidden", true);
     document.getElementById('listoftimers').removeAttribute("hidden");
 }
 
@@ -602,66 +664,73 @@ function registerNewVoterFromList() {
  */
 function registerNewVoter(address) {
 	if (isAddress(address)) {
-		//Generate keys of the administrator for the voter
-		var key = ec.genKeyPair();
-		var adminPrivateKeyStr = key.getPrivate().toString();
-		
-		var adminPublicKey_xStr = key.getPublic().x.toString();
-		var adminPublicKey_yStr = key.getPublic().y.toString();
-		var adminPublicKey =  [new BigNumber(adminPublicKey_xStr), new BigNumber(adminPublicKey_yStr)];
-		
 		//Get the personalPublicKey of the voter
 		var voter = anonymousvotingAddr.getPeopleToRegister(address);
+		var inscriptionCode = web3.toUtf8(voter[2]);
 		
-		var personalPublicKey = [voter[1][0], voter[1][1]];
-		var res = cryptoAddr.buildVotingPrivateKey.call(new BigNumber(adminPrivateKeyStr), personalPublicKey);
-        console.log(res);
+        db.findOne({_id: inscriptionCode}, function(err, doc) {
+        	console.log(doc);
+        	if(doc==null) {
+        		alert("The inscription code of this voter isn't valid");
+        	} else {
+        		var name = doc.name;
+        		var lastName = doc.lastName;
+        		if(confirm("You are going to register the voter " + name + " " + lastName + "...")) {
+        			//Generate keys of the administrator for the voter
+        			var key = ec.genKeyPair();
+        			var adminPrivateKeyStr = key.getPrivate().toString();
+        			
+        			var adminPublicKey_xStr = key.getPublic().x.toString();
+        			var adminPublicKey_yStr = key.getPublic().y.toString();
+        			var adminPublicKey =  [new BigNumber(adminPublicKey_xStr), new BigNumber(adminPublicKey_yStr)];
+        			
 
-        var x = res[0];
-        var xG = [res[1][0], res[1][1]];
-		
-		var v = new BigNumber(ec.genKeyPair().getPrivate().toString());
-		// We prove knowledge of the voting key
-        var single_zkp = cryptoAddr.createZKP.call(x, v, xG);
-        var vG = [single_zkp[1], single_zkp[2], single_zkp[3]];
+        			
+        			var personalPublicKey = [voter[1][0], voter[1][1]];
+        			var res = cryptoAddr.buildVotingPrivateKey.call(new BigNumber(adminPrivateKeyStr), personalPublicKey);
+        	        console.log(res);
 
-        web3.personal.unlockAccount(addr, password);
+        	        var x = res[0];
+        	        var xG = [res[1][0], res[1][1]];
+        			
+        			var v = new BigNumber(ec.genKeyPair().getPrivate().toString());
+        			// We prove knowledge of the voting key
+        	        var single_zkp = cryptoAddr.createZKP.call(x, v, xG);
+        	        var vG = [single_zkp[1], single_zkp[2], single_zkp[3]];
 
-        // Lets make sure the ZKP is valid!
-        var verifyres = cryptoAddr.verifyZKP.call(xG, single_zkp[0], vG);
+        	        web3.personal.unlockAccount(addr, password);
 
-        if (!verifyres[0]) {
-            alert("Problem with voting codes");
-            return;
-        }
-        
-        var res = anonymousvotingAddr.registerAccount.call(address, adminPublicKey, xG, vG, single_zkp[0], {
-                from: web3.eth.accounts[accountindex]
-            });
+        	        // Lets make sure the ZKP is valid!
+        	        var verifyres = cryptoAddr.verifyZKP.call(xG, single_zkp[0], vG);
 
-        // Submit voting key to the network
-        if (res[0]) {
-        	web3.personal.unlockAccount(addr, password);
-        	
-            anonymousvotingAddr.registerAccount.sendTransaction(address, adminPublicKey, xG, vG, single_zkp[0], {
-                from: web3.eth.accounts[accountindex],
-                gas: 4200000
-            });
-            
-            db.find({account: address}, function(err, docs) {
-            	console.log(docs);
-            	if (!docs.length) {
-            		var accountKey = {account: address, adminPrivateKey: adminPrivateKeyStr, privateVotingKey: x.toString(10)};
-            		db.insert(accountKey);
-            	} else {
-            		db.update({account: address}, {account: address, adminPrivateKey: adminPrivateKeyStr, privateVotingKey: x.toString(10)}, {});
-            	}
-            });
-            
-            alert("The registration has been sent");
-        } else {
-        	alert("Error : " + res[1])
-        }
+        	        if (!verifyres[0]) {
+        	            alert("Problem with voting codes");
+        	            return;
+        	        }
+        	        
+        	        var res = anonymousvotingAddr.registerAccount.call(address, adminPublicKey, xG, vG, single_zkp[0], {
+        	                from: web3.eth.accounts[accountindex]
+        	            });
+
+        	        // Submit voting key to the network
+        	        if (res[0]) {
+        	        	web3.personal.unlockAccount(addr, password);
+        	        	
+        	            anonymousvotingAddr.registerAccount.sendTransaction(address, adminPublicKey, xG, vG, single_zkp[0], {
+        	                from: web3.eth.accounts[accountindex],
+        	                gas: 4200000
+        	            });
+        	            
+        	            db.update({_id: inscriptionCode}, {name: doc.name, lastName: doc.lastName, mail: doc.mail, account: address, adminPrivateKey: adminPrivateKeyStr, privateVotingKey: x.toString(10)}, {});
+        	            
+        	            alert("The registration has been sent");
+        	        } else {
+        	        	alert("Error : " + res[1])
+        	        }
+        		}
+        	}
+        });
+
 	} else {
 		alert("The selected address isn't a valid Ethereum address");
 	}
@@ -696,10 +765,14 @@ function createTally() {
     // alert(res1 + " " + res2);
 
     if((anonymousvotingAddr.totalregistered().eq(anonymousvotingAddr.totalvoted())) && !anonymousvotingAddr.totalregistered().eq(new BigNumber("0"))) {
-      var yes = anonymousvotingAddr.finaltally(0);
-      var total = anonymousvotingAddr.finaltally(1);
-      var no = total - yes;
-      document.getElementById("section_desc").innerHTML = "Yes = " + yes + " and No = " + no + "<hr>";
+      var totalAnswer = anonymousvotingAddr.getTotalAnswers();
+      var innerHtml = "";
+      for (var i=0;i<totalAnswer;i++) {
+    	  var answer = web3.toUtf8(anonymousvotingAddr.answerList(i));
+    	  var tallyAnswer = anonymousvotingAddr.finalTally(i);
+    	  innerHtml+= "<p>" + answer + " : " + tallyAnswer + "<\p>";
+      }
+      document.getElementById("section_desc").innerHTML = innerHtml;
     } else {
       document.getElementById("section_desc").innerHTML = "Voting has been cancelled.";
     }

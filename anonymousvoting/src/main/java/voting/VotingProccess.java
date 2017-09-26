@@ -145,7 +145,7 @@ public class VotingProccess {
     	g.initialize(ecSpec, new SecureRandom());
     	
     	ECCurve curve = ecSpec.getCurve();
-    	ECPoint xG2 = curve.createPoint(new BigInteger("95787470013882240377780579361846477715076442832980715937919592583391890323206"), new BigInteger("60955581105196326129778580802235693220501564381302441236987645503202198387523"));
+    	ECPoint yG = curve.createPoint(new BigInteger("50691235389227174336683915521017056113766552788461351081860921559467389817918"), new BigInteger("77616208651119448442382986254165483222263911805140372537644040310359862731463"));
     	ECPoint votePoint1 = curve.createPoint(new BigInteger("56321406392798902601463525060233516822248532674269807233234267998287529646083"), new BigInteger("16397007917345963904976872491420336079325640164272097739632189698676522567322"));
     	BigInteger Xpri1 = new BigInteger("73684597056470802520640839675442817373247702535850643999083350831860052477001");
     	
@@ -161,19 +161,13 @@ public class VotingProccess {
     	String address2 = "0xa76512bcf54f1994a451c5b295d0f749138d59aa";
     	String address3 = "0xc3c98a47af44aba07cdc4380e76e26a25abc468a";
     	
-    	System.out.println(xG1.isValid());
-    	System.out.println(votePoint1.isValid());
-    	System.out.println(xG2.isValid());
-    	System.out.println(votePoint2.isValid());
-    	ECPoint result = (xG2.negate().subtract(xG3)).normalize();
-    	ECPoint result2 = (xG1.multiply(privateKey)).normalize();
-    	ECPoint result3 = (xG1.subtract(xG3)).normalize();
-    	System.out.println(result.getRawXCoord().toBigInteger());
-    	System.out.println(result.getRawYCoord().toBigInteger());
-    	System.out.println(result2.getRawXCoord().toBigInteger());
-    	System.out.println(result2.getRawYCoord().toBigInteger());
-    	System.out.println(result3.getRawXCoord().toBigInteger());
-    	System.out.println(result3.getRawYCoord().toBigInteger());
+    	ECPoint xyG = yG.multiply(new BigInteger("6667205255059125942400314223350582287065273273365832917293050468602247570838")).normalize();
+    	ECPoint gvi2 = ecSpec.getG().multiply(new BigInteger("1")).normalize();
+    	ECPoint xyGG = xyG.add(gvi2).normalize();
+    	System.out.println("xyG : " + xyG.getRawXCoord().toBigInteger());
+    	System.out.println("xyG : " + xyG.getRawYCoord().toBigInteger());
+    	System.out.println("xyG_x : " + xyGG.getRawXCoord().toBigInteger());
+    	System.out.println("xyG_y : " + xyGG.getRawYCoord().toBigInteger());
     	
     	/*
     	System.out.println(yG1);
@@ -198,15 +192,6 @@ public class VotingProccess {
     	for(int i=0;i<nombre_votants;i++) {
     		key_list.add(g.generateKeyPair());
     	}
-    	
-    	
-    	KeyPair keypair1 = g.generateKeyPair();
-    	KeyPair keypair2 = g.generateKeyPair();
-    	
-    	ECPrivateKey privatekey1 = (ECPrivateKey) keypair1.getPrivate();
-    	ECPrivateKey privatekey2 = (ECPrivateKey) keypair2.getPrivate();
-    	
-    	BigInteger sommePrivateKey = (privatekey1.getD().add(privatekey2.getD()));
     	
     	//Fin du round 1 : on calcule g^yi pour chaque xi
     	List<ECPoint> gyi_list = new ArrayList<ECPoint>();
@@ -316,10 +301,14 @@ public class VotingProccess {
     	}
     	Pgxiyigvi = Pgxiyigvi.normalize();
     	System.out.println("--------------------------------Calcul du résulat crypté du dépouillement terminé !-----------------------------");
+    	System.out.println("Produit_x : " + Pgxiyigvi.getRawXCoord().toBigInteger());
+    	System.out.println("Produit_y : " + Pgxiyigvi.getRawYCoord().toBigInteger());
     	
     	//Faire l'algo Baby-step giant-step
     	System.out.println("2^km= " + (long)Math.pow(2, nombreCandidat*m));
-    	long sommeVi = logBabyStepGiantStepEC(baseG, Pgxiyigvi, (long)Math.pow(2, nombreCandidat*m));
+    	ECPoint produitVote = curve.createPoint(new BigInteger("9082489389433202800261982824095331619410221232933259055016654422493091681032"), new BigInteger("38247003175448550651848273528845382443424900972808116527482940066451175144776"));
+    	nombreCandidat = 7;
+    	long sommeVi = logBabyStepGiantStepEC(baseG, produitVote, (long)Math.pow(2, nombreCandidat*m));
     	System.out.println("sommeViBaby = " + sommeVi);
     	
     	

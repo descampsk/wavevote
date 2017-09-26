@@ -47,9 +47,10 @@
                    <p>You have <span id="balance"></span> ether.</p>
                    <br>
                    <p id="questionRegistration"> Would you like to register for this vote?</p>
+                   <p id="inscriptionCode">Enter your inscription code: <input id="inscriptionCodeInput" type="text"></p>
                    <input id="registerbutton" class="action-button" type="button" value="Ask for registration" onclick="askForRegistration();">
                    <input id="askEtherbutton" class="action-button" type="button" value="Ask for one Ether" onclick="askOneEther();">
-                   <p hidden id = "submitregistration">Waiting for an administrator to confirm your registration.</p>
+                   <p hidden id = "submitregistration">Waiting for Ethereum to accept your demand.</p>
                    <br>
                    <p id="registerby"></p>
                    <br>
@@ -102,7 +103,8 @@
             <h2> Creation of an ethereum account: </h2>
 			<div id="dropdown2">
                 <button onclick="openNewPasswordBox();" class="action-button">Create</button>
-                <button onclick="reloadPage();" class="action-button">Reload the page</button>
+                <a id="pageVotant" href="vote.html" class="action-button">Reload the page</a>
+                <a id="pageAdmin" href="admin.html" class="action-button">Page Admin</a>
             </div>
         </fieldset>
 	</form>
@@ -116,6 +118,7 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster --> 
+    <script src="../js/helper.js"></script> 
     <script src="../js/vote.js"></script> 
     <script>var jQuery = require('jQuery')</script>
     <script src="../js/jquery.min.js"></script>

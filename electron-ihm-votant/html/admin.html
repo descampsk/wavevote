@@ -41,6 +41,12 @@
         </div> 
         <div hidden id="registrationSetQuestion">
           <p>Question:  <input type='text' id='questioninput' value='Dummy Question?'/> </p>
+          <p>Total of answer :  <input type='number' id='totalAnswerInput' value='2'/> </p>
+          <p id="setUpAnswers"><button onclick="setUpAnswers()" class="btn btn-primary">Set up the answers</button></p>
+        </div>
+        <div hidden id="registrationSetAnswers">
+          <div id="answersList"></div>
+          <p id="return"><button onclick="returnSetQuestion()" class="btn btn-primary">Return</button></p>
           <p id="setUpTimeTable"><button onclick="setUpTimeTable()" class="btn btn-primary">Set up the timetable</button></p>
         </div>
         <div hidden id="listoftimers">
@@ -78,6 +84,10 @@
         <div hidden id="votephase">
           <p id="totalvoters"></p>
           <p id="tallybutton"><button onclick="tally()" class="btn btn-primary">Get Tally</button></p>
+          <div id="manualTally">
+            <p>Result of the discret logarithm: <input id="discretlogarithm" type="number"></p>
+          	<button onclick="manualTally()" class="btn btn-success">Manual Tally</button>
+          </div>
           <hr>
         </div>
         <div hidden id="tallydiv">
@@ -108,11 +118,11 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->  
-    <script src="../js/elliptic.js"></script>
+    <script src="../js/helper.js"></script> 
+    <script src="../js/adminEngine.js"></script> 
     <script src="../js/admin.js"></script> 
     <script src="../js/jquery.min.js"></script>
     <script>var jQuery = require('jQuery')</script>
     <script src="../js/jquery.datetimepicker.js"></script>  
-    <script src="../js/bignumber.min.js"></script>
 </body>
 </html>
