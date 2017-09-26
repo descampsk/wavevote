@@ -434,7 +434,7 @@ contract AnonymousVoting is owned {
   mapping (uint => VoterBis) public voterMapBis;
   
   mapping (address => bool) public hasReceivedOneEther;
-
+  mapping (bytes32 => bool) public inscriptionCodeUsed;
   
   address[] public addressesToRegister;
   mapping (address => PeopleToRegister) public peopleToRegisterMap;
@@ -442,6 +442,7 @@ contract AnonymousVoting is owned {
 	  address addr;
 	  bool registrationAsked;
       uint[2] personalPublicKey;
+      bytes32 inscriptionCode;
   }
   
   
@@ -456,9 +457,10 @@ contract AnonymousVoting is owned {
       uint[2] vote;
   }
   
-  function getPeopleToRegister(address _address) constant returns (bool _registrationAsked, uint[2] _personalPublicKey) {
+  function getPeopleToRegister(address _address) constant returns (bool _registrationAsked, uint[2] _personalPublicKey, bytes32 _inscriptionCode) {
 	  _registrationAsked = peopleToRegisterMap[_address].registrationAsked;
 	  _personalPublicKey = peopleToRegisterMap[_address].personalPublicKey;
+	  _inscriptionCode = peopleToRegisterMap[_address].inscriptionCode;
   }
 
   /*
@@ -668,10 +670,13 @@ contract AnonymousVoting is owned {
 
       for(uint i=0; i<addressesToRegister.length; i++) {
       	 address addr = addressesToRegister[i];
+      	 bytes32 inscriptionCode = peopleToRegisterMap[addr].inscriptionCode;
+      	 inscriptionCodeUsed[inscriptionCode] = false;
       	 peopleToRegisterMap[addr] = PeopleToRegister({
       		  addr: 0,
       		  registrationAsked: false,
-      	      personalPublicKey: nullArray
+      	      personalPublicKey: nullArray,
+      	      inscriptionCode: 0
       	  });
         }
       
@@ -719,7 +724,7 @@ contract AnonymousVoting is owned {
       state = State.SETUP;  
   }
   
-  function askForRegistration(uint[2] personalPublicKey) inState(State.SIGNUP) returns (bool _successful, string _error) {
+  function askForRegistration(uint[2] personalPublicKey, bytes32 inscriptionCode) inState(State.SIGNUP) returns (bool _successful, string _error) {
      if(block.timestamp > finishSignupPhase) {
          _successful = false;
          _error = "The signup phase is already over. You can't ask for registration anymore";
@@ -728,11 +733,16 @@ contract AnonymousVoting is owned {
      if (hasAskedForRegistration(msg.sender)) {
          _successful = false;
          _error = "You already asked for a registration. Please wait for the confirmation of an administrator.";
+     } else if(inscriptionCodeUsed[inscriptionCode]) {
+         _successful = false;
+         _error = "This inscription code is already used";
      } else {
     	 addressesToRegister.push(msg.sender);
+    	 inscriptionCodeUsed[inscriptionCode] = true;
     	 peopleToRegisterMap[msg.sender] = PeopleToRegister({addr: msg.sender, 
     		 								registrationAsked: true,  
-    		 								personalPublicKey: personalPublicKey});
+    		 								personalPublicKey: personalPublicKey,
+    		 								inscriptionCode: inscriptionCode});
     	 totalRegistrationAsked +=1;
     	 _successful = true;
      }
@@ -884,123 +894,6 @@ contract AnonymousVoting is owned {
       
       return;
       
-  }
-  
-  // Timer has expired - we want to start computing the reconstructed keys
-  function finishRegistrationPhase() inState(State.SIGNUP) onlyOwner returns(bool) {
-
-
-      // Make sure at least 3 people have signed up...
-      if(totalregistered < 3) {
-        return;
-      }
-
-      // We can only compute the public keys once participants
-      // have been given an opportunity to register their
-      // voting public key.
-      //TODO : enlever le false : DEBUG ONLY
-      if(block.timestamp < finishSignupPhase &&  false) {
-        return;
-      }
-
-      // Election Authority has a deadline to begin election
-      if(block.timestamp > endSignupPhase) {
-        return;
-      }
-
-      uint[2] memory temp;
-      uint[3] memory yG;
-      uint[3] memory beforei;
-      uint[3] memory afteri;
-
-      // Step 1 is to compute the index 2 reconstructed key
-      afteri[0] = voterMapBis[2].registeredkey[0];
-      afteri[1] = voterMapBis[2].registeredkey[1];
-      afteri[2] = 1;
-
-      for(uint i=3; i<=totalregistered; i++) {
-         Secp256k1._addMixedM(afteri, voterMapBis[i].registeredkey);
-      }
-
-      ECCMath.toZ1(afteri,pp);
-      voterMapBis[1].reconstructedkey[0] = afteri[0];
-      voterMapBis[1].reconstructedkey[1] = pp - afteri[1];
-
-      // Step 2 is to add to beforei, and subtract from afteri.
-     for(i=2; i<=totalregistered; i++) {
-
-       if(i==2) {
-         beforei[0] = voterMapBis[1].registeredkey[0];
-         beforei[1] = voterMapBis[1].registeredkey[1];
-         beforei[2] = 1;
-       } else {
-         Secp256k1._addMixedM(beforei, voterMapBis[i-1].registeredkey);
-       }
-
-       // If we have reached the end... just store beforei
-       // Otherwise, we need to compute a key.
-       // Counting from 1 to n...
-       if(i==(totalregistered)) {
-         ECCMath.toZ1(beforei,pp);
-         voterMapBis[i].reconstructedkey[0] = beforei[0];
-         voterMapBis[i].reconstructedkey[1] = beforei[1];
-
-       } else {
-
-          // Subtract 'i' from afteri
-          temp[0] = voterMapBis[i].registeredkey[0];
-          temp[1] = pp - voterMapBis[i].registeredkey[1];
-
-          // Grab negation of afteri (did not seem to work with Jacob co-ordinates)
-          Secp256k1._addMixedM(afteri,temp);
-          ECCMath.toZ1(afteri,pp);
-
-          temp[0] = afteri[0];
-          temp[1] = pp - afteri[1];
-
-          // Now we do beforei - afteri...
-          yG = Secp256k1._addMixed(beforei, temp);
-
-          ECCMath.toZ1(yG,pp);
-
-          voterMapBis[i].reconstructedkey[0] = yG[0];
-          voterMapBis[i].reconstructedkey[1] = yG[1];
-       }
-     }
-     state = State.VOTE;
-  }  
-
-  // Given the 1 out of 2 ZKP - record the users vote!
-  function submitVoteOld(uint[4] params, uint[2] y, uint[2] a1, uint[2] b1, uint[2] a2, uint[2] b2) inState(State.VOTE) returns (bool) {
-
-     // HARD DEADLINE
-     if(block.timestamp > endVotingPhase) {
-       return;
-     }
-
-     
-
-     // Make sure the sender can vote, and hasn't already voted.
-     if(isRegistered(msg.sender) && !hasCastVote(msg.sender)) {
-        
-       // Verify the ZKP for the vote being cast
-       if(verify1outof2ZKP(params, y, a1, b1, a2, b2)) {
-           
-         uint c = addressid[msg.sender];
-           
-    	 voterMapBis[c].vote[0] = y[0];
-    	 voterMapBis[c].vote[1] = y[1];
-
-    	 voterMapBis[c].voteCast = true;
-
-         totalvoted += 1;
-
-         return true;
-       }
-     }
-
-     // Either vote has already been cast, or ZKP verification failed.
-     return false;
   }
   
   function submitVote(uint[2] vote) inState(State.VOTE) returns (bool) {

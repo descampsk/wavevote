@@ -47,24 +47,24 @@ public class ZKPBuilder {
 		ECPoint y = (yG.multiply(x).add(ecSpec.getG())).normalize();
 		map.put("y", y);
 		
-		//a1 = r1G + d1xG
-		ECPoint r1G = ecSpec.getG().multiply(r1);
-		ECPoint d1xG = xG.multiply(d1);
-		ECPoint a1 = r1G.add(d1xG).normalize();
+		//a1 = wG
+		ECPoint a1 = ecSpec.getG().multiply(w).normalize();
 		map.put("a1", a1);
 		
-		//b1 = r1yG*(y*G)^d1
-		ECPoint r1yG = yG.multiply(r1);
-		ECPoint d1yG = (y.add(ecSpec.getG())).multiply(d1);
-		ECPoint b1 = r1yG.add(d1yG).normalize();
+		//b1 = wyG
+		ECPoint b1 = yG.multiply(w).normalize();
 		map.put("b1", b1);
 		
-		//a2 = wG
-		ECPoint a2 = ecSpec.getG().multiply(w).normalize();
+		//a2 = r1G + d1xG
+		ECPoint r1G = ecSpec.getG().multiply(r1);
+		ECPoint d1xG = xG.multiply(d1);
+		ECPoint a2 = r1G.add(d1xG).normalize();
 		map.put("a2", a2);
 		
-		//b2 = wyG
-		ECPoint b2 = yG.multiply(w).normalize();
+		//b2 = r1yG*(y*G)^d1
+		ECPoint r1yG = yG.multiply(r1);
+		ECPoint d1yG = (y.subtract(ecSpec.getG())).multiply(d1);
+		ECPoint b2 = r1yG.add(d1yG).normalize();
 		map.put("b2", b2);
 		
 		// c = H(y,a1,b1,a2,b2)
@@ -88,7 +88,7 @@ public class ZKPBuilder {
 	}
 	
 	
-	public HashMap<String, Object> generateZKP(ECPoint xG, BigInteger x, ECPoint yG, BigInteger ri, BigInteger w, BigInteger di, int vote, int nombreCandidat, KeyPairGenerator g) {
+	public HashMap<String, Object> generateZKP(ECPoint xG, BigInteger x, ECPoint yG, BigInteger w, BigInteger vote, int nombreCandidat, KeyPairGenerator g) {
 		
 		HashMap<String, Object> map = new HashMap<String, Object>();
 		List<ECPoint> aList = new ArrayList<ECPoint>();
@@ -96,82 +96,106 @@ public class ZKPBuilder {
 		List<ECPoint> GList = new ArrayList<ECPoint>();
 		List<BigInteger> dList = new ArrayList<BigInteger>();
 		List<BigInteger> rList = new ArrayList<BigInteger>();
-	
-		GList.add(ecSpec.getG());
-		GList.add(ecSpec.getG().negate());
-		map.put("GList", GList);
 		
+		List<BigInteger> diList = new ArrayList<BigInteger>();
+		List<BigInteger> riList = new ArrayList<BigInteger>();
+	
 		map.put("xG", xG);
 		map.put("yG", yG);
 		
 		// c = H(y,a1,b1,a2,b2)
     	SHA256Digest sha256 = new SHA256Digest();
+    	
+    	//Calcul de m
+    	int m=2;
 		
 		//Calcul du vote
 		//y = yG+Gi
-		ECPoint Gi;
-		if(vote==0) {
-			Gi = ecSpec.getG();
-		} else {
-			Gi = ecSpec.getG().negate();
-		}
+    	double vi = Math.pow(2, m*vote.intValue());
+		ECPoint Gi = ecSpec.getG().multiply(new BigInteger(String.valueOf((long) vi))).normalize();
 		ECPoint y = (yG.multiply(x).add(Gi)).normalize();
+		System.out.println("y.x : " + y.getRawXCoord().toBigInteger());
+		System.out.println("y.y : " + y.getRawYCoord().toBigInteger());
 		map.put("y", y);
 		addIn(sha256, y);
 		
 		//Calcul des ai
-		for(int i=0;i<nombreCandidat;i++) {
-			if(i==vote) {
+		for(Integer i=1;i<=nombreCandidat;i++) {
+			vi = Math.pow(2, m*i);
+			Gi = ecSpec.getG().multiply(new BigInteger(String.valueOf((long) vi))).normalize();
+			GList.add(Gi);
+			if(!(new BigInteger(i.toString()).equals(vote))) {
+				
+				BigInteger di = ((ECPrivateKey) g.generateKeyPair().getPrivate()).getD();
+				BigInteger ri = ((ECPrivateKey) g.generateKeyPair().getPrivate()).getD();
+				diList.add(di);
+				riList.add(ri);
+				
 				//a vote = r1G + d1xG
 				ECPoint r1G = ecSpec.getG().multiply(ri);
 				ECPoint d1xG = xG.multiply(di);
-				ECPoint a1 = r1G.add(d1xG).normalize();
-				aList.add(a1);
-				
-				//b1 = r1yG*(y*G)^d1
-				ECPoint r1yG = yG.multiply(ri);
-				ECPoint d1yG = (y.add(Gi)).multiply(di);
-				ECPoint b1 = r1yG.add(d1yG).normalize();
-				bList.add(b1);
-				
-		    	addIn(sha256, a1);
-		    	addIn(sha256, b1);
-		    	
-
-		    	
-			} else {
-				//a2 = wG
-				ECPoint a2 = ecSpec.getG().multiply(w).normalize();
+				ECPoint a2 = r1G.add(d1xG).normalize();
 				aList.add(a2);
 				
-				//b2 = wyG
-				ECPoint b2 = yG.multiply(w).normalize();
+				//b1 = r1yG*(y/Gi)^d1
+				ECPoint r1yG = yG.multiply(ri);
+				ECPoint d1yG = (y.subtract(Gi)).multiply(di);
+				ECPoint b2 = r1yG.add(d1yG).normalize();
 				bList.add(b2);
 				
 		    	addIn(sha256, a2);
 		    	addIn(sha256, b2);
+		    	
+
+		    	
+			} else {
+				
+				
+				//a1 = wG
+				ECPoint a1 = ecSpec.getG().multiply(w).normalize();
+				aList.add(a1);
+				
+				//b1 = wyG
+				ECPoint b1 = yG.multiply(w).normalize();
+				bList.add(b1);
+				
+		    	addIn(sha256, a1);
+		    	addIn(sha256, b1);
 			}
 		}
-
+		
+		map.put("GList", GList);
+		
     	byte[] res = new byte[sha256.getDigestSize()];
         sha256.doFinal(res, 0);
         BigInteger c = new BigInteger(1, res);
         
-        
-        if(vote==0) {
-        	dList.add(di);
-        	rList.add(ri);
-            dList.add(c.subtract(di));
-            BigInteger r2 = w.subtract(x.multiply(c.subtract(di)));
-            rList.add(r2);
-        } else {
-            dList.add(c.subtract(di));
-            BigInteger r2 = w.subtract(x.multiply(c.subtract(di)));
-            rList.add(r2);
-        	dList.add(di);
-        	rList.add(ri);
+        BigInteger sommeDi = new BigInteger("0");
+        for(int i=0;i<diList.size();i++) {
+        	sommeDi = sommeDi.add(diList.get(i));
         }
+        BigInteger nn = new BigInteger("115792089237316195423570985008687907852837564279074904382605163141518161494337");
+        sommeDi = sommeDi.mod(nn);
         
+        BigInteger dVote = c.subtract(sommeDi).mod(nn);
+        BigInteger rVote = w.subtract(x.multiply(dVote)).mod(nn);
+   
+		for(Integer i=1;i<=nombreCandidat;i++) {
+			if(new BigInteger(i.toString()).equals(vote)) {
+	        	dList.add(dVote);
+	        	rList.add(rVote);
+			} else {
+				dList.add(diList.get(0));
+				diList.remove(0);
+				rList.add(riList.get(0));
+				riList.remove(0);
+			}
+		}
+		
+        System.out.println("dList : " + dList);
+        System.out.println("rList : " + rList);
+        System.out.println("c : " + c);
+
         map.put("aList", aList);
         map.put("bList", bList);
         map.put("rList", rList);
@@ -284,9 +308,12 @@ public class ZKPBuilder {
     		ECPoint bi = bList.get(i);
     		ECPoint Gi = GList.get(i);
     		
-    		System.out.println("ri : " + ri);
-    		System.out.println("di : " + di);
-    		System.out.println("ai : " + ai);
+    		System.out.println("r" + i + " : " + ri);
+    		System.out.println("d" + i + " : " + di);
+    		System.out.println("a.x" + i + " : " + ai.getRawXCoord().toBigInteger());
+    		System.out.println("a.y" + i + " : " + ai.getRawYCoord().toBigInteger());
+    		System.out.println("b.x" + i + " : " + bi.getRawXCoord().toBigInteger());
+    		System.out.println("b.y" + i + " : " + bi.getRawYCoord().toBigInteger());
     		
     		sommeD = sommeD.add(di);
     		
@@ -305,12 +332,12 @@ public class ZKPBuilder {
             
             //b1 = r1yG * (y*G)^d1
             temp = yG.multiply(ri);
-            ECPoint temp2 = (y.add(Gi)).multiply(di);
+            ECPoint temp2 = (y.subtract(Gi)).multiply(di);
             temp = temp.add(temp2);
             temp = temp.normalize();
             
             if(!temp.equals(bi)) {
-            	System.out.println("bi !=");
+            	System.out.println("b" + i + ": " + bi + "!=" + temp);
             	return false;
             }
     	} 
@@ -319,6 +346,8 @@ public class ZKPBuilder {
         sha256.doFinal(res, 0);
         BigInteger c = new BigInteger(1, res);
         
+        BigInteger nn = new BigInteger("115792089237316195423570985008687907852837564279074904382605163141518161494337");
+        sommeD = sommeD.mod(nn);
         if(!c.equals(sommeD)) {
         	System.out.println("c !=");
         	return false;
@@ -344,15 +373,27 @@ public class ZKPBuilder {
 		BigInteger r1 = ((ECPrivateKey) g.generateKeyPair().getPrivate()).getD();
 		BigInteger d1 = ((ECPrivateKey) g.generateKeyPair().getPrivate()).getD();
 		
-		HashMap<String, Object> map = zkpBuilder.generateZKPOne(xG, x, yG, w, r1, d1, g);
-		System.out.println(map);
+		//HashMap<String, Object> map = zkpBuilder.generateZKPOne(xG, x, yG, w, r1, d1, g);
+		//System.out.println(map);
+		System.out.println(ecSpec.getCurve().getOrder());
+		BigInteger nn = new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 32);
+		System.out.println(nn);
+		System.out.println(nn.equals(ecSpec.getN()));
 		
-		HashMap<String, Object> map2 = zkpBuilder.generateZKP(xG, x, yG, w, r1, d1, 1, 2, g);
+		int nombreCandidat = 4;
+		System.out.println("xG.x : " + xG.getRawXCoord().toBigInteger());
+		System.out.println("xG.y : " + xG.getRawYCoord().toBigInteger());
+		System.out.println("yG.x : " + yG.getRawXCoord().toBigInteger());
+		System.out.println("yG.y : " + yG.getRawYCoord().toBigInteger());
+		System.out.println("x : " + x);
+		System.out.println("w : " + w);
+		
+		HashMap<String, Object> map2 = zkpBuilder.generateZKP(xG, x, yG, w, new BigInteger("1"), nombreCandidat, g);
 		System.out.println(map2);
 
 		
-		System.out.println(zkpBuilder.verifyZKP(map));
-		System.out.println(zkpBuilder.verifyZKPBis(map2, 2));
+		//System.out.println(zkpBuilder.verifyZKP(map));
+		System.out.println(zkpBuilder.verifyZKPBis(map2, nombreCandidat));
 
 	}
 
