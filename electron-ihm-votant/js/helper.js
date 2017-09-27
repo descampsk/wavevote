@@ -12,7 +12,7 @@
  
  function initRequire() {
 	 try {
-		 $ = require('jQuery')
+		 $ = require('jquery')
 		 BigNumber = require('bignumber.js');
 		 //Create and initialize EC context 
 		 //(better do it once and reuse it) 
