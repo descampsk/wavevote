@@ -7,13 +7,14 @@
 var nodemailer = require('nodemailer');
 
 var transporter = nodemailer.createTransport({
-    host: "smtp-mail.outlook.com", // hostname
+    host: "smtp.office365.com", // hostname
     secureConnection: false, // TLS requires secureConnection to be false
     port: 587, // port for secure SMTP
     auth: {
         user: "kevin.descamps@wavestone.com",
-        pass: "Marvellous2204"
+        pass: "fcmddnzzhgmhbssx"
     },
+    requireTLS: true,
     tls: {
         ciphers:'SSLv3'
     }
@@ -21,7 +22,7 @@ var transporter = nodemailer.createTransport({
 
 var mailOptions = {
   from: 'kevin.descamps@wavestone.com',
-  to: 'kevin.descamps@wavestone.com',
+  to: 'melanie.coissard@wavestone.com',
   subject: 'Sending Email using Node.js',
   text: 'That was easy!'
 };

@@ -2,8 +2,7 @@
  //require files joining that directory variable with the location within your package of files
  const databasePath = require('path').join(directory, '/db/adminKey.db');
  const mailDataPath = require('path').join(directory, '/data/mail.csv');
- const javaPath = require('path').join(directory, '/java/');
- console.log(databasePath);
+ console.log("Set of the path : ok");
 
 //Ouverture de la base de données
 var Datastore = require('nedb')
@@ -11,8 +10,22 @@ var db = new Datastore({filename: databasePath, autoload: true, onload: function
 	console.log(error);
 }});
 
-var paramUrl = location.search.substring(1);
-var addrProvider = paramUrl.split('=')[1];
+var paramUrl; 
+var addrProvider;
+try {
+	paramUrl = location.search.substring(1);
+	console.log("ParamUrl : " + paramUrl);
+	addrProvider= paramUrl.split('=')[1];
+} catch(e) {
+	console.log(e);
+	alert(e);
+	  if(isProd()) {
+		  addrProvider = "localhost:8545";
+	  } else {
+		  addrProvider = "192.168.99.100:8545";
+	  }
+}
+console.log("AddrProvider : " + addrProvider);
 
 document.getElementById('pageVotant').href="vote.html?addr=" + addrProvider;
 document.getElementById('pageAdmin').href="admin.html?addr=" + addrProvider;

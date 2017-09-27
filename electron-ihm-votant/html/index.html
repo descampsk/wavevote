@@ -36,9 +36,18 @@
   </body>
    
   <script>
+  const isProd = () => process.env.NODE_ENV === 'production';
+  
   var Web3 = require('web3');
   var web3;
-  var addr = "192.168.99.100:8545";
+  
+  
+  var addr;
+  if(isProd()) {
+	  addr = "localhost:8545";
+  } else {
+	  addr = "192.168.99.100:8545";
+  }
   document.getElementById('pageAdmin').href="admin.html?addr=" + addr;
   document.getElementById('pageVotant').href="vote.html?addr=" + addr;
   
@@ -61,6 +70,9 @@
       
       try {
 	      if(web3.isConnected()) {
+	    	  
+	    	  
+	    	  
 	    	  document.getElementById('resultTest').innerHTML = "You are connected to the Ethereum node. You can continue";
 	    	  document.getElementById('modifyAddress').setAttribute("hidden", true);
 	      } else {
