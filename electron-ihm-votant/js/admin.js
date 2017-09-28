@@ -47,24 +47,24 @@ function setInitialTimes() {
 
    endreg.setTime(endreg.getTime() + (gap*1000));
    // Initial time is set here.
-   jQuery('#datetimepickerfinishby').datetimepicker(
+   $('#datetimepickerfinishby').datetimepicker(
      {minDate:'0', // Sets minimum date as today
       value:endreg});
 
    endsignuptime.setTime(endreg.getTime() + (gap*1000));
-   jQuery('#datetimepickerendsignup').datetimepicker(
+   $('#datetimepickerendsignup').datetimepicker(
      {minDate:'0', // Sets minimum date as today
       value:endsignuptime});
 
    var endvotetime = new Date();
    endvotetime.setTime(endreg.getTime() + (gap*1000));
-   jQuery('#datetimepickerendvote').datetimepicker(
+   $('#datetimepickerendvote').datetimepicker(
      {minDate:'0', // Sets minimum date as today
      value:endvotetime});
 
    var endrefund = new Date();
    endrefund.setTime(endvotetime.getTime() + (gap*1000));
-   jQuery('#datetimepickerendrefund').datetimepicker(
+   $('#datetimepickerendrefund').datetimepicker(
      {minDate:'0', // Sets minimum date as today
      value:endrefund});
 
@@ -545,18 +545,25 @@ function openLogin() {
 }
 
 function unlock(callback) {
-  var _addr = jQuery('#addrs').find(":selected").text();
-  var _password = document.getElementById('passwordf').value;
+	
+  try {
+	  var _addr = $('#addrs').find(":selected").text();
+	  var _password = document.getElementById('passwordf').value;
 
-  if(web3.personal.unlockAccount(_addr,_password)) {
-    addressChosen = true;
-    addr = _addr;
-    password = _password;
-    accountindex = $( "#addrs" ).val();
-    signedIn = true;
-    document.getElementById('login').setAttribute("hidden", true);
-    currentState();
+	  if(web3.personal.unlockAccount(_addr,_password)) {
+	    addressChosen = true;
+	    addr = _addr;
+	    password = _password;
+	    accountindex = $( "#addrs" ).val();
+	    signedIn = true;
+	    document.getElementById('login').setAttribute("hidden", true);
+	    currentState();
+	  }
+  } catch(e) {
+	  console.log(e);
+	  alert(e);
   }
+
 }
 
 //STEP 2 : Configuration of the Election
@@ -663,7 +670,7 @@ function registerNewVoterFromTextArea() {
 
 function registerNewVoterFromList() {
 	try{
-		var address = jQuery('#addrToRegister').find(":selected").text();
+		var address = $('#addrToRegister').find(":selected").text();
 		registerNewVoter(address)
 	} catch(e) {
 		winston.log('error',e)

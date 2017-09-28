@@ -9,10 +9,11 @@
  var ec;
  var winston;
  var Web3;
+ var jQuery;
  
  function initRequire() {
 	 try {
-		 $ = require('jquery')
+		 $ = require('jquery');
 		 BigNumber = require('bignumber.js');
 		 //Create and initialize EC context 
 		 //(better do it once and reuse it) 

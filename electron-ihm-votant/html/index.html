@@ -51,6 +51,29 @@
   document.getElementById('pageAdmin').href="admin.html?addr=" + addr;
   document.getElementById('pageVotant').href="vote.html?addr=" + addr;
   
+  if (typeof web3 !== 'undefined') {
+      //web3 = new Web3(web3.currentProvider);
+  } else {
+      // set the provider you want from Web3.providers
+  	web3 = new Web3(new Web3.providers.HttpProvider("http://" + addr));
+  }
+  
+  
+  web3.eth.isSyncing(function(error, sync){
+	    if(!error) {
+	        // stop all app activity
+	        if(sync && web3.eth.syncing.highestBlock!=web3.eth.blockNumber) {
+		      	document.getElementById('resultTest').innerHTML = "You are connected to the Ethereum node. The node is syncing with the Blockchain. Please wait.";
+		      	document.getElementById('modifyAddress').setAttribute("hidden", true);
+	        // re-gain app operation
+	        } else {
+		    	document.getElementById('resultTest').innerHTML = "You are connected to the Ethereum node. You can continue.";
+		    	document.getElementById('modifyAddress').setAttribute("hidden", true);
+	        }
+	    }
+	});
+  
+   
   function changeAddress() {
 	  addr = document.getElementById('addressEthereumNode').value;
 	  console.log(addr);
@@ -61,20 +84,10 @@
   }
   
   	function testWeb3() {
-      if (typeof web3 !== 'undefined') {
-          //web3 = new Web3(web3.currentProvider);
-      } else {
-          // set the provider you want from Web3.providers
-      	web3 = new Web3(new Web3.providers.HttpProvider("http://" + addr));
-      }
-      
       try {
 	      if(web3.isConnected()) {
-	    	  
-	    	  
-	    	  
-	    	  document.getElementById('resultTest').innerHTML = "You are connected to the Ethereum node. You can continue";
 	    	  document.getElementById('modifyAddress').setAttribute("hidden", true);
+	    	  document.getElementById('resultTest').innerHTML = "You are connected to the Ethereum node. You can continue.";
 	      } else {
 	    	  document.getElementById('resultTest').innerHTML = "Error : you aren't connected to the Ethereum node with the address: " + addr;
 	    	  document.getElementById('modifyAddress').removeAttribute("hidden");
@@ -85,8 +98,10 @@
     	  document.getElementById('modifyAddress').removeAttribute("hidden");
       }
   	}
+  	
+  	setInterval("testWeb3()", 10000);
   	testWeb3();
-
+    
   </script>
   
 </html>
