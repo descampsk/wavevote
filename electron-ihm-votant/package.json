@@ -37,6 +37,7 @@
     "electron-prebuilt-compile": "1.6.12",
     "elliptic": "^6.4.0",
     "jquery": "^3.2.1",
+    "jquery-datetimepicker": "^2.5.4",
     "nedb": "^1.8.0",
     "nodemailer": "^4.1.0",
     "web3": "0.20.0",
@@ -45,9 +46,9 @@
   "config": {
     "forge": {
       "make_targets": {
-    	"win32" : [
-    		"zip"
-    		],  
+        "win32": [
+          "zip"
+        ],
         "linux": [
           "rpm"
         ]
