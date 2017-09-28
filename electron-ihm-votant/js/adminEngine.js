@@ -27,6 +27,7 @@ var mailOptions = {
   text: 'That was easy!'
 };
 
+/*
 transporter.sendMail(mailOptions, function(error, info){
   if (error) {
     console.log(error);
@@ -34,6 +35,7 @@ transporter.sendMail(mailOptions, function(error, info){
     console.log('Email sent: ' + info.response);
   }
 }); 
+*/
 
 function generateEachInscriptionKey() {
 	var lineReader = require('readline').createInterface({

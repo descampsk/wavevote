@@ -32,6 +32,7 @@ if(!web3.isConnected()) {
 }
 
 console.log("init ok");
+debugger;
 
 //TODO : à mettre dans l'html
 function openNewPasswordBox() {
@@ -699,10 +700,6 @@ function createAccountEthereum() {
        return toString;
     }
     
-    whatIsQuestion();
-    
-    selectBox();
-
     /*
      * State Variables. Make sure we only do these things ONCE.
      */
@@ -714,10 +711,13 @@ function createAccountEthereum() {
     var changedToTally = false;
     
     try {
+        whatIsQuestion();
+        selectBox();
     	setInterval("currentState()", 5000);
     	currentState();
     } catch(e) {
     	conole.log(e);
+    	alert(e);
     }
 
     /* FOR THE FIELD SET STEPPING */
