@@ -13,10 +13,12 @@
  
  function initRequire() {
 	 try {
+		 /*
 		 if (typeof module === 'object') {window.module = module; module = undefined;}
 		 $ = require('jquery');
 		 if (window.module) module = window.module;
-		 //$ = jQuery;
+		 */
+		 $ = jQuery;
 		 BigNumber = require('bignumber.js');
 		 //Create and initialize EC context 
 		 //(better do it once and reuse it) 

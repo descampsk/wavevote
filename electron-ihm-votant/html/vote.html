@@ -118,14 +118,15 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster --> 
-    <script src="../js/helper.js"></script> 
-    <script src="../js/vote.js"></script> 
+    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
     <script src="../js/jquery.min.js"></script>
     <script src="../js/jquery.easing.min.js"></script>
+    <script>if (window.module) module = window.module;</script>
+    
+    <script src="../js/helper.js"></script> 
+    <script src="../js/vote.js"></script> 
     <!-- 
     <script>var jQuery = require('jQuery')</script>
-    
-
     <script src="../js/jquery.datetimepicker.js"></script>  
      -->
     <!-- Until Here! -->
