@@ -15,6 +15,11 @@
 </head>
 
 <body>
+	<form id = msform3>
+		<a id="pageVotant" href="vote.html" class="action-button">Reload the page</a>
+		<a id="pageAdmin" href="admin.html" class="action-button">Page Admin</a>
+	</form>
+
     <form id="msform">
         <!-- progressbar -->
         <ul id="progressbar">
@@ -101,20 +106,23 @@
 	<form id = msform2>
 		<fieldset id="test">
             <h2> Creation of an ethereum account: </h2>
-			<div id="dropdown2">
-                <button onclick="openNewPasswordBox();" class="action-button">Create</button>
-                <a id="pageVotant" href="vote.html" class="action-button">Reload the page</a>
-                <a id="pageAdmin" href="admin.html" class="action-button">Page Admin</a>
+            <div id="newPasswordDiv" hidden>
+            	<br>
+            	<br><p>Please enter a password:</p>
+            	<br>
+            	<input type='password' id='passwordNewAccount' value='ilikelittlepaddy' class='action-text'></input>
+            	<input type='button' class='action-button'  value='Create' onclick='createAccountEthereum();'></input>
             </div>
+			<div id="openPasswordDiv">
+				<input type='button' class='action-button'  value='Create' onclick='openNewPasswordBox();'></input>
+            </div>
+
         </fieldset>
 	</form>
+	
 
-<!--  
-	<form id = msform3>
-		<button onclick="location.href='admin.html;'" class="action-button">Page Administration</button>
-		<button onclick="location.href='vote.html;'" class="action-button">Page Votant</button>
-	</form>
-	-->
+
+ 
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster --> 

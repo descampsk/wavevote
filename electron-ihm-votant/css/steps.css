@@ -23,7 +23,7 @@ body {
 }
 #msform3 {
 	width: 600px;
-	margin: 600px auto;
+	margin: 10px auto;
 	text-align: center;
 	position: relative;
 }
@@ -39,7 +39,7 @@ body {
 	padding: 10px 5px;
 	margin: 10px 5px;
 }
-#msform3 .action-button:hover, #msform2 .action-button:focus {
+#msform3 .action-button:hover, #msform3 .action-button:focus {
 	box-shadow: 0 0 0 2px white, 0 0 0 3px #27AE60;
 }
 

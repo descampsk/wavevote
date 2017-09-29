@@ -26,7 +26,6 @@ try {
 	  }
 }
 console.log("AddrProvider : " + addrProvider);
-debugger;
 
 document.getElementById('pageVotant').href="vote.html?addr=" + addrProvider;
 document.getElementById('pageAdmin').href="admin.html?addr=" + addrProvider;
@@ -236,7 +235,9 @@ function finishRegistration() {
 					var res = anonymousvotingAddr.computeReconstructedKey.call(totalRecalculatedKey.add(1));
 					document.getElementById("finishRegistration").innerHTML  = "<p>Waiting for Ethereum to confirm that Registration has finished</p><p>" + totalRecalculatedKey + "/" + totalRegistered + " computations done.";
 					if(res[0]) {
-						anonymousvotingAddr.computeReconstructedKey.sendTransaction(totalRecalculatedKey.add(1), {from:web3.eth.accounts[accountindex], gas: 4200000});
+						setTimeout(function() {
+							anonymousvotingAddr.computeReconstructedKey.sendTransaction(totalRecalculatedKey.add(1), {from:web3.eth.accounts[accountindex], gas: 4200000});
+						}, 2000);
 					} else {
 						console.log(res[1]),
 						alert(res[1]);

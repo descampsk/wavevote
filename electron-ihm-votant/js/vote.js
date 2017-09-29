@@ -32,12 +32,11 @@ if(!web3.isConnected()) {
 }
 
 console.log("init ok");
-debugger;
 
 //TODO : à mettre dans l'html
 function openNewPasswordBox() {
-	var selectbox2 = "<br><p>Création d'un compte Ethereum</p><br><p>Veuillez rentrer un mot de passe :</p><br><input type='password' id='passwordNewAccount' value='ilikelittlepaddy' name='fname' class='action-text'> <input id='done2' class='hidden next' type='button'> <input type='button' class='action-button'  value = 'Créer' onclick='createAccountEthereum();'>";
-    document.getElementById('dropdown2').innerHTML = selectbox2;
+	document.getElementById('openPasswordDiv').setAttribute("hidden", true);
+    document.getElementById('newPasswordDiv').removeAttribute("hidden");
 }
 
 function createAccountEthereum() {
@@ -45,9 +44,9 @@ function createAccountEthereum() {
     document.getElementById('passwordNewAccount').value = "";
     var addressAccount = web3.personal.newAccount(_password)
 	alert("L'adresse de vote compte est : " + addressAccount +" . Veuillez bien la noter.")
-    
-    var box = "<button onclick='openNewPasswordBox();' class='action-button'>Create</button><button onclick='reloadPage();' class='action-button'>Reload the page</button>"
-    document.getElementById('dropdown2').innerHTML = box;
+    document.getElementById('openPasswordDiv').removeAttribute("hidden");
+    document.getElementById('newPasswordDiv').setAttribute("hidden", true);
+    selectBox();
 }
 	
 
