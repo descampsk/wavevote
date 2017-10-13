@@ -36,77 +36,156 @@ var addr = 0;
 var state = 0;
 var accountindex = 0;
 
-// Controls which times and dates are displayed by default
-// We need to ensure there is a 'minimum' gap between default times too.
-// TODO: When the 'gap' drop down box is used... update all times accordingly.
+//STEP 1: User must find an Ethereum account that is recognised as the owner of the contract
+//and then the user MUST log in with that account!!
+var openedLogIn = false;
+var signedIn = false;
+
+/**
+ * Open the login Box
+ */
+function openLogin() {
+	if(!openedLogIn) {
+	 openedLogIn = true;
+	 document.getElementById('login').removeAttribute("hidden");
+	 var selectbox = "<p>Address: <select id='addrs'>";
+	
+	 var foundOwner = false;
+	
+	 // Let user select one of their Ethereum addresses
+	 for(var i=0; i<web3.eth.accounts.length; i++) {
+	
+	   if(anonymousvotingAddr.owner() == web3.eth.accounts[i]) {
+	     foundOwner = true;
+	     selectbox = selectbox + '<option value="' + i + '">' + web3.eth.accounts[i] + '</option>';
+	   }
+	 }
+	
+	 selectbox = selectbox + "</select></p>";
+	 selectbox = selectbox + "<p>Password: <input type='password' id='passwordf' value='' name='fname'> <button onclick='unlock()' class='btn btn-primary'>Unlock</button> </p>";
+	
+	 if(foundOwner) {
+	   document.getElementById('dropdown').innerHTML = selectbox;
+	 } else {
+	   document.getElementById('dropdown').innerHTML = "You do not have an Ethereum account that is the Election Authority for this vote";
+	 }
+	}
+}
+
+/**
+ * Unlock the ethereum account
+ * @returns
+ */
+function unlock() {
+	try {
+		  var _addr = $('#addrs').find(":selected").text();
+		  var _password = document.getElementById('passwordf').value;
+	
+		  if(web3.personal.unlockAccount(_addr,_password)) {
+		    addressChosen = true;
+		    addr = _addr;
+		    password = _password;
+		    accountindex = $( "#addrs" ).val();
+		    signedIn = true;
+		    document.getElementById('login').setAttribute("hidden", true);
+		    currentState();
+		  }
+	} catch(e) {
+		  console.log(e);
+		  alert(e);
+	}
+}
+
+//STEP 2 : Configuration of the Election
+var createElectionConfigurationTextBoxCreated = false;
+function createElectionConfigurationTextBox() {
+	if (!createElectionConfigurationTextBoxCreated) {
+		createElectionConfigurationTextBoxCreated = true;
+		document.getElementById('title').innerHTML = "Election Configuration";
+		document.getElementById('section_desc').innerHTML = "";
+		document.getElementById('listoftimers').setAttribute("hidden", true);
+		document.getElementById('registrationSetQuestion').removeAttribute("hidden");
+	}
+}
+
+/**
+ * Set up the page to choose the answers
+ */
+function setUpAnswers() {
+    document.getElementById('registrationSetQuestion').setAttribute("hidden", true);
+    document.getElementById('registrationSetAnswers').removeAttribute("hidden");
+    
+    var question = document.getElementById('questioninput').value;
+    document.getElementById('title').innerHTML = question;
+    
+    var totalAnswer = document.getElementById('totalAnswerInput').value;
+    var innerHtlm = "";
+    for(var i=1;i<=totalAnswer;i++) {
+    	innerHtlm+= "<p> Answer " + i + " : <input type='text' id='answer" + i + "' value='Answer " + i + "'/> </p>";
+    }
+    document.getElementById('answersList').innerHTML = innerHtlm;
+    
+}
+
+/**
+ * Return to the page to set the question
+ */
+function returnSetQuestion() {
+	document.getElementById('title').innerHTML = "Election Configuration";
+	document.getElementById('registrationSetQuestion').removeAttribute("hidden");
+	document.getElementById('registrationSetAnswers').setAttribute("hidden", true);
+}
+
+//Controls which times and dates are displayed by default
 function setInitialTimes() {
-
-   var endreg = new Date();
-   var endsignuptime = new Date();
-   var gap = anonymousvotingAddr.gap();
-
-   endreg.setTime(endreg.getTime() + (gap*1000));
-   // Initial time is set here.
-   $('#datetimepickerfinishby').datetimepicker(
-     {minDate:'0', // Sets minimum date as today
-      value:endreg});
-
-   endsignuptime.setTime(endreg.getTime() + (gap*1000));
-   $('#datetimepickerendsignup').datetimepicker(
-     {minDate:'0', // Sets minimum date as today
-      value:endsignuptime});
-
-   var endvotetime = new Date();
-   endvotetime.setTime(endreg.getTime() + (gap*1000));
-   $('#datetimepickerendvote').datetimepicker(
-     {minDate:'0', // Sets minimum date as today
-     value:endvotetime});
-
-   var endrefund = new Date();
-   endrefund.setTime(endvotetime.getTime() + (gap*1000));
-   $('#datetimepickerendrefund').datetimepicker(
-     {minDate:'0', // Sets minimum date as today
-     value:endrefund});
-
-
-   $.datetimepicker.setLocale('en');
-
+	
+	var endreg = new Date();
+	var endsignuptime = new Date();
+	
+	endreg.setTime(endreg.getTime());
+	// Initial time is set here.
+	$('#datetimepickerfinishby').datetimepicker(
+	  {minDate:'0', // Sets minimum date as today
+	   value:endreg});
+	
+	endsignuptime.setTime(endreg.getTime());
+	$('#datetimepickerendsignup').datetimepicker(
+	  {minDate:'0', // Sets minimum date as today
+	   value:endsignuptime});
+	
+	var endvotetime = new Date();
+	endvotetime.setTime(endreg.getTime());
+	$('#datetimepickerendvote').datetimepicker(
+	  {minDate:'0', // Sets minimum date as today
+	  value:endvotetime});
+	
+	var endrefund = new Date();
+	endrefund.setTime(endvotetime.getTime());
+	$('#datetimepickerendrefund').datetimepicker(
+	  {minDate:'0', // Sets minimum date as today
+	  value:endrefund});
+	$.datetimepicker.setLocale('en');
 }
 
-function cancelElection() {
-  web3.personal.unlockAccount(addr, password);
-  var res = anonymousvotingAddr.deadlinePassed.call({ from: web3.eth.accounts[accountindex], gas: 4200000});
-
-  if(res) {
-    anonymousvotingAddr.forceCancelElection.sendTransaction({from: web3.eth.accounts[accountindex],gas: 4200000});
-    document.getElementById("cancelelectionbutton").setAttribute("disabled",true);
-    alert("Please wait a few minutes for the election to be cancelled.");
-  } else {
-	  alert("Deadlines aren't passed : you can't cancel the election");
-  }
-
-  return false;
+/**
+ * Create the page to set up the time table for the election
+ * @returns
+ */
+function setUpTimeTable() {
+	setInitialTimes();
+    document.getElementById('title').innerHTML = "The Election Time Table";
+    document.getElementById('section_desc').innerHTML = "";
+    document.getElementById('registrationSetAnswers').setAttribute("hidden", true);
+    document.getElementById('listoftimers').removeAttribute("hidden");
 }
 
-function resetElection() {
-
-  var currentTime = new Date();
-
-  web3.personal.unlockAccount(addr, password);
-  var res = anonymousvotingAddr.deadlinePassed.call({ from: web3.eth.accounts[accountindex], gas: 4200000});
-
-  if(res) {
-    anonymousvotingAddr.forceCancelElection.sendTransaction({from: web3.eth.accounts[accountindex],gas: 4200000});
-    document.getElementById('tallydiv').innerHTML = "Please refresh your web browser in a few minutes";
-  } else {
-	  //TODO : faire un message d'erreur
-	  alert("Erreur !")
-  }
-
-  return false;
+function destorypickers() {
+    $('#datetimepickerfinishby').datetimepicker('destroy');
+    $('#datetimepickerendsignup').datetimepicker('destroy');
+    $('#datetimepickerendvote').datetimepicker('destroy');
 }
 
-// Allow people to start submiting their voting key.
+//Allow people to start asking for a registration
 function beginRegistration() {
 
   if(!addressChosen) {
@@ -157,6 +236,7 @@ function beginRegistration() {
   
   console.log(answersList);
   
+  //Send the transaction to begin the signup
   if(anonymousvotingAddr.beginSignUp.call(question, answersList, finishby, endsignup, endvote, {from:web3.eth.accounts[accountindex], value: 0 })) {
 	  web3.personal.unlockAccount(addr, password);
 	  var res = anonymousvotingAddr.beginSignUp.sendTransaction(question, answersList, finishby, endsignup, endvote, {from:web3.eth.accounts[accountindex], gas: 4200000, value: 0 });
@@ -175,402 +255,21 @@ function beginRegistration() {
   }
 }
 
-function destorypickers() {
-    $('#datetimepickerfinishby').datetimepicker('destroy');
-    $('#datetimepickerendsignup').datetimepicker('destroy');
-    $('#datetimepickerendvote').datetimepicker('destroy');
-}
-
-var computationReconstructedKeyEvent = anonymousvotingAddr.ComputationReconstructedKeyEvent();
-
-// Allow the Election Authority to finish the registration phase...
-function finishRegistration() {
-  if(!addressChosen) {
-    alert("Please unlock your Ethereum address");
-    return;
-  }
-
-  if(state != 1) {
-    alert("Please wait until Registration Phase");
-    return;
-  }
-
-  if(anonymousvotingAddr.totalregistered() < 3) {
-    alert("Election cannot begin until there is 3 or more registered voters");
-    return;
-  }
-
-  var time = new Date();
-  var finishReg = anonymousvotingAddr.finishSignupPhase() * 1000;
-  
-  var reg = anonymousvotingAddr.totalregistered();
-  
-  //TODO retirer le false : DEBUG ONLY
-  if(time.getTime() < finishReg && false) {
-    alert("Please wait until " + clockformat(new Date(finishReg)) + " before finishing registration or that all eligible voters have vote.");
-    return;
-  }
-  
-  
-  try {
-	  web3.personal.unlockAccount(addr,password);
-	  
-	  computationReconstructedKeyEvent.watch(function(error, result) {
-			if(error) {
-				console.log(error);
-				return;
-			} else {
-				console.log(result);
-			}
-			var success = result.args._successful;
-			if (success) {
-				var totalRecalculatedKey = anonymousvotingAddr.totalRecalculatedKey();
-				var totalRegistered = anonymousvotingAddr.totalregistered();
-				console.log(totalRegistered);
-				console.log(totalRecalculatedKey);
-				
-				if(totalRecalculatedKey.equals(totalRegistered)) {
-					computationReconstructedKeyEvent.stopWatching();
-				} else {
-					var res = anonymousvotingAddr.computeReconstructedKey.call(totalRecalculatedKey.add(1));
-					document.getElementById("finishRegistration").innerHTML  = "<p>Waiting for Ethereum to confirm that Registration has finished</p><p>" + totalRecalculatedKey + "/" + totalRegistered + " computations done.";
-					if(res[0]) {
-						setTimeout(function() {
-							anonymousvotingAddr.computeReconstructedKey.sendTransaction(totalRecalculatedKey.add(1), {from:web3.eth.accounts[accountindex], gas: 4200000});
-						}, 2000);
-					} else {
-						console.log(res[1]),
-						alert(res[1]);
-					}		
-				}
-			} else {
-				var message = result.args._message;
-				console.log(message);
-				alert(message);
-			}
-		});
-		var res = anonymousvotingAddr.computeReconstructedKey.call(1);
-		if(res[0]) {
-			var totalRegistered = anonymousvotingAddr.totalregistered();
-			var tx = anonymousvotingAddr.computeReconstructedKey.sendTransaction(1, {from:web3.eth.accounts[accountindex], gas: 4200000});
-			document.getElementById("finishRegistration").innerHTML  = "<p>Waiting for Ethereum to confirm that Registration has finished</p><p>0/" + totalRegistered + " computations done.";
-			txlist("Finish Registration Phase: " + tx);
-		} else {
-			console.log(res[1]),
-			alert(res[1]);
-		}	
-	  
-  } catch(e) {
-	  console.log(e);
-	  alert(e);
-  }
-}
-
-var isVoteCastEvent = anonymousvotingAddr.IsVoteCastEvent();
-
-// Tell Ethereum to compute Tally
-function tally() {
-
-  // Ethereum Account needs to be unlocked.
-  if(!addressChosen) {
-    alert("Please unlock your Ethereum address");
-    return;
-  }
-
-  // Make sure we are in the correct phase.
-  if(state != 2) {
-    alert("Please wait until VOTE Phase");
-    return;
-  }
-  var reg = anonymousvotingAddr.totalregistered();
-  var voted = anonymousvotingAddr.totalvoted();
-  
-  web3.personal.unlockAccount(addr, password);
-  
-  // Make sure everyone has voted!
-  if(!reg.equals(voted)) {
-      if (confirm("Warning : not all voters cast their vote! Are you sure to close the election and to get the final tally?")) {
-    	  var addressToDoNullVoteList = new Array();
-    	  for(var i=0;i<reg;i++) {
-    		  var addressHasNotVoted = anonymousvotingAddr.addresses(i);
-    		  if(!anonymousvotingAddr.hasCastVote(addressHasNotVoted)) {
-    			  addressToDoNullVoteList.push(addressHasNotVoted);
-    		  }
-    	  }
-    	  
-    	  var nullVoteSent = 0;
-    	  var totalVoteToCast =  addressToDoNullVoteList.length;
-			isVoteCastEvent.watch(function(error, result) {
-				if(error) {
-					console.log(error);
-					return;
-				} else {
-					console.log(result);
-				}
-				var success = result.args._isVoteCast;
-				if(success) {
-					nullVoteSent+=1;
-					console.log(nullVoteSent);
-					document.getElementById('tallybutton').innerHTML = "Please wait ...<br>Sending to Ethereum null votes: "+ nullVoteSent + "/" + totalVoteToCast;
-					if(addressToDoNullVoteList.length==0) {
-						isVoteCastEvent.stopWatching();
-						var res = anonymousvotingAddr.computeTally.call({from:web3.eth.accounts[accountindex], gas: 4000000});
-						console.log(res);
-						if(res[0]) {
-							res = anonymousvotingAddr.computeTally.sendTransaction({from:web3.eth.accounts[accountindex], gas: 9000000}, function(error, value) {
-								if(error) {
-									alert("Error : please consider a manual tallying");
-									console.error(error);
-								} else {
-									console.log(value);
-								}
-							});
-							document.getElementById("tallybutton").innerHTML  = "Waiting for Ethereum to confirm tally";
-							txlist("Compute Tally: " + res);
-							setTimeout(function() {
-								var state = anonymousvotingAddr.state();
-								if(state!=3) {
-									alert("Ethereum has not confirm the tally : please consider a manual tallying");
-									document.getElementById("tallybutton").innerHTML  = "Ethereum has not confirm the tally : please consider a manual tallying";
-								}
-							}, 60000);
-						} else {
-							alert(res[1]);
-						}
-					} else {
-						  var addressToDoNullVote = addressToDoNullVoteList.pop();
-					      db.find({account: addressToDoNullVote}, function(err, docs) {
-					      	if(err) {
-					      		alert("Error : " + err);
-					      	}
-					      	if (!docs.length) {
-					      		alert("Error : no account with this address " + addressToDoNullVote + " found in the database!");
-					      	} else if (docs.length>1) {
-					      		alert("Error : two or more accounts with this address " + addressToDoNullVote + " found in the database!");
-					      	} else {
-					      		//delayProcessNullVoting(5000, docs[0].privateVotingKey, docs[0].account)
-					      		processNullVoting(docs[0].privateVotingKey, docs[0].account); 
-					      	}
-					      });
-					}
-				} else {
-					console.log(result.args._error);
-				}
-			});
-
-		  var addressToDoNullVote = addressToDoNullVoteList.pop();
-		  document.getElementById('tallybutton').innerHTML = "Please wait ...<br>Sending to Ethereum null votes: "+ nullVoteSent + "/" + totalVoteToCast;
-	      db.find({account: addressToDoNullVote}, function(err, docs) {
-	      	if(err) {
-	      		alert("Error : " + err);
-	      	}
-	      	if (!docs.length) {
-	      		alert("Error : no account with this address " + addressToDoNullVote + " found in the database!");
-	      	} else if (docs.length>1) {
-	      		alert("Error : two or more accounts with this address " + addressToDoNullVote + " found in the database!");
-	      	} else {
-	      		//delayProcessNullVoting(5000, docs[0].privateVotingKey, docs[0].account)
-	      		processNullVoting(docs[0].privateVotingKey, docs[0].account); 
-	      	}
-	      });
-      }
-  } else {
-	  try {
-		  var res = anonymousvotingAddr.computeTally.call({from:web3.eth.accounts[accountindex]});
-		  
-		  if (res) {
-			  anonymousvotingAddr.computeTally.sendTransaction({from:web3.eth.accounts[accountindex], gas: 9000000});
-			  document.getElementById("tallybutton").innerHTML  = "Waiting for Ethereum to confirm tally";
-			  txlist("Compute Tally: " + res);
-		  }
-	  } catch(e) {
-		  console.log(e);
-		  alert(e);
-	  }
-	  
-  }
-
-}
-
-function delayProcessNullVoting(delay, privateVotingKeyStr, addressToDoNullVote) {
-	setTimeout(processNullVoting, delay, privateVotingKeyStr, addressToDoNullVote);
-}
-
-function processNullVoting(privateVotingKeyStr, addressToDoNullVote) {
-	var privateVotingKey = new BigNumber(privateVotingKeyStr);
-	
-	try  {
-		var voter = anonymousvotingAddr.getVoterBis(addressToDoNullVote);
-		var reconstructedKey = [voter[5][0], voter[5][1]];
-		var xG = [voter[4][0], voter[4][1]];
-		var nullVote = cryptoAddr.createNullVote(reconstructedKey, privateVotingKey);
-		var v = new BigNumber(ec.genKeyPair().getPrivate().toString());
-		
-		console.log(addressToDoNullVote);
-		console.log(privateVotingKeyStr);
-		console.log(reconstructedKey[0].toString(10) + ", " + reconstructedKey[1].toString(10))
-		console.log(nullVote);
-		// We prove that the vote is null and that is the right key
-		var single_zkp = cryptoAddr.createZKPNullVote.call(privateVotingKey, v, reconstructedKey, {
-		    from: web3.eth.accounts[accountindex]
-		});
-		console.log(single_zkp);
-		var vG = [single_zkp[1], single_zkp[2], single_zkp[3]];
-		var vyG = [single_zkp[4], single_zkp[5], single_zkp[6]];
-		
-		// Lets make sure the ZKP is valid!
-		var verifyresNullVote = cryptoAddr.verifyZKPNullVote.call(xG, reconstructedKey, nullVote, single_zkp[0], vG, vyG, {
-		    from: web3.eth.accounts[accountindex]
-		});
-		console.log(verifyresNullVote);
-		
-			
-		if (!verifyresNullVote[0]) {
-		    alert(verifyresNullVote[1]);
-		    return;
-		}
-	
-		var res = anonymousvotingAddr.submitNullVote.call(addressToDoNullVote, nullVote, vG, vyG, single_zkp[0], {
-		        from: web3.eth.accounts[accountindex]
-		    });
-		
-		// Submit voting key to the network
-		if (res[0]) {
-		    anonymousvotingAddr.submitNullVote.sendTransaction(addressToDoNullVote, nullVote, vG, vyG, single_zkp[0], {
-		        from: web3.eth.accounts[accountindex],
-		        gas: 4200000
-		    });
-		    
-		    console.log("The null vote has been sent");
-		} else {
-			console.log("Error : " + res[1])
-		}
+/**
+ * Register a new voter from the list
+ */
+function registerNewVoterFromList() {
+	try{
+		var address = $('#addrToRegister').find(":selected").text();
+		registerNewVoter(address)
 	} catch(e) {
+		winston.log('error',e)
 		console.log(e);
 		alert(e);
 	}
 }
 
-function reset() {
-  web3.personal.unlockAccount(web3.eth.accounts[accountindex],password);
-  var res = anonymousvotingAddr.reset.sendTransaction({from:web3.eth.accounts[accountindex], gas: 4200000});
-    txlist("Reset: " + res);
-}
-
-// Update question set for vote.
-function whatIsQuestion() {
-
-  if(anonymousvotingAddr.state() > 0) {
-    var q = anonymousvotingAddr.question();
-    document.getElementById('title').innerHTML = q;
-  }
-}
-
-// Keep a list of transaction hashes on the website. Might be useful...
-function txlist(extra) {
-    document.getElementById('txlist').innerHTML = document.getElementById('txlist').innerHTML + "<br>" + extra;
-}
-
-// STEP 1: User must find an Ethereum account that is recognised as the owner of the contract
-// and then the user MUST log in with that account!!
-var openedLogIn = false;
-var signedIn = false;
-
-function openLogin() {
-
-  if(!openedLogIn) {
-    openedLogIn = true;
-    document.getElementById('login').removeAttribute("hidden");
-    var selectbox = "<p>Address: <select id='addrs'>";
-
-    var foundOwner = false;
-
-    // Let user select one of their Ethereum addresses
-    for(var i=0; i<web3.eth.accounts.length; i++) {
-
-      if(anonymousvotingAddr.owner() == web3.eth.accounts[i]) {
-        foundOwner = true;
-        selectbox = selectbox + '<option value="' + i + '">' + web3.eth.accounts[i] + '</option>';
-      }
-    }
-
-    selectbox = selectbox + "</select></p>";
-    selectbox = selectbox + "<p>Password: <input type='password' id='passwordf' value='' name='fname'> <button onclick='unlock()' class='btn btn-primary'>Unlock</button> </p>";
-
-    if(foundOwner) {
-      document.getElementById('dropdown').innerHTML = selectbox;
-    } else {
-      document.getElementById('dropdown').innerHTML = "You do not have an Ethereum account that is the Election Authority for this vote";
-    }
-  }
-}
-
-function unlock(callback) {
-	
-  try {
-	  var _addr = $('#addrs').find(":selected").text();
-	  var _password = document.getElementById('passwordf').value;
-
-	  if(web3.personal.unlockAccount(_addr,_password)) {
-	    addressChosen = true;
-	    addr = _addr;
-	    password = _password;
-	    accountindex = $( "#addrs" ).val();
-	    signedIn = true;
-	    document.getElementById('login').setAttribute("hidden", true);
-	    currentState();
-	  }
-  } catch(e) {
-	  console.log(e);
-	  alert(e);
-  }
-
-}
-
-//STEP 2 : Configuration of the Election
-var createElectionConfigurationTextBoxCreated = false;
-function createElectionConfigurationTextBox() {
-	if (!createElectionConfigurationTextBoxCreated) {
-		createElectionConfigurationTextBoxCreated = true;
-		document.getElementById('title').innerHTML = "Election Configuration";
-		document.getElementById('section_desc').innerHTML = "";
-		document.getElementById('listoftimers').setAttribute("hidden", true);
-		document.getElementById('registrationSetQuestion').removeAttribute("hidden");
-	}
-}
-
-function setUpAnswers() {
-    document.getElementById('registrationSetQuestion').setAttribute("hidden", true);
-    document.getElementById('registrationSetAnswers').removeAttribute("hidden");
-    
-    var question = document.getElementById('questioninput').value;
-    document.getElementById('title').innerHTML = question;
-    
-    var totalAnswer = document.getElementById('totalAnswerInput').value;
-    var innerHtlm = "";
-    for(var i=1;i<=totalAnswer;i++) {
-    	innerHtlm+= "<p> Answer " + i + " : <input type='text' id='answer" + i + "' value='Answer " + i + "'/> </p>";
-    }
-    document.getElementById('answersList').innerHTML = innerHtlm;
-    
-}
-
-function returnSetQuestion() {
-	document.getElementById('title').innerHTML = "Election Configuration";
-	document.getElementById('registrationSetQuestion').removeAttribute("hidden");
-	document.getElementById('registrationSetAnswers').setAttribute("hidden", true);
-}
-
-function setUpTimeTable() {
-	setInitialTimes();
-    document.getElementById('title').innerHTML = "The Election Time Table";
-    document.getElementById('section_desc').innerHTML = "";
-    document.getElementById('registrationSetAnswers').setAttribute("hidden", true);
-    document.getElementById('listoftimers').removeAttribute("hidden");
-}
-
-
-// STEP 3: Admin must finish the registration phase
+//Create the page to register a voter
 var finishRegistrationCreated = false;
 function createFinishRegistration() {
 
@@ -616,28 +315,6 @@ function createFinishRegistration() {
     }
   }
 
-}
-
-
-function registerNewVoterFromTextArea() {
-	try {
-		var address = document.getElementById('addressRegister').value;
-		registerNewVoter(address)
-	} catch(e) {
-		alert(e);
-	}
-	
-}
-
-function registerNewVoterFromList() {
-	try{
-		var address = $('#addrToRegister').find(":selected").text();
-		registerNewVoter(address)
-	} catch(e) {
-		winston.log('error',e)
-		console.log(e);
-		alert(e);
-	}
 }
 
 /**
@@ -718,8 +395,100 @@ function registerNewVoter(address) {
 
 }
 
+//Event to follow each transactions
+var computationReconstructedKeyEvent = anonymousvotingAddr.ComputationReconstructedKeyEvent();
+
+//Allow the Election Authority to finish the registration phase...
+function finishRegistration() {
+	if(!addressChosen) {
+	 alert("Please unlock your Ethereum address");
+	 return;
+	}
+	
+	if(state != 1) {
+	 alert("Please wait until Registration Phase");
+	 return;
+	}
+	
+	if(anonymousvotingAddr.totalregistered() < 3) {
+	 alert("Election cannot begin until there is 3 or more registered voters");
+	 return;
+	}
+	
+	var time = new Date();
+	var finishReg = anonymousvotingAddr.finishSignupPhase() * 1000;
+	
+	var reg = anonymousvotingAddr.totalregistered();
+	
+	//TODO retirer le false : DEBUG ONLY
+	if(time.getTime() < finishReg && false) {
+	 alert("Please wait until " + clockformat(new Date(finishReg)) + " before finishing registration or that all eligible voters have vote.");
+	 return;
+	}
+	
+	
+	try {
+		  web3.personal.unlockAccount(addr,password);
+		  
+		  //Watch if the transaction is done. If its done then we send the next transaction
+		  computationReconstructedKeyEvent.watch(function(error, result) {
+				if(error) {
+					console.log(error);
+					return;
+				} else {
+					console.log(result);
+				}
+				var success = result.args._successful;
+				if (success) {
+					var totalRecalculatedKey = anonymousvotingAddr.totalRecalculatedKey();
+					var totalRegistered = anonymousvotingAddr.totalregistered();
+					console.log(totalRegistered);
+					console.log(totalRecalculatedKey);
+					
+					if(totalRecalculatedKey.equals(totalRegistered)) {
+						computationReconstructedKeyEvent.stopWatching();
+					} else {
+						var res = anonymousvotingAddr.computeReconstructedKey.call(totalRecalculatedKey.add(1));
+						document.getElementById("finishRegistration").innerHTML  = "<p>Waiting for Ethereum to confirm that Registration has finished</p><p>" + totalRecalculatedKey + "/" + totalRegistered + " computations done.";
+						if(res[0]) {
+							setTimeout(function() {
+								anonymousvotingAddr.computeReconstructedKey.sendTransaction(totalRecalculatedKey.add(1), {from:web3.eth.accounts[accountindex], gas: 4200000});
+							}, 2000);
+						} else {
+							console.log(res[1]),
+							alert(res[1]);
+						}		
+					}
+				} else {
+					var message = result.args._message;
+					console.log(message);
+					alert(message);
+				}
+			});
+		  
+		  	//We send the first transaction to comput the first reconstructedKey
+			var res = anonymousvotingAddr.computeReconstructedKey.call(1);
+			if(res[0]) {
+				var totalRegistered = anonymousvotingAddr.totalregistered();
+				var tx = anonymousvotingAddr.computeReconstructedKey.sendTransaction(1, {from:web3.eth.accounts[accountindex], gas: 4200000});
+				document.getElementById("finishRegistration").innerHTML  = "<p>Waiting for Ethereum to confirm that Registration has finished</p><p>0/" + totalRegistered + " computations done.";
+				txlist("Finish Registration Phase: " + tx);
+			} else {
+				console.log(res[1]),
+				alert(res[1]);
+			}	
+		  
+	} catch(e) {
+		  console.log(e);
+		  alert(e);
+	}
+}
 
 var voteCreate = false;
+
+/**
+ * Create the page to follow the vote
+ */
 function createVote() {
 
   if(!voteCreate) {
@@ -733,17 +502,204 @@ function createVote() {
   document.getElementById('totalvoters').innerHTML = anonymousvotingAddr.totalvoted() + "/" + anonymousvotingAddr.totalregistered() + " voters have cast their vote.";
 }
 
+var isVoteCastEvent = anonymousvotingAddr.IsVoteCastEvent();
+
+// Tell Ethereum to compute Tally
+function tally() {
+
+  // Ethereum Account needs to be unlocked.
+  if(!addressChosen) {
+    alert("Please unlock your Ethereum address");
+    return;
+  }
+
+  // Make sure we are in the correct phase.
+  if(state != 2) {
+    alert("Please wait until VOTE Phase");
+    return;
+  }
+  var reg = anonymousvotingAddr.totalregistered();
+  var voted = anonymousvotingAddr.totalvoted();
+  
+  web3.personal.unlockAccount(addr, password);
+  
+  // Make sure everyone has voted!
+  if(!reg.equals(voted)) {
+      if (confirm("Warning : not all voters cast their vote! Are you sure to close the election and to get the final tally?")) {
+    	  
+    	  //We get all address from people who have not cast their vote
+    	  var addressToDoNullVoteList = new Array();
+    	  for(var i=0;i<reg;i++) {
+    		  var addressHasNotVoted = anonymousvotingAddr.addresses(i);
+    		  if(!anonymousvotingAddr.hasCastVote(addressHasNotVoted)) {
+    			  addressToDoNullVoteList.push(addressHasNotVoted);
+    		  }
+    	  }
+    	  
+    	  
+    	  var nullVoteSent = 0;
+    	  var totalVoteToCast =  addressToDoNullVoteList.length;
+    	  //We watch the transaction to send the next null vote after one is accepted by ethereum
+			isVoteCastEvent.watch(function(error, result) {
+				if(error) {
+					console.log(error);
+					return;
+				} else {
+					console.log(result);
+				}
+				var success = result.args._isVoteCast;
+				if(success) {
+					nullVoteSent+=1;
+					console.log(nullVoteSent);
+					document.getElementById('tallybutton').innerHTML = "Please wait ...<br>Sending to Ethereum null votes: "+ nullVoteSent + "/" + totalVoteToCast;
+					//If there is no more address then we can compute the tally
+					if(addressToDoNullVoteList.length==0) {
+						isVoteCastEvent.stopWatching();
+						var res = anonymousvotingAddr.computeTally.call({from:web3.eth.accounts[accountindex], gas: 4000000});
+						console.log(res);
+						if(res[0]) {
+							res = anonymousvotingAddr.computeTally.sendTransaction({from:web3.eth.accounts[accountindex], gas: 9000000}, function(error, value) {
+								if(error) {
+									alert("Error : please consider a manual tallying");
+									console.error(error);
+								} else {
+									console.log(value);
+								}
+							});
+							document.getElementById("tallybutton").innerHTML  = "Waiting for Ethereum to confirm tally";
+							txlist("Compute Tally: " + res);
+							setTimeout(function() {
+								var state = anonymousvotingAddr.state();
+								if(state!=3) {
+									alert("Ethereum has not confirm the tally : please consider a manual tallying");
+									document.getElementById("tallybutton").innerHTML  = "Ethereum has not confirm the tally : please consider a manual tallying";
+								}
+							}, 60000);
+						} else {
+							alert(res[1]);
+						}
+					} else { //Else we send an other null vote
+						  var addressToDoNullVote = addressToDoNullVoteList.pop();
+					      db.find({account: addressToDoNullVote}, function(err, docs) {
+					      	if(err) {
+					      		alert("Error : " + err);
+					      	}
+					      	if (!docs.length) {
+					      		alert("Error : no account with this address " + addressToDoNullVote + " found in the database!");
+					      	} else if (docs.length>1) {
+					      		alert("Error : two or more accounts with this address " + addressToDoNullVote + " found in the database!");
+					      	} else {
+					      		processNullVoting(docs[0].privateVotingKey, docs[0].account); 
+					      	}
+					      });
+					}
+				} else {
+					console.log(result.args._error);
+				}
+			});
+
+			//We send the first null vote
+		  var addressToDoNullVote = addressToDoNullVoteList.pop();
+		  document.getElementById('tallybutton').innerHTML = "Please wait ...<br>Sending to Ethereum null votes: "+ nullVoteSent + "/" + totalVoteToCast;
+	      db.find({account: addressToDoNullVote}, function(err, docs) {
+	      	if(err) {
+	      		alert("Error : " + err);
+	      	}
+	      	if (!docs.length) {
+	      		alert("Error : no account with this address " + addressToDoNullVote + " found in the database!");
+	      	} else if (docs.length>1) {
+	      		alert("Error : two or more accounts with this address " + addressToDoNullVote + " found in the database!");
+	      	} else {
+	      		processNullVoting(docs[0].privateVotingKey, docs[0].account); 
+	      	}
+	      });
+      }
+  } else { //if all people has cast their vote, we do directly the tally
+	  try {
+		  var res = anonymousvotingAddr.computeTally.call({from:web3.eth.accounts[accountindex]});
+		  
+		  if (res) {
+			  anonymousvotingAddr.computeTally.sendTransaction({from:web3.eth.accounts[accountindex], gas: 9000000});
+			  document.getElementById("tallybutton").innerHTML  = "Waiting for Ethereum to confirm tally";
+			  txlist("Compute Tally: " + res);
+		  }
+	  } catch(e) {
+		  console.log(e);
+		  alert(e);
+	  }
+	  
+  }
+
+}
+
+/**
+ * Function to send the transaction of a null vote
+ * @param privateVotingKeyStr the private Voting Key of the voter
+ * @param addressToDoNullVote the address of the voter
+ */
+function processNullVoting(privateVotingKeyStr, addressToDoNullVote) {
+	var privateVotingKey = new BigNumber(privateVotingKeyStr);
+	
+	try  {
+		var voter = anonymousvotingAddr.getVoterBis(addressToDoNullVote);
+		var reconstructedKey = [voter[5][0], voter[5][1]];
+		var xG = [voter[4][0], voter[4][1]];
+		var nullVote = cryptoAddr.createNullVote(reconstructedKey, privateVotingKey);
+		var v = new BigNumber(ec.genKeyPair().getPrivate().toString());
+		
+		console.log(addressToDoNullVote);
+		console.log(privateVotingKeyStr);
+		console.log(reconstructedKey[0].toString(10) + ", " + reconstructedKey[1].toString(10))
+		console.log(nullVote);
+		// We prove that the vote is null and that is the right key
+		var single_zkp = cryptoAddr.createZKPNullVote.call(privateVotingKey, v, reconstructedKey, {
+		    from: web3.eth.accounts[accountindex]
+		});
+		console.log(single_zkp);
+		var vG = [single_zkp[1], single_zkp[2], single_zkp[3]];
+		var vyG = [single_zkp[4], single_zkp[5], single_zkp[6]];
+		
+		// Lets make sure the ZKP is valid!
+		var verifyresNullVote = cryptoAddr.verifyZKPNullVote.call(xG, reconstructedKey, nullVote, single_zkp[0], vG, vyG, {
+		    from: web3.eth.accounts[accountindex]
+		});
+		console.log(verifyresNullVote);
+		
+			
+		if (!verifyresNullVote[0]) {
+		    alert(verifyresNullVote[1]);
+		    return;
+		}
+	
+		var res = anonymousvotingAddr.submitNullVote.call(addressToDoNullVote, nullVote, vG, vyG, single_zkp[0], {
+		        from: web3.eth.accounts[accountindex]
+		    });
+		
+		// Submit the null vote to the network
+		if (res[0]) {
+		    anonymousvotingAddr.submitNullVote.sendTransaction(addressToDoNullVote, nullVote, vG, vyG, single_zkp[0], {
+		        from: web3.eth.accounts[accountindex],
+		        gas: 4200000
+		    });
+		    
+		    console.log("The null vote has been sent");
+		} else {
+			console.log("Error : " + res[1])
+		}
+	} catch(e) {
+		console.log(e);
+		alert(e);
+	}
+}
+
 var tallyCreate = false;
+//Create the page to get the result of the vote
 function createTally() {
 
   if(!tallyCreate) {
     tallyCreate = true;
 
     document.getElementById('tallydiv').removeAttribute("hidden");
-
-    // var res1 = anonymousvotingAddr.totalregistered().eq(anonymousvotingAddr.totalvoted());
-    // var res2 = !anonymousvotingAddr.totalregistered().eq(new BigNumber("0"));
-    // alert(res1 + " " + res2);
 
     if((anonymousvotingAddr.totalregistered().eq(anonymousvotingAddr.totalvoted())) && !anonymousvotingAddr.totalregistered().eq(new BigNumber("0"))) {
       var totalAnswer = anonymousvotingAddr.getTotalAnswers();
@@ -763,6 +719,63 @@ function createTally() {
 
     controlTransition("#pb_tally");
   }
+}
+
+
+//TODO : fusionner avec resetElection
+function cancelElection() {
+web3.personal.unlockAccount(addr, password);
+var res = anonymousvotingAddr.deadlinePassed.call({ from: web3.eth.accounts[accountindex], gas: 4200000});
+
+if(res) {
+  anonymousvotingAddr.forceCancelElection.sendTransaction({from: web3.eth.accounts[accountindex],gas: 4200000});
+  document.getElementById("cancelelectionbutton").setAttribute("disabled",true);
+  alert("Please wait a few minutes for the election to be cancelled.");
+} else {
+	  alert("Deadlines aren't passed : you can't cancel the election");
+}
+
+return false;
+}
+
+//TODO : fusionner avec cancelElection
+function resetElection() {
+
+var currentTime = new Date();
+
+web3.personal.unlockAccount(addr, password);
+var res = anonymousvotingAddr.deadlinePassed.call({ from: web3.eth.accounts[accountindex], gas: 4200000});
+
+if(res) {
+  anonymousvotingAddr.forceCancelElection.sendTransaction({from: web3.eth.accounts[accountindex],gas: 4200000});
+  document.getElementById('tallydiv').innerHTML = "Please refresh your web browser in a few minutes";
+} else {
+	  //TODO : faire un message d'erreur
+	  alert("Erreur !")
+}
+
+return false;
+}
+
+//TODO : à supprimer ??
+function reset() {
+  web3.personal.unlockAccount(web3.eth.accounts[accountindex],password);
+  var res = anonymousvotingAddr.reset.sendTransaction({from:web3.eth.accounts[accountindex], gas: 4200000});
+    txlist("Reset: " + res);
+}
+
+// Update question set for vote.
+function whatIsQuestion() {
+
+  if(anonymousvotingAddr.state() > 0) {
+    var q = anonymousvotingAddr.question();
+    document.getElementById('title').innerHTML = q;
+  }
+}
+
+// Keep a list of transaction hashes on the website. Might be useful...
+function txlist(extra) {
+    document.getElementById('txlist').innerHTML = document.getElementById('txlist').innerHTML + "<br>" + extra;
 }
 
 function clockformat(date) {

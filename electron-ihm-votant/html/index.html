@@ -5,8 +5,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="Open Vote Network on Ethereum">
-    <meta name="author" content="Paddy">
+    <meta name="description" content="WaveVote">
+    <meta name="author" content="decampsk">
     <title>Admin Page</title>
 
     <!-- Bootstrap core CSS -->
@@ -18,9 +18,10 @@
     <link href="../css/jquery.datetimepicker.css" rel="stylesheet">
 
     <link href="../css/admin.css" rel="stylesheet">
-
   </head>
-
+  
+  <!-- This page is the first page. It check if we are connected to the Ethereum Node and if the node is syncing.
+  		Then we can go to the admin page or the voter page -->
   <body>
   	<div class="jumbotron">
 	  	<div id='testWeb3'>
@@ -36,12 +37,13 @@
   </body>
    
   <script>
-  const isProd = () => process.env.NODE_ENV === 'production';
+  
   
   var Web3 = require('web3');
   var web3;
   
-  
+  //We define the address of the ethereum node 
+  const isProd = () => process.env.NODE_ENV === 'production';
   var addr;
   if(isProd()) {
 	  addr = "localhost:8545";
@@ -52,13 +54,15 @@
   document.getElementById('pageVotant').href="vote.html?addr=" + addr;
   
   if (typeof web3 !== 'undefined') {
-      //web3 = new Web3(web3.currentProvider);
+      web3 = new Web3(web3.currentProvider);
   } else {
       // set the provider you want from Web3.providers
   	web3 = new Web3(new Web3.providers.HttpProvider("http://" + addr));
   }
   
   
+  //TODO : si il n'y a aucun bloc alors, mettre en synchronisation
+  //Check if the node is syncing
   web3.eth.isSyncing(function(error, sync){
 	    if(!error) {
 	        // stop all app activity
@@ -73,7 +77,8 @@
 	    }
 	});
   
-   
+  
+  //Change the adress of the provider
   function changeAddress() {
 	  addr = document.getElementById('addressEthereumNode').value;
 	  console.log(addr);
@@ -83,6 +88,7 @@
 	  testWeb3();
   }
   
+  //Test if we are connected to the Ethereum Node
   	function testWeb3() {
       try {
 	      if(web3.isConnected()) {
@@ -99,6 +105,7 @@
       }
   	}
   	
+  //We test that every 10s
   	setInterval("testWeb3()", 10000);
   	testWeb3();
     

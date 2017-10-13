@@ -37,11 +37,16 @@ transporter.sendMail(mailOptions, function(error, info){
 }); 
 */
 
+/**
+ * Insert in the database each person who is eligible to vote. 
+ * Find the mail in the mail.csv file and write the adminKey database.
+ */
 function generateEachInscriptionKey() {
 	var lineReader = require('readline').createInterface({
 		  input: require('fs').createReadStream(mailDataPath)
 		});
 
+		var numero = 0;
 		lineReader.on('line', function (line) {
 		  console.log('Line from file:', line);
 			var beforeAt = line.split('@')[0];
@@ -49,6 +54,7 @@ function generateEachInscriptionKey() {
 			var name = nameSplit[0];
 			var lastName = nameSplit[1];
 			
-			db.insert({name: name, lastName: lastName, mail: line});
+			db.insert({numero: numero, name: name, lastName: lastName, mail: line});
+			numero+=1;
 		});
 }

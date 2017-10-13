@@ -19,6 +19,7 @@
   "author": "GitHub",
   "license": "CC0-1.0",
   "devDependencies": {
+    "abi-decoder": "^1.0.8",
     "babel-plugin-transform-async-to-generator": "^6.24.1",
     "babel-preset-env": "^1.6.0",
     "babel-preset-react": "^6.24.1",
@@ -48,9 +49,6 @@
       "make_targets": {
         "win32": [
           "zip"
-        ],
-        "linux": [
-          "rpm"
         ]
       },
       "electronPackagerConfig": {},

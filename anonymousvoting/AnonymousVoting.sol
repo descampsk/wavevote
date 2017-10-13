@@ -383,6 +383,9 @@ library Secp256k1 {
 
 }
 
+/**
+ * 
+ */
 contract owned {
     address public owner;
 
@@ -408,7 +411,7 @@ contract owned {
  *  Open Vote Network
  *  A self-talling protocol that supports voter privacy.
  *
- *  Author: Patrick McCorry
+ *  Author: Kévin DESCAMPS
  */
 contract AnonymousVoting is owned {
 
@@ -421,7 +424,8 @@ contract AnonymousVoting is owned {
 
   // Modulus for private keys (sub-group)
   uint constant nn = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
-
+  
+  //Containt Gx and Gy
   uint[2] G;
   
   //Every address has an index
@@ -436,6 +440,8 @@ contract AnonymousVoting is owned {
   mapping (address => bool) public hasReceivedOneEther;
   mapping (bytes32 => bool) public inscriptionCodeUsed;
   
+  
+  //To save all people which ask to register
   address[] public addressesToRegister;
   mapping (address => PeopleToRegister) public peopleToRegisterMap;
   struct PeopleToRegister {
@@ -446,6 +452,7 @@ contract AnonymousVoting is owned {
   }
   
   
+  //Struct to save all voters
   struct VoterBis {
 	  address addr;
 	  bool registered;
@@ -457,21 +464,12 @@ contract AnonymousVoting is owned {
       uint[2] vote;
   }
   
+  // Work around function to fetch details about someone which asked to register
   function getPeopleToRegister(address _address) constant returns (bool _registrationAsked, uint[2] _personalPublicKey, bytes32 _inscriptionCode) {
 	  _registrationAsked = peopleToRegisterMap[_address].registrationAsked;
 	  _personalPublicKey = peopleToRegisterMap[_address].personalPublicKey;
 	  _inscriptionCode = peopleToRegisterMap[_address].inscriptionCode;
   }
-
-  /*
-  // Work around function to fetch details about a voter
-  function getVoter(address _address) constant returns (uint[2] _registeredkey, uint[2] _reconstructedkey, uint[2] _vote) { //}, bytes32 _commitment){
-      uint index = addressid[_address];
-      _registeredkey = voters[index].registeredkey;
-      _reconstructedkey = voters[index].reconstructedkey;
-      _vote = voters[index].vote;
-  }
-  */
   
   // Work around function to fetch details about a voter
   function getVoterBis(address _address) constant returns (bool _registered, bool _voteCast, uint[2] _personalPublicKey, uint[2] _adminPublicKey, uint[2] _registeredkey, uint[2] _reconstructedkey, uint[2] _vote) {
@@ -521,18 +519,17 @@ contract AnonymousVoting is owned {
   uint public endSignupPhase; // Election Authority does not transition to next phase by this time.
   uint public endVotingPhase; // Voters have not submitted their vote by this stage.
     
-  uint public totalRegistrationAsked;
-  uint public totalRecalculatedKey;
-  uint public totalregistered; //Total number of participants that have submited a voting key
-  uint public totalvoted;
+  uint public totalRegistrationAsked; //Total number of people that have asked a registration
+  uint public totalRecalculatedKey; //Number to track how many recalculated key are computed
+  uint public totalregistered; //Total number of participants that are registered
+  uint public totalvoted; //Total number of participants that have cast their vote
 
-  string public question;
-  bytes32[] public answerList;
+  string public question; //The question
+  bytes32[] public answerList; //The list of the answers of the question
   
   bool manualComputationTally;
 
   mapping (uint => uint) public finalTally; // Final tally
-  uint public gap; // Minimum amount of time between time stamps. //Useless atm TODO : remove
 
   enum State { SETUP, SIGNUP, VOTE, FINISHED }
   State public state;
@@ -544,26 +541,19 @@ contract AnonymousVoting is owned {
     _;
   }
 
-  // 2 round anonymous voting protocol
-  // TODO: Right now due to gas limits there is an upper limit
-  // on the number of participants that we can have voting...
-  // I need to split the functions up... so if they cannot
-  // finish their entire workload in 1 transaction, then
-  // it does the maximum. This way we can chain transactions
-  // to complete the job...
-  function AnonymousVoting(uint _gap) payable { //}, address _charity) {
+  //Constructor of the contract
+  function AnonymousVoting() payable {
     G[0] = Gx;
     G[1] = Gy;
     state = State.SETUP;
     question = "No question set";
-    gap = _gap; // Minimum gap period between stages
-    //charity = _charity;
   }
   
   function addEther() payable {
 	  
   }
   
+  //Used to send one eth to a voter to allow him to send transactions
   function sendOneEtherToVoter(address addr) returns (bool _successful, string _error) {
 	  if(hasReceivedOneEther[addr]) {
 		  _successful = false;
@@ -586,34 +576,23 @@ contract AnonymousVoting is owned {
     // _endSignUpPhase - Election Authority never finished sign up phase
     // _endCommitmentPhase - One or more voters did not send their commitments in time
     // _endVotingPhase - One or more voters did not send their votes in time
-    // _endRefundPhase - Provide time for voters to get their money back.
-    // Why is there no endTally? Because anyone can call it!
 
     // Represented in UNIX time...
     // TODO: Set to block timestamp...
-    // TODO: Enforce gap to be at least 1 hour.. may break unit testing
-    // Make sure 3 people are at least eligible to vote..
     // Deposit can be zero or more WEI
-	if(_finishSignupPhase > 0 + gap) {
-    //if(_finishSignupPhase > 0 + gap && addresses.length >= 3) {
+	if(_finishSignupPhase > 0) {
 
         // Ensure each time phase finishes in the future...
         // Ensure there is a gap of 'x time' between each phase.
-        if(_endSignupPhase-gap < _finishSignupPhase) {
+        if(_endSignupPhase < _finishSignupPhase) {
           return false;
         }
         
         // We have no commitment phase.
         // Make sure there is a gap between 'end of registration' and 'end of vote' phases.
-        if(_endVotingPhase-gap < _endSignupPhase) {
+        if(_endVotingPhase < _endSignupPhase) {
           return false;
         }
-		
-      // Store the election authority's deposit
-      // Note: This deposit is only lost if the
-      // election authority does not begin the election
-      // or call the tally function before the timers expire.
-      //refunds[msg.sender] = msg.value;
 
       // All time stamps are reasonable.
       // We can now begin the signup phase.
@@ -685,7 +664,6 @@ contract AnonymousVoting is owned {
 
       for(i=0; i<addresses.length; i++) {
          addr = addresses[i];
-         //registered[addr] = false; // Remove voting registration
          voterMapBis[i] = VoterBis({
          	addr: 0,
         	registered: false,
@@ -696,7 +674,6 @@ contract AnonymousVoting is owned {
         	reconstructedkey: nullArray,
         	vote: nullArray});
          addressid[addr] = 0; // Remove index
-         //votecast[addr] = false; // Remove that vote was cast
       }
       
       for(i=0;i<answerList.length;i++) {
@@ -724,6 +701,11 @@ contract AnonymousVoting is owned {
       state = State.SETUP;  
   }
   
+  /**
+   * The voter ask for a registration for this vote.
+   * @arg personalPublicKey : the personalPublicKey of the voter
+   * @arg inscriptionCode : the inscriptionCode of the voter
+   */
   function askForRegistration(uint[2] personalPublicKey, bytes32 inscriptionCode) inState(State.SIGNUP) returns (bool _successful, string _error) {
      if(block.timestamp > finishSignupPhase) {
          _successful = false;
@@ -750,7 +732,7 @@ contract AnonymousVoting is owned {
      
   
   // Called by the administrator to register a voter
-  function registerAccount(address accountToRegister, uint[2] adminPublicKey, uint[2] xG, uint[3] vG, uint r) inState(State.SIGNUP) onlyOwner payable returns (bool _successful, string _error) {
+  function registerAccount(address accountToRegister, uint[2] adminPublicKey, uint[2] xG, uint[3] vG, uint r) inState(State.SIGNUP) onlyOwner returns (bool _successful, string _error) {
 	  
 	uint256[2] memory nullArray;  
 	  
@@ -790,8 +772,13 @@ contract AnonymousVoting is owned {
   }
   
   
+  //Used to follow the computation
   event ComputationReconstructedKeyEvent(address indexed addressVoter, bool _successful, string _error, uint[2] _yG);
   
+  /**
+   * Function to compute one of the reconstructedKey of one Voter
+   * @arg indexVoter : the index of map VoterMap
+   */
   function computeReconstructedKey(uint indexVoter) onlyOwner returns(bool _successful, string _message, uint[2] _yG){
       	  
 	  // Make sure at least 3 people have signed up...
@@ -824,13 +811,20 @@ contract AnonymousVoting is owned {
             return;
       }
       
+      
+      //Check if we have not already compute the reconstructedKey.
+      //If we don't have, then we add one to the total
       if (voterMapBis[indexVoter].reconstructedkey[0]==0) {
     	  totalRecalculatedKey+=1;
+    	  //If the total is equal to the totalregistered, then we have compute all keys and the vote can begin.
     	  if (totalRecalculatedKey==totalregistered) {
     		  state = State.VOTE;
     	  }
       }
  
+      
+      //We compute the recalculatedKey
+      //@see DAT to understand the computation
       address addressVoter = addresses[indexVoter-1];
       
       uint[2] memory yG;
@@ -896,6 +890,14 @@ contract AnonymousVoting is owned {
       
   }
   
+  /**
+   * Function to submit the vote from a voter
+   * @arg y : the vote of the voter
+   * @arg diAndRiList : informations of the ZKP
+   * @arg aList : informations of the ZKP
+   * @arg bList : informations of the ZKP
+   * @see the DAT to know what is di, ri, ai and bi
+   */
   function submitVote(uint[3] y, uint[2][10] diAndriList, uint[2][10] aList,  uint[2][10] bList) inState(State.VOTE) returns (bool _successful, string _message) {
 
      // HARD DEADLINE
@@ -940,8 +942,18 @@ contract AnonymousVoting is owned {
      }
   }
   
+  //To follow the cast of a vote
   event IsVoteCastEvent(address indexed _from, bool _isVoteCast, string _error);
   
+  
+  /**
+   * Function used by the administrator to send null votes
+   * @arg addressToDoNullVote : address of the voter who has not cast his vote
+   * @arg nullVote : the nullVote
+   * @arg vG : ZKP for the null vote
+   * @arg yvG : ZKP for the null vote
+   * @arg r : random number for the ZKP
+   */
   function submitNullVote(address addressToDoNullVote, uint[2] nullVote, uint[3] vG, uint[3] yvG, uint r) inState(State.VOTE) onlyOwner returns (bool _successful, string _error) {
      // HARD DEADLINE
 	  
@@ -986,6 +998,9 @@ contract AnonymousVoting is owned {
      
   }
   
+  /**
+   * Constant function to sum all the votes
+   */
   function computeSumAllVote() constant returns(uint[2] _sum) {
 	 uint[3] memory temp;
      uint[2] memory vote;
@@ -1019,8 +1034,11 @@ contract AnonymousVoting is owned {
   }
   
   
-  
+  /**
+   * Function called by the administrator to compute the Tally
+   */
   function computeTally() inState(State.VOTE) onlyOwner returns(bool _successful, string _message) {
+	  //We check that all people have cast their vote
 	  if(totalregistered==totalvoted) {
 		     uint[2] memory sumAllVoteTemp = computeSumAllVote();
 
@@ -1052,7 +1070,14 @@ contract AnonymousVoting is owned {
 	  }
 }
   
+  
+  /**
+   * Function called by the administrator to do a manual Tally
+   * @arg result : result of the discret logarithm of the sum of all votes
+   * TODO: call this function only if State is finished or ... ??
+   */
   function manualComputeFinalTally(uint result) onlyOwner returns (bool _successful, string _message){
+	  //Check that all voters has cast their vote
 	  if(totalregistered==totalvoted) {
 	  
 		  //Check that the result is correct
@@ -1079,6 +1104,10 @@ contract AnonymousVoting is owned {
 	  
   }
   
+  /**
+   * Intern function.
+   * TODO : merge this function with manualComputeFinalTally because the admin can call this function with a false result !!
+   */
   function computeFinalTally(uint result) onlyOwner returns(bool _successful, string _message){
 	if(totalregistered==totalvoted) {
 
@@ -1109,6 +1138,9 @@ contract AnonymousVoting is owned {
 	  }
   }
   
+  /**
+   * Constant function to compute the discret Logarithme of a elliptic point
+   */
   function discretLogarithme(uint[2] point) constant returns (bool _successful, string _message, uint _result){
 	  if(point[0] == 0) {
 	       _successful = false;

@@ -184,7 +184,7 @@ public class VotingProccess {
     	System.out.println("sol2 : " + votePoint2);
     	*/
     	
-    	int nombre_votants = 3;
+    	int nombre_votants = 5000;
     	
     	//Initialisation des clés des votants
     	List<KeyPair> key_list = new ArrayList<KeyPair>();
@@ -238,20 +238,20 @@ public class VotingProccess {
     		pointTotal = pointTotal.add(point);
     	}
     	   	
-    	System.out.println("gyiList = " + gyi_list);
-    	System.out.println(pointTotal); 	
+    	//System.out.println("gyiList = " + gyi_list);
+    	//System.out.println(pointTotal); 	
     	
     	ECPoint baseG = ecSpec.getG();
-    	System.out.println("BaseG =  " + baseG);
+    	//System.out.println("BaseG =  " + baseG);
     	
     	Random random = new Random(); 	
     	//On prépare le vote pour chaque candidat
-    	int nombreCandidat = 5;
+    	int nombreCandidat = 3;
     	Map<Integer, Integer> nombreVotantParCandidat = new HashMap<Integer, Integer>();
     	List<Integer> voteCandidatList = new ArrayList<Integer>();
     	for(int i=0;i<nombre_votants;i++) {
     		int randomVote = random.nextInt(nombreCandidat);
-    		//randomVote = 0;
+    		randomVote = 2;
     		voteCandidatList.add(randomVote);
     		if (nombreVotantParCandidat.containsKey(randomVote)) {
     			nombreVotantParCandidat.put(randomVote, nombreVotantParCandidat.get(randomVote)+1);
@@ -260,7 +260,7 @@ public class VotingProccess {
     		}
     	}
     	
-    	System.out.println("Vote list = " + voteCandidatList);
+    	//System.out.println("Vote list = " + voteCandidatList);
     	System.out.println("Nombre Vote par candidat = " + nombreVotantParCandidat);
     	
     	//On trouve m tel que 2^m>n
@@ -280,7 +280,7 @@ public class VotingProccess {
     		gviList.add(point);
     	}
     	
-    	System.out.println("gviList = " + gviList);
+    	//System.out.println("gviList = " + gviList);
     	
     	//On calcule chaque gxiyigvi
     	List<ECPoint> gxiyigviList = new ArrayList<ECPoint>();
@@ -306,9 +306,9 @@ public class VotingProccess {
     	
     	//Faire l'algo Baby-step giant-step
     	System.out.println("2^km= " + (long)Math.pow(2, nombreCandidat*m));
-    	ECPoint produitVote = curve.createPoint(new BigInteger("9082489389433202800261982824095331619410221232933259055016654422493091681032"), new BigInteger("38247003175448550651848273528845382443424900972808116527482940066451175144776"));
-    	nombreCandidat = 7;
-    	long sommeVi = logBabyStepGiantStepEC(baseG, produitVote, (long)Math.pow(2, nombreCandidat*m));
+    	//ECPoint produitVote = curve.createPoint(new BigInteger("9082489389433202800261982824095331619410221232933259055016654422493091681032"), new BigInteger("38247003175448550651848273528845382443424900972808116527482940066451175144776"));
+    	//nombreCandidat = 7;
+    	long sommeVi = logBabyStepGiantStepEC(baseG, Pgxiyigvi, (long)Math.pow(2, nombreCandidat*m));
     	System.out.println("sommeViBaby = " + sommeVi);
     	
     	
