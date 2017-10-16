@@ -33,4 +33,5 @@ docker run -it --net=host --rm -v blockchain-volume-dev:/root/ kdwavestone/ether
 
 #### How to install the Smart Contract ?
 1 - Install Ethereum-Wallet/Mist : https://github.com/ethereum/mist/releases<br> <b>Warning</b> : the version must be under 0.9.0 or you won't be able to compile the contract.<br>
-
+2 - Compile and upload the 3 contracts : WaveVote.sol, LocalCrypto.sol and WaveVoteContractRegistry.sol.<br>
+3 - 
