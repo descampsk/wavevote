@@ -6,8 +6,8 @@ Thanks for his amazing job.<br>
 
 Based of this work, WaveVote :<br>
 - Removed the limit of 40 voters<br>
-- Removed the obligation of all voters to vote<br>
-- Add a distributed administration <b>(NOT IMPLEMENTED YET)</b><br>
+- Removed the obligation of all voters to vote => secret is now corrupted by the administrator<br>
+- Add a distributed administration => keep all secret safe until all administrators are corrupted. If one administrator is safe, then all secrets are safe.<b>(NOT IMPLEMENTED YET)</b><br>
 - Add the possibility to organize a multi-candidates election<br>
 - Cryptography is now hidden in the client<br>
 - Use Electron to create a user friendly application<br> 
