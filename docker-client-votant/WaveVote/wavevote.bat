@@ -1,2 +1,0 @@
-START docker run -it --net=host --rm -e DOCKER_HOST=%DOCKER_HOST% kdwavestone/ethereum-apache-votant-ihm:v1
-docker run -it --net=host --rm -e NETWORKID=9876 -v blockchain-volume-dev:/root/ kdwavestone/ethereum-node-votant:v1
