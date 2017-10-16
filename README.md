@@ -1,6 +1,16 @@
 # WaveVote
 
-WaveVote is a voting system based on Ethereum. It's inspired from and base of the work of https://github.com/stonecoldpat/anonymousvoting. Thanks for his amazing job.
+WaveVote is a voting system based on Ethereum. It is inspired and is based on the work of https://github.com/stonecoldpat/<br>
+You can find his work here : https://github.com/stonecoldpat/anonymousvoting.<br>
+Thanks for his amazing job.<br>
+
+Based of this work, WaveVote :<br>
+- Removed the limit of 40 voters<br>
+- Removed the obligation of all voters to vote<br>
+- Add a distributed administration <b>(NOT IMPLEMENTED YET)</b><br>
+- Add the possibility to organize a multi-candidates election<br>
+- Cryptography is now hidden in the client<br>
+- Many others things ...
 
 ## How to install the WaveVote client ?
 ```
