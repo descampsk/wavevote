@@ -10,6 +10,7 @@ Based of this work, WaveVote :<br>
 - Add a distributed administration <b>(NOT IMPLEMENTED YET)</b><br>
 - Add the possibility to organize a multi-candidates election<br>
 - Cryptography is now hidden in the client<br>
+- Use Electron to create a user friendly application<br> 
 - Many others things ...
 
 ## How to install the WaveVote client ?
