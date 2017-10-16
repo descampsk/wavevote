@@ -13,6 +13,12 @@ Based of this work, WaveVote :<br>
 - Use Electron to create a user friendly application<br> 
 - Many others things ...
 
+## I want directly test the WaveVote Client ! 
+It's possible. <br>
+To achieve this, you have to download VirtualBox here : https://www.virtualbox.org/wiki/Downloads<br>
+Then, you need to download a Virtual Box LUbuntu image, which contains the client and a local private Ethereum Blockchain which mines automaticaly. You will find the image here : <br>
+Last things, import the image into VirtualBox and let's have fun !
+
 ## How to install the WaveVote client ?
 ```
 1 - git clone <location> https://github.com/descampsk/wavevote/
