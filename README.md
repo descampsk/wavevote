@@ -25,7 +25,7 @@ Last thing, import the image into VirtualBox and let's have fun ! The administra
 2 - cd \<location\>/WaveVote_Electron<br>
 3 - npm install
 4 - npm start
-5 - To build an executable : npm make
+5 - To build an executable : electron-forge make
 ```
 
 ### Prerequisites
