@@ -7,7 +7,7 @@ Thanks for his amazing job.<br>
 Based of this work, WaveVote :<br>
 - Removed the limit of 40 voters<br>
 - Removed the obligation of all voters to vote => secret is now corrupted by the administrator<br>
-- Add a distributed administration => keep all secret safe until all administrators are corrupted. If one administrator is safe, then all secrets are safe.<b>(NOT IMPLEMENTED YET)</b><br>
+- Add a distributed administration => keep all secret safe until all administrators are corrupted. If one administrator is safe, then all secrets are safe <b>(NOT IMPLEMENTED YET)</b><br>
 - Add the possibility to organize a multi-candidates election<br>
 - Cryptography is now hidden in the client<br>
 - Use Electron to create a user friendly application<br> 
@@ -22,7 +22,7 @@ Last thing, import the image into VirtualBox and let's have fun ! The administra
 ## How to install the WaveVote client ?
 ```
 1 - git clone <location> https://github.com/descampsk/wavevote/
-2 - cd \<location\>/WaveVote_Electron<br>
+2 - cd \<location\>/WaveVote_Electron
 3 - npm install
 4 - npm start
 5 - To build an executable : electron-forge make
