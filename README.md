@@ -31,12 +31,8 @@ Last thing, import the image into VirtualBox and let's have fun ! The administra
 ### Prerequisites
 
 #### Private Blockchain
-
-You need to have a private Ethereum Blockchain that is installed.<br>
-To do it quickly, you can use docker and this command : 
-```
-docker run -it --net=host --rm -v blockchain-volume-dev:/root/ kdwavestone/ethereum-node-votant:v2
-```
+A Geth client is included in the application. It will automatically create the genesis block and connect to the Blockchain on the networkid 9876. You can change the networkid in the file config.json.<br>
+By default, the client will not mine new blocks and will act as a relay. However, you can change the "mine" value to true in the config file, so that the client will mine with a single thread.
 
 #### How to install the Smart Contract ?
 1 - Install Ethereum-Wallet/Mist : https://github.com/ethereum/mist/releases<br> <b>Warning</b> : the version must be under 0.9.0 or you won't be able to compile the contract.<br>
