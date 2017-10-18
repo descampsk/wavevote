@@ -31,7 +31,7 @@ Last thing, import the image into VirtualBox and let's have fun ! The administra
 ### Prerequisites
 
 #### Private Blockchain
-A Geth client is included in the application. It will automatically create the genesis block and connect to the Blockchain on the networkid 9876. You can change the networkid in the file config.json.<br>
+A Geth client is included in the application. It will automatically create the genesis block (the genesis file can be changed) and connect to the Blockchain on the networkid 9876. You can change the networkid in the file config.json.<br>
 By default, the client will not mine new blocks and will act as a relay. However, you can change the "mine" value to true in the config file, so that the client will mine with a single thread.<br>
 It's possible to use an other geth client. To do this, change in the config file, the value "externGeth" to true and the value "gethAddress" to "IP:8545". For example :
 ```
