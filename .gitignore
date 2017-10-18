@@ -25,8 +25,9 @@ hs_err_pid*
 .classpath
 .settings
 target/
-electron-ihm-votant/node_modules/
-anonymousvoting/target/
-anonymousvoting/target/maven-archiver/
-electron-ihm-votant/out/
-electron-ihm-votant/db/
+WaveVote_Electron/node_modules/
+WaveVote_NodeJsServer/node_modules/
+WaveVote_JavaJob/target/
+WaveVote_JavaJob/target/maven-archiver/
+WaveVote_Electron/out/
+WaveVote_Electron/db/

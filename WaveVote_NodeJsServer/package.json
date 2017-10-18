@@ -1,0 +1,14 @@
+{
+  "name": "wavevote_nodejsserver",
+  "version": "1.0.0",
+  "description": "Server NodeJs for WaveVote",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "geth": "^0.4.0"
+  }
+}

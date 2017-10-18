@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="Open Vote Network on Ethereum">
+    <meta name="author" content="descampsk">
+    <title>Admin Page</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="../css/starter-template.css" rel="stylesheet">
+
+    <link href="../css/jquery.datetimepicker.css" rel="stylesheet">
+
+    <link href="../css/admin.css" rel="stylesheet">
+
+  </head>
+
+  <body>
+
+    <div class="container">
+      <ul id="progressbar">
+          <li id="pb_unlock" class="active">Unlock Address</li>
+          <li id="pb_setup">Set up</li>
+          <li id="pb_register">Register</li>
+          <li id="pb_cast">Cast</li>
+          <li id="pb_tally">Tally</li>
+      </ul>
+      <div class="jumbotron">
+        <h2 id="title">Login to Ethereum</h2>
+        <p id="section_desc"></p>
+        <p id="question"></p>
+        <div hidden id="login">
+           <div id='dropdown'></div>
+        </div> 
+        <div hidden id="registrationSetQuestion">
+          <p>Question:  <input type='text' id='questioninput' value='Dummy Question?'/> </p>
+          <p>Total of answer :  <input type='number' id='totalAnswerInput' value='2'/> </p>
+          <p id="setUpAnswers"><button onclick="setUpAnswers()" class="btn btn-primary">Set up the answers</button></p>
+        </div>
+        <div hidden id="registrationSetAnswers">
+          <div id="answersList"></div>
+          <p id="return"><button onclick="returnSetQuestion()" class="btn btn-primary">Return</button></p>
+          <p id="setUpTimeTable"><button onclick="setUpTimeTable()" class="btn btn-primary">Set up the timetable</button></p>
+        </div>
+        <div hidden id="listoftimers">
+          <div id="registrationSetTimes">
+
+            <p>A timetable is necessary to ensure the election progresses in a timely manner. All active voters are guaranteed that their deposit is returned if a deadline is missed. </p>
+            <hr>
+
+            <p>What time should the election begin?  </p>
+            <p id="datepairExample">
+                Voters should register by <input id="datetimepickerfinishby" type="text">
+            </p>
+            <hr>
+
+            <p>Set a deadline for each phase in the election:
+            <p id="endSignup">
+                Begin Election: <input id="datetimepickerendsignup" type="text">
+            </p>
+            <p id="endVote">
+                Voting: <input id="datetimepickerendvote" type="text">
+            </p>
+
+          </div>
+          <p id="beginRegistrationbutton"><button onclick="beginRegistration()" class="btn btn-primary">Begin Registration Phase</button></p>
+        </div>
+
+        <div hidden id="finishRegistration">
+            <div id='selectAccountToRegister'></div>
+       	  <br>
+             <p id="currentRegistration"></p>
+             <p id="finishby"></p>
+             <p id="totalregistered"></p>
+             <button class="btn btn-primary" onclick="finishRegistration()">Finish Registration Phase</button> 
+        </div>
+        <div hidden id="votephase">
+          <p id="totalvoters"></p>
+          <p id="tallybutton"><button onclick="tally()" class="btn btn-primary">Get Tally</button></p>
+          <div id="manualTally">
+            <p>Result of the discret logarithm: <input id="discretlogarithm" type="number"></p>
+          	<button onclick="manualTally()" class="btn btn-success">Manual Tally</button>
+          </div>
+          <hr>
+        </div>
+        <div hidden id="tallydiv">
+            <hr>
+            <p id="newvote"></p>
+            <button onclick="resetElection()" class="btn btn-success">Start a new vote</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- <hr> -->
+    <div>
+      <br>
+      <div hidden id="cancelelec"><button id="cancelelectionbutton" onclick="cancelElection()" class="btn btn-danger">Cancel Election</button></div>
+      <div hidden id="unspentdeposits"><button onclick="claimUnspentDeposits()" class="btn btn-danger">Send deposits to Charity</button></div>
+    </div>
+      <div hidden id="txlist">
+        <p>Transaction List:</p>
+      </div>
+      <div hidden id="infodiv">
+        <p>Events from Ethereum:</p>
+      </div>
+    </div><!-- /.container -->
+    
+    <a href="admin.html" id='pageAdmin' class="btn btn-primary">Page Administration</a>
+  	<a href="vote.html" id='pageVotant' class="btn btn-primary">Page Votant</a>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->  
+    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+    <script src="../js/jquery.min.js"></script>
+    <script src="../js/jquery.datetimepicker.js"></script>  
+    <script>if (window.module) module = window.module;</script>
+    
+    <script src="../js/helper.js"></script> 
+    <script src="../js/adminEngine.js"></script> 
+    <script src="../js/admin.js"></script> 
+    <!--  
+    <script src="../js/jquery.min.js"></script>
+    <script src="../js/jquery-ui.min.js"></script>
+    <script src="../js/jquery.easing.min.js"></script>
+    <script src="../js/jquery.min.js"></script>
+    -->
+</body>
+</html>

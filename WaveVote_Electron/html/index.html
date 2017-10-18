@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="WaveVote">
+    <meta name="author" content="decampsk">
+    <title>Admin Page</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="../css/starter-template.css" rel="stylesheet">
+
+    <link href="../css/jquery.datetimepicker.css" rel="stylesheet">
+
+    <link href="../css/admin.css" rel="stylesheet">
+  </head>
+  
+  <!-- This page is the first page. It check if we are connected to the Ethereum Node and if the node is syncing.
+  		Then we can go to the admin page or the voter page -->
+  <body>
+  	<div class="jumbotron">
+	  	<div id='testWeb3'>
+	  		<p id='resultTest'></p>
+		  	<p hidden=false id='modifyAddress'>Please enter the ip address and the port of the local ethereum node (XX.XX.XX.XX:port): 
+		  		<input type='text' id='addressEthereumNode' value='' name='faddressEthereumNode'> 
+		  		<button onclick='changeAddress()' class='btn btn-primary'>Modify</button> 
+		  	</p>
+	  	</div>
+	  <div id=pageButton hidden=true>
+	    <a href="admin.html" id="pageAdmin" class="btn btn-primary">Page Administration</a>
+	  	<a href="vote.html" id="pageVotant" class="btn btn-primary">Page Votant</a>
+	  </div>
+  	</div>
+  </body>
+   
+  <script>
+  var Web3 = require('web3');
+  var web3;
+  
+  //We define the address of the ethereum node 
+  const isProd = () => process.env.NODE_ENV === 'production';
+  var addr;
+  if(isProd()) {
+	  addr = "localhost:8545";
+  } else {
+	  addr = "192.168.99.100:8545";
+  }
+  document.getElementById('pageAdmin').href="admin.html?addr=" + addr;
+  document.getElementById('pageVotant').href="vote.html?addr=" + addr;
+  
+  if (typeof web3 !== 'undefined') {
+      web3 = new Web3(web3.currentProvider);
+  } else {
+      // set the provider you want from Web3.providers
+  	web3 = new Web3(new Web3.providers.HttpProvider("http://" + addr));
+  }
+  
+  var checkingSyncing = false;
+  function checkSyncing() {
+	  //TODO : si il n'y a aucun bloc alors, mettre en synchronisation
+	  //Check if the node is syncing
+	  
+	  if(checkingSyncing) {
+		  return;
+	  }
+  
+	  checkingSyncing= true;
+	  
+	  web3.eth.isSyncing(function(error, sync){
+		    if(!error) {
+		        // stop all app activity
+		        if((sync && web3.eth.syncing.highestBlock!=web3.eth.blockNumber) || web3.eth.blockNumber==0) {
+			      	document.getElementById('resultTest').innerHTML = "You are connected to the Ethereum node. The node is syncing with the Blockchain. Please wait.";
+			      	document.getElementById('modifyAddress').setAttribute("hidden", true);
+			      	document.getElementById('pageButton').setAttribute("hidden", true);
+		        // re-gain app operation
+		        } else {
+			    	document.getElementById('resultTest').innerHTML = "You are connected to the Ethereum node. You can continue.";
+			    	document.getElementById('modifyAddress').setAttribute("hidden", true);
+			      	document.getElementById('pageButton').removeAttribute("hidden");
+		        }
+		    }
+		});  
+  }
+  
+  //Change the adress of the provider
+  function changeAddress() {
+	  addr = document.getElementById('addressEthereumNode').value;
+	  console.log(addr);
+	  document.getElementById('pageAdmin').href="admin.html?addr=" + addr;
+	  document.getElementById('pageVotant').href="vote.html?addr=" + addr;
+	  web3 = new Web3(new Web3.providers.HttpProvider("http://" + addr));
+	  testWeb3();
+  }
+  
+  //Test if we are connected to the Ethereum Node
+  	function testWeb3() {
+      try {
+	      if(web3.isConnected()) {
+	    	  if((web3.eth.syncing.highestBlock==web3.eth.blockNumber || !web3.eth.syncing) && web3.eth.blockNumber!=0) {
+	    		  document.getElementById('modifyAddress').setAttribute("hidden", true);
+		    	  document.getElementById('resultTest').innerHTML = "You are connected to the Ethereum node. You can continue.";
+			      document.getElementById('pageButton').removeAttribute("hidden");
+	    	  } else {
+	    		  //checkSyncing();
+		      	document.getElementById('resultTest').innerHTML = "You are connected to the Ethereum node. The node is syncing with the Blockchain. Please wait.";
+		      	document.getElementById('modifyAddress').setAttribute("hidden", true);
+		      	document.getElementById('pageButton').setAttribute("hidden", true);
+	    	  }  
+	    	} else {
+	    	  checkingSyncing = false;
+	    	  document.getElementById('resultTest').innerHTML = "Error : you aren't connected to the Ethereum node with the address: " + addr;
+	    	  document.getElementById('modifyAddress').removeAttribute("hidden");
+		      document.getElementById('pageButton').setAttribute("hidden", true);
+	      }
+      } catch(e) {
+    	  console.log(e);
+    	  document.getElementById('resultTest').innerHTML = "Error : you aren't connected to the Ethereum node with the address: " + addr;
+    	  document.getElementById('modifyAddress').removeAttribute("hidden");
+	      document.getElementById('pageButton').setAttribute("hidden", true);
+      }
+  	}
+  	
+  //We test that every 10s
+  	setInterval("testWeb3()", 5000);
+  	testWeb3();
+    
+  </script>
+  
+</html>
