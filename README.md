@@ -7,7 +7,7 @@ Thanks for his amazing job.<br>
 Based of this work, WaveVote :<br>
 - Removed the limit of 40 voters<br>
 - Removed the obligation of all voters to vote => secret is now corrupted by the administrator<br>
-- Add a distributed administration => keep all secret safe until all administrators are corrupted. If one administrator is safe, then all secrets are safe.<b>(NOT IMPLEMENTED YET)</b><br>
+- Add a distributed administration => keep all secret safe until all administrators are corrupted. If one administrator is safe, then all secrets are safe <b>(NOT IMPLEMENTED YET)</b><br>
 - Add the possibility to organize a multi-candidates election<br>
 - Cryptography is now hidden in the client<br>
 - Use Electron to create a user friendly application<br> 
@@ -22,7 +22,7 @@ Last thing, import the image into VirtualBox and let's have fun ! The administra
 ## How to install the WaveVote client ?
 ```
 1 - git clone <location> https://github.com/descampsk/wavevote/
-2 - cd \<location\>/WaveVote_Electron<br>
+2 - cd \<location\>/WaveVote_Electron
 3 - npm install
 4 - npm start
 5 - To build an executable : electron-forge make
@@ -31,11 +31,11 @@ Last thing, import the image into VirtualBox and let's have fun ! The administra
 ### Prerequisites
 
 #### Private Blockchain
-
-You need to have a private Ethereum Blockchain that is installed.<br>
-To do it quickly, you can use docker and this command : 
+A Geth client is included in the application. It will automatically create the genesis block (the genesis file can be changed) and connect to the Blockchain on the networkid 9876. You can change the networkid in the file config.json.<br>
+By default, the client will not mine new blocks and will act as a relay. However, you can change the "mine" value to true in the config file, so that the client will mine with a single thread.<br>
+It's possible to use an other geth client. To do this, change in the config file, the value "externGeth" to true and the value "addrProvider" to "IP:8545". For example :
 ```
-docker run -it --net=host --rm -v blockchain-volume-dev:/root/ kdwavestone/ethereum-node-votant:v2
+{"externGeth": true, "addrProvider": localhost:8545, ...}
 ```
 
 #### How to install the Smart Contract ?
