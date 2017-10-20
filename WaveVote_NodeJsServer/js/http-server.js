@@ -71,47 +71,46 @@ var server = http.createServer((request, response) => {
         response.writeHead(204, {'Content-Type': 'application/json'});
         response.end();
     } else {
-        console.log(url);
-        var account = url.split('?')[1].split('=')[1];
-        console.log(account);
-
-        if (isAddress(account)) {
-                console.log("account : " + account);
-
-                web3.personal.unlockAccount(web3.eth.accounts[0], "password");
-
-                console.log("Connected");
-                var res = anonymousvotingAddr.sendOneEtherToVoter.call(account, {
-                    from: web3.eth.accounts[0]
-            });
-
-            console.log(res);
-
-             if (res[0]) {
-                    try {
-                            anonymousvotingAddr.sendOneEtherToVoter.sendTransaction(account, {
-                            from: web3.eth.accounts[0],
-                            gaz: 400000
-                            });
-
-                    response.writeHead(200, {'Content-Type': 'application/json'});
-                    var responseBody = {successful: true, message: "You will receive 1 Ether on this account " + account};
-                    response.end(JSON.stringify(responseBody));
-
-                    } catch (e) {
-                            response.writeHead(200, {'Content-Type': 'application/json'});
-                            var responseBody = {successful: false, message: e};
-                            response.end(JSON.stringify(responseBody));
-                    }
-            } else {
-                    response.writeHead(200, {'Content-Type': 'application/json'});
-                    var responseBody = {successful: false, message: res[1]};
-                    response.end(JSON.stringify(responseBody));
-            }
-    } else {
+    	try {
+	        console.log(url);
+	        var account = url.split('?')[1].split('=')[1];
+	        console.log(account);
+	
+	        if (isAddress(account)) {
+	                console.log("account : " + account);
+	
+	                web3.personal.unlockAccount(web3.eth.accounts[0], "password");
+	
+	                console.log("Connected");
+	                var res = anonymousvotingAddr.sendOneEtherToVoter.call(account, {
+	                    from: web3.eth.accounts[0]
+	            });
+	
+	            console.log(res);
+	
+	             if (res[0]) {
+	                            anonymousvotingAddr.sendOneEtherToVoter.sendTransaction(account, {
+	                            from: web3.eth.accounts[0],
+	                            gaz: 400000
+	                            });
+	
+	                    response.writeHead(200, {'Content-Type': 'application/json'});
+	                    var responseBody = {successful: true, message: "You will receive 1 Ether on this account " + account};
+	                    response.end(JSON.stringify(responseBody));
+	            } else {
+	                    response.writeHead(200, {'Content-Type': 'application/json'});
+	                    var responseBody = {successful: false, message: res[1]};
+	                    response.end(JSON.stringify(responseBody));
+	            }      
+		    } else {
+		            response.writeHead(200, {'Content-Type': 'application/json'});
+		            var responseBody = {successful: false, message: "Error"};
+		    }
+        } catch (e) {
             response.writeHead(200, {'Content-Type': 'application/json'});
-            var responseBody = {successful: false, message: "Error"};
-    }
+            var responseBody = {successful: false, message: e};
+            response.end(JSON.stringify(responseBody));
+        }
     }
     });
   });

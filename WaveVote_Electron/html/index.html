@@ -35,29 +35,32 @@
 	    <a href="admin.html" id="pageAdmin" class="btn btn-primary">Page Administration</a>
 	  	<a href="vote.html" id="pageVotant" class="btn btn-primary">Page Votant</a>
 	  </div>
+	  <div>
+	  	<button id="refreshButton" onclick="testWeb3()" class="btn btn-primary">Refresh</button>
+	  </div>
   	</div>
   </body>
    
   <script>
+  const isProd = () => process.env.NODE_ENV === 'production';
   var Web3 = require('web3');
   var web3;
   
   //We define the address of the ethereum node 
-  const isProd = () => process.env.NODE_ENV === 'production';
-  var addr;
-  if(isProd()) {
-	  addr = "localhost:8545";
-  } else {
-	  addr = "192.168.99.100:8545";
-  }
-  document.getElementById('pageAdmin').href="admin.html?addr=" + addr;
-  document.getElementById('pageVotant').href="vote.html?addr=" + addr;
+  var path = require("path");
+  var config = require(path.join(__dirname, "../config/config.json"));
+  console.log(config);
+  var addrProvider = config.addrProvider;
+  console.log("AddrProvider : " + addrProvider);
+
+  document.getElementById('pageAdmin').href="admin.html?addr=" + addrProvider;
+  document.getElementById('pageVotant').href="vote.html?addr=" + addrProvider;
   
   if (typeof web3 !== 'undefined') {
       web3 = new Web3(web3.currentProvider);
   } else {
       // set the provider you want from Web3.providers
-  	web3 = new Web3(new Web3.providers.HttpProvider("http://" + addr));
+  	web3 = new Web3(new Web3.providers.HttpProvider("http://" + addrProvider));
   }
   
   var checkingSyncing = false;
@@ -90,16 +93,16 @@
   
   //Change the adress of the provider
   function changeAddress() {
-	  addr = document.getElementById('addressEthereumNode').value;
-	  console.log(addr);
-	  document.getElementById('pageAdmin').href="admin.html?addr=" + addr;
-	  document.getElementById('pageVotant').href="vote.html?addr=" + addr;
-	  web3 = new Web3(new Web3.providers.HttpProvider("http://" + addr));
+	  addrProvider = document.getElementById('addressEthereumNode').value;
+	  console.log(addrProvider);
+	  document.getElementById('pageAdmin').href="admin.html?addr=" + addrProvider;
+	  document.getElementById('pageVotant').href="vote.html?addr=" + addrProvider;
+	  web3 = new Web3(new Web3.providers.HttpProvider("http://" + addrProvider));
 	  testWeb3();
   }
   
   //Test if we are connected to the Ethereum Node
-  	function testWeb3() {
+  	function testWeb3() {  
       try {
 	      if(web3.isConnected()) {
 	    	  if((web3.eth.syncing.highestBlock==web3.eth.blockNumber || !web3.eth.syncing) && web3.eth.blockNumber!=0) {
@@ -107,28 +110,28 @@
 		    	  document.getElementById('resultTest').innerHTML = "You are connected to the Ethereum node. You can continue.";
 			      document.getElementById('pageButton').removeAttribute("hidden");
 	    	  } else {
-	    		  //checkSyncing();
 		      	document.getElementById('resultTest').innerHTML = "You are connected to the Ethereum node. The node is syncing with the Blockchain. Please wait.";
 		      	document.getElementById('modifyAddress').setAttribute("hidden", true);
 		      	document.getElementById('pageButton').setAttribute("hidden", true);
 	    	  }  
 	    	} else {
 	    	  checkingSyncing = false;
-	    	  document.getElementById('resultTest').innerHTML = "Error : you aren't connected to the Ethereum node with the address: " + addr;
+	    	  document.getElementById('resultTest').innerHTML = "Error : you aren't connected to the Ethereum node with the address: " + addrProvider;
 	    	  document.getElementById('modifyAddress').removeAttribute("hidden");
 		      document.getElementById('pageButton').setAttribute("hidden", true);
 	      }
       } catch(e) {
     	  console.log(e);
-    	  document.getElementById('resultTest').innerHTML = "Error : you aren't connected to the Ethereum node with the address: " + addr;
+    	  document.getElementById('resultTest').innerHTML = "Error : you aren't connected to the Ethereum node with the address: " + addrProvider;
     	  document.getElementById('modifyAddress').removeAttribute("hidden");
 	      document.getElementById('pageButton').setAttribute("hidden", true);
       }
   	}
   	
-  //We test that every 10s
-  	setInterval("testWeb3()", 5000);
+  //We test that every 15s
+  	setInterval("testWeb3()", 60000);
   	testWeb3();
+  	checkSyncing();
     
   </script>
   

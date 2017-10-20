@@ -12,7 +12,7 @@ var transporter = nodemailer.createTransport({
     port: 587, // port for secure SMTP
     auth: {
         user: "kevin.descamps@wavestone.com",
-        pass: "fcmddnzzhgmhbssx"
+        pass: "wbzccjxrvpmxlxyv"
     },
     requireTLS: true,
     tls: {
@@ -20,22 +20,44 @@ var transporter = nodemailer.createTransport({
     }
 });
 
-var mailOptions = {
-  from: 'kevin.descamps@wavestone.com',
-  to: 'melanie.coissard@wavestone.com',
-  subject: 'Sending Email using Node.js',
-  text: 'That was easy!'
-};
+function sendAuthentificationCodeTo(doc, question) {
+	var to = doc.mail;
+	var name = doc.name;
+	var lastName = doc.lastName;
+	var authentificationCode = doc._id;
+	var mailOptions = {
+			  from: 'kevin.descamps@wavestone.com',
+			  to: to,
+			  subject: "[WaveVote] Code d'authentification",
+			  html: "Bonjour " + name + " " + lastName + " !<br><br>" +
+			  		"Votre code d’authentification pour le vote « " + question + " » est : <br>" +
+			  		"<FONT COLOR=#4B088A>&nbsp;&nbsp;&nbsp;<b>" + authentificationCode + "</b><br><br></FONT>" +
+			  		"N’oubliez pas d’aller voter !<br><br>" + 
+			  		"Kévin DESCAMPS<br>" +
+			  		"Administrateur WaveVote"
+			};
+	console.log(mailOptions);
+	transporter.sendMail(mailOptions, function(error, info){
+		  if (error) {
+		    console.log(error);
+		  } else {
+		    console.log('Email sent: ' + info.response);
+		  }
+		}); 
+}
 
-/*
-transporter.sendMail(mailOptions, function(error, info){
-  if (error) {
-    console.log(error);
-  } else {
-    console.log('Email sent: ' + info.response);
-  }
-}); 
-*/
+function sendAllMail(question) {
+	db.find({}, function(error,docs) {
+		if(error) {
+			console.log(error);
+		} else {
+			for(var i=0;i<docs.length;i++) {
+				var doc = docs[i];
+				sendAuthentificationCodeTo(doc, question);
+			}
+		}
+	});
+}
 
 /**
  * Insert in the database each person who is eligible to vote. 

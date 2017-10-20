@@ -10,23 +10,7 @@ var db = new Datastore({filename: databasePath, autoload: true, onload: function
 	console.log(error);
 }});
 
-var paramUrl; 
-var addrProvider;
-try {
-	paramUrl = location.search.substring(1);
-	console.log("ParamUrl : " + paramUrl);
-	addrProvider= paramUrl.split('=')[1];
-} catch(e) {
-	console.log(e);
-	alert(e);
-	  if(isProd()) {
-		  addrProvider = "localhost:8545";
-	  } else {
-		  addrProvider = "192.168.99.100:8545";
-	  }
-}
-console.log("AddrProvider : " + addrProvider);
-
+//addrProvider defined in helper.js
 document.getElementById('pageVotant').href="vote.html?addr=" + addrProvider;
 document.getElementById('pageAdmin').href="admin.html?addr=" + addrProvider;
 

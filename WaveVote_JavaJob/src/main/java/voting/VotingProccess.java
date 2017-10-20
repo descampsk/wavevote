@@ -353,9 +353,9 @@ public class VotingProccess {
 	   	ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256k1");
 	   	ECCurve curve = ecSpec.getCurve();
 	   	
-		int nombre_votants = 3;
-		int nombreCandidat = 3;
-		ECPoint produitVote = curve.createPoint(new BigInteger("101419098787597942766661010883841213675986572091206578880178916574081925093625"), new BigInteger("53748097764673089702489673031527129553025318704228137363806494938199580582828"));
+		int nombre_votants = 4;
+		int nombreCandidat = 4;
+		ECPoint produitVote = curve.createPoint(new BigInteger("23593695842213704323894249109946233988291594176434645859101973539580417621171"), new BigInteger("71470002574855576372143173110000816563859031876144663484613718030123982354396"));
 		
 		//On trouve m tel que 2^m>n
 	   	int m=1;

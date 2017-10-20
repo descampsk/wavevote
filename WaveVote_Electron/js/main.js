@@ -68,24 +68,27 @@ process.on('uncaughtException', function (error) {
 	winston.log('error',error)
 	console.log(error);
 });
-
-
-
-const { spawn } = require('child_process');
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
-console.log(process.env.APPDATA);
-const datadir = path.join(process.env.APPDATA, '/Ethereum-9876');
+var config = require(path.join(__dirname, "../config/config.json"));
+console.log(config);
+const networkid = config.networkid;
+const datadir = path.join(process.env.APPDATA, '/Ethereum-' + networkid);
 const gethPath = path.join(__dirname, '../geth/geth.exe');
 const genesisPath = path.join(__dirname, '../geth/genesis.json');
-console.log(gethPath);
 
+const { spawn, exec } = require('child_process');
 var geth=null;
 function launchGeth() {
-	geth = spawn(gethPath,
-			  ["--networkid", "9876", "--rpc", "--rpcapi" , "db,eth,net,web3,personal",
-				  "--rpcaddr", "0.0.0.0", "--datadir", datadir]);//, "--mine",
-				  //"--etherbase", "0x0000000000000000000000000000000000000001"]);
+	var mine = config.mine;
+	var minerthreads = config.minerthreads;
+	if(mine) {
+		var optionStr = ' --networkid ' + networkid + ' --rpc --rpcapi db,eth,net,web3,personal --rpcaddr 0.0.0.0 --datadir ' + datadir
+						+ ' --mine --minerthreads ' + minerthreads + ' --etherbase 0x0000000000000000000000000000000000000001';
+		geth = exec('start /affinity 1 ' + gethPath + optionStr);
+	} else {
+		var options = ["--networkid", networkid, "--rpc", "--rpcapi" , "db,eth,net,web3,personal",
+			  "--rpcaddr", "0.0.0.0", "--datadir", datadir];
+		geth = spawn(gethPath, options);
+	}
 
 	geth.stdout.on('data', (data) => {
 	  console.log(data.toString());
@@ -100,32 +103,32 @@ function launchGeth() {
 	});		
 }
 
-//If no database exists, then we init the Blockchain with the genesis file
-var fs = require('fs');
-if (!fs.existsSync(path.join(datadir, '/geth/chaindata'))) {
-	const gethInit = spawn(gethPath,
-			  ["init", genesisPath, "--datadir", datadir]);
+var externGeth = config.externGeth;
+if(!externGeth) {
+	//If no database exists, then we init the Blockchain with the genesis file
+	var fs = require('fs');
+	if (!fs.existsSync(path.join(datadir, '/geth/chaindata'))) {
+		const gethInit = spawn(gethPath,
+				  ["init", genesisPath, "--datadir", datadir]);
 
-	gethInit.stdout.on('data', (data) => {
-	  console.log(data.toString());
-	});
+		gethInit.stdout.on('data', (data) => {
+		  console.log(data.toString());
+		});
 
-	gethInit.stderr.on('data', (data) => {
-	  console.log(data.toString());
-	});
+		gethInit.stderr.on('data', (data) => {
+		  console.log(data.toString());
+		});
 
-	gethInit.on('exit', (code) => {
-	  console.log(`Child exited with code ${code}`);
-	  //We need to copy the static-nodes.json into the folder
-	  var fsExtra = require('fs-extra');
-	  fsExtra.copySync(path.join(__dirname,'../geth/static-nodes.json'), path.join(datadir,'/static-nodes.json'));
-	  //fs.createReadStream(path.join(__dirname, '../geth/static-nodes.json'))
-	  //			.pipe(fs.createWriteStream(path.join(datadir,'/static-nodes.json')));
-	  
-	  launchGeth();
-	});
-} else {
-	launchGeth();
+		gethInit.on('exit', (code) => {
+		  console.log(`Child exited with code ${code}`);
+		  //We need to copy the static-nodes.json into the folder
+		  var fsExtra = require('fs-extra');
+		  fsExtra.copySync(path.join(__dirname,'../geth/static-nodes.json'), path.join(datadir,'/static-nodes.json'));
+		  launchGeth();
+		});
+	} else {
+		launchGeth();
+	}
 }
 
 //Quit when all windows are closed.
@@ -134,6 +137,8 @@ app.on('window-all-closed', function () {
   // to stay active until the user quits explicitly with Cmd + Q
   if (process.platform !== 'darwin') {
     app.quit();
-    geth.kill("SIGINT");
+    if(geth!=null) {
+        geth.kill("SIGINT"); 
+    }
   }
 });

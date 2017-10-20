@@ -1,7 +1,7 @@
 pragma solidity ^0.4.3;
 
 contract WaveVoteContractRegistery {
-	address owner;
+	address public owner;
 	
     address public lastWaveVoteContractAddress;
     address[] public previousWaveVoteContractAddressList; 

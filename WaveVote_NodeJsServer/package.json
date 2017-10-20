@@ -9,6 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "geth": "^0.4.0"
+    "abi-decoder": "^1.0.9",
+    "elasticsearch": "^13.3.1",
+    "geth": "^0.4.0",
+    "web3": "^0.20.0"
   }
 }
