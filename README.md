@@ -41,4 +41,6 @@ It's possible to use an other geth client. To do this, change in the config file
 #### How to install the Smart Contract ?
 1 - Install Ethereum-Wallet/Mist : https://github.com/ethereum/mist/releases<br> <b>Warning</b> : the version must be under 0.9.0 or you won't be able to compile the contract.<br>
 2 - Compile and upload the 3 contracts : WaveVote.sol, LocalCrypto.sol and WaveVoteContractRegistry.sol.<br>
-3 - 
+3 - Edit the config file and change the param "WaveVoteContractRegistryAddress" to the new address of the contract WaveVoteContractRegistry.<br>
+4 - Send two transactions to the Contract WaveVoteContractRegistry to set the abi and the address of the contracts WaveVote and LocalCrypto.<br>
+5 - You can now use the client.
