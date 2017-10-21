@@ -49,7 +49,7 @@ It's possible to use an other geth client. To do this, change in the config file
 2 - Compile and upload the 3 contracts : WaveVote.sol, LocalCrypto.sol and WaveVoteContractRegistry.sol.<br>
 3 - Edit the config file and change the param "WaveVoteContractRegistryAddress" to the new address of the contract WaveVoteContractRegistry.<br>
 ```
-{"WaveVoteContractRegistryAddress":"", ...}
+{"WaveVoteContractRegistryAddress":"0xe73B1eBf7190A66e2b07F39A8cF9A117Db4d2740", ...}
 ```
 4 - Send two transactions to the Contract WaveVoteContractRegistry to set the abi and the address of the contracts WaveVote and LocalCrypto.<br>
 5 - You can now use the client.
