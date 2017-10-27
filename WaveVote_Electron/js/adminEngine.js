@@ -12,7 +12,7 @@ var transporter = nodemailer.createTransport({
     port: 587, // port for secure SMTP
     auth: {
         user: "kevin.descamps@wavestone.com",
-        pass: "wbzccjxrvpmxlxyv"
+        pass: "************"
     },
     requireTLS: true,
     tls: {
