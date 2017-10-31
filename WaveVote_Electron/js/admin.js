@@ -273,6 +273,97 @@ function registerNewVoterFromList() {
 	}
 }
 
+/**
+ * Register all Voter who have a valid authentificationCode 
+ */
+function registerAllAcceptedVoter() {
+  for(var i=0; i<WaveVoteAddr.totalRegistrationAsked(); i++) {
+	  try {
+		 	 var addressToRegister = WaveVoteAddr.addressesToRegister(i);
+		 	 if(!WaveVoteAddr.isRegistered(addressToRegister)) {
+		 		var voter = WaveVoteAddr.getPeopleToRegister(addressToRegister);
+		 		registerNewVoterFromAuthentificationCode(voter, addressToRegister);
+		 	 }
+	  } catch(e) {
+		  console.log(e);
+	  }
+  }
+}
+
+/**
+ * Register a new Voter from 
+ * @param authentificationCode The authentificationCode of the voter
+ * @returns {successful: if the new voter is well register, message: return message}
+ */
+function registerNewVoterFromAuthentificationCode(voter, address) {
+	var inscriptionCode = web3.toUtf8(voter[2]);
+	db.findOne({_id: inscriptionCode}, function(err, doc) {
+    	console.log(doc);
+    	if(doc==null) {
+    		console.log("This inscription code : " + inscriptionCode  + " isn't valid");
+    	} else {
+    		try {
+        		var name = doc.name;
+        		var lastName = doc.lastName;
+    			//Generate keys of the administrator for the voter
+    			var key = ec.genKeyPair();
+    			var adminPrivateKeyStr = key.getPrivate().toString();
+    			
+    			var adminPublicKey_xStr = key.getPublic().x.toString();
+    			var adminPublicKey_yStr = key.getPublic().y.toString();
+    			var adminPublicKey =  [new BigNumber(adminPublicKey_xStr), new BigNumber(adminPublicKey_yStr)];
+    			
+    			var personalPublicKey = [voter[1][0], voter[1][1]];
+    			var res = cryptoAddr.buildVotingPrivateKey.call(new BigNumber(adminPrivateKeyStr), personalPublicKey);
+
+    	        var x = res[0];
+    	        var xG = [res[1][0], res[1][1]];
+    			
+    			var v = new BigNumber(ec.genKeyPair().getPrivate().toString());
+    			// We prove knowledge of the voting key
+    	        var single_zkp = cryptoAddr.createZKP.call(x, v, xG, {
+                    from: web3.eth.accounts[accountindex]
+                });
+    	        var vG = [single_zkp[1], single_zkp[2], single_zkp[3]];
+
+    	        web3.personal.unlockAccount(addr, password);
+
+    	        // Lets make sure the ZKP is valid!
+    	        var verifyres = cryptoAddr.verifyZKP.call(xG, single_zkp[0], vG, {
+                    from: web3.eth.accounts[accountindex]
+                });
+
+    	        if (!verifyres[0]) {
+    	    		console.log("Problem with voting codes of the vote " + name + " " + lastName);
+    	        }
+    	        
+    	        var res = WaveVoteAddr.registerAccount.call(address, adminPublicKey, xG, vG, single_zkp[0], {
+    	                from: web3.eth.accounts[accountindex]
+    	            });
+
+    	        // Submit voting key to the network
+    	        if (res[0]) {
+    	        	web3.personal.unlockAccount(addr, password);
+    	        	
+    	            WaveVoteAddr.registerAccount.sendTransaction(address, adminPublicKey, xG, vG, single_zkp[0], {
+    	                from: web3.eth.accounts[accountindex],
+    	                gas: 4200000
+    	            });
+    	            
+    	            db.update({_id: inscriptionCode}, {numero: doc.numero, name: doc.name, lastName: doc.lastName, mail: doc.mail, account: address, registered: true, adminPrivateKey: adminPrivateKeyStr, privateVotingKey: x.toString(10)}, {});
+
+    	    		console.log(name + " " + lastName + " registered");
+        		} else {
+        			console.log(name + " " + lastName + " not registered");
+        		}
+    		}
+    		catch(e) {
+    			console.log(e);
+    		}
+    	}
+    });
+}
+
 //Create the page to register a voter
 var finishRegistrationCreated = false;
 function createFinishRegistration() {
@@ -387,7 +478,7 @@ function registerNewVoter(address) {
         	                gas: 4200000
         	            });
         	            
-        	            db.update({_id: inscriptionCode}, {name: doc.name, lastName: doc.lastName, mail: doc.mail, account: address, adminPrivateKey: adminPrivateKeyStr, privateVotingKey: x.toString(10)}, {});
+        	            db.update({_id: inscriptionCode}, {numero: doc.numero, name: doc.name, lastName: doc.lastName, mail: doc.mail, account: address, registered: true, adminPrivateKey: adminPrivateKeyStr, privateVotingKey: x.toString(10)}, {});
         	            
         	            alert("The registration has been sent");
         	        } else {

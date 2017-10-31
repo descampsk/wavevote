@@ -36,10 +36,11 @@ function createWindow () {
     slashes: true
   }))
   
-   mainWindow.openDevTools();
-
-  // Open the DevTools.
-  // mainWindow.webContents.openDevTools()
+  var config = require(path.join(__dirname, "../config/config.json"));
+  var debug = config.debug;
+  if(debug) {
+	  mainWindow.openDevTools();
+  }
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
@@ -49,6 +50,9 @@ function createWindow () {
     mainWindow = null
   })
 }
+
+
+
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -68,12 +72,22 @@ process.on('uncaughtException', function (error) {
 	winston.log('error',error)
 	console.log(error);
 });
+
 var config = require(path.join(__dirname, "../config/config.json"));
 console.log(config);
+
 const networkid = config.networkid;
 const datadir = path.join(process.env.APPDATA, '/Ethereum-' + networkid);
-const gethPath = path.join(__dirname, '../geth/geth.exe');
 const genesisPath = path.join(__dirname, '../geth/genesis.json');
+
+const OS = process.env.OS;
+
+var gethPath;
+if(OS.indexOf("Windows")!=-1) {
+	gethPath = path.join(__dirname, '../geth/geth-win32-64.exe');
+} else {
+	gethPath = path.join(__dirname, '../geth/geth-linux-64');
+}
 
 const { spawn, exec } = require('child_process');
 var geth=null;
@@ -85,9 +99,17 @@ function launchGeth() {
 						+ ' --mine --minerthreads ' + minerthreads + ' --etherbase 0x0000000000000000000000000000000000000001';
 		geth = exec('start /affinity 1 ' + gethPath + optionStr);
 	} else {
-		var options = ["--networkid", networkid, "--rpc", "--rpcapi" , "db,eth,net,web3,personal",
-			  "--rpcaddr", "0.0.0.0", "--datadir", datadir];
-		geth = spawn(gethPath, options);
+		var debug = config.debug;
+		if(!debug) {
+			var options = ["--networkid", networkid, "--rpc", "--rpcapi" , "db,eth,net,web3,personal",
+				  "--rpcaddr", "0.0.0.0", "--datadir", datadir];
+			geth = spawn(gethPath, options);
+		} else {
+			var optionStr = ' --networkid ' + networkid +
+			' --rpc --rpcapi db,eth,net,web3,personal --rpcaddr 0.0.0.0 --datadir ' + datadir;			;
+			geth = exec('start /affinity 1 ' + gethPath + optionStr);
+		}
+
 	}
 
 	geth.stdout.on('data', (data) => {

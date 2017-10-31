@@ -51,7 +51,7 @@ public class VotingProccess {
 	   
 	  //1 : Pick an integer m > sqrt(N)
 	  int m= (int)(Math.sqrt(N))+1;
-	  System.out.println(m);
+	  //System.out.println(m);
 	  //2 : compute mBase
 	  ECPoint mBase = base.multiply(new BigInteger(String.valueOf(m))).normalize();
 	  
@@ -78,9 +78,9 @@ public class VotingProccess {
     		  long i = entry.getValue();
     		  long j = hQ_imBase.get(pointA);
 			  long timeFin = System.currentTimeMillis();
-			  System.out.println("logBabyStepGiantStepEC a pris : " + String.valueOf(timeFin-timeDebut) + " ms");
-			  System.out.println("result = " + result + "et g^p = " + (base.multiply(new BigInteger(String.valueOf(i+j*m))).normalize()));
-			  System.out.println("i=" + i + ";j=" + j);
+			  //System.out.println("logBabyStepGiantStepEC a pris : " + String.valueOf(timeFin-timeDebut) + " ms");
+			  //System.out.println("result = " + result + "et g^p = " + (base.multiply(new BigInteger(String.valueOf(i+j*m))).normalize()));
+			  //System.out.println("i=" + i + ";j=" + j);
     		  return (i+j*m);
     	  }
       }
@@ -88,8 +88,8 @@ public class VotingProccess {
       
       iBaseList.sort(new ECPointComparator());
       Q_imBaseList.sort(new ECPointComparator());
-      System.out.println("iBase_list = " + iBaseList.subList(0, 10));
-      System.out.println("Q_imbaseList = " + Q_imBaseList.subList(0, 10));
+      //System.out.println("iBase_list = " + iBaseList.subList(0, 10));
+      //System.out.println("Q_imbaseList = " + Q_imBaseList.subList(0, 10));
       
       ECPointComparator ecPointComparator = new ECPointComparator();
       for(int i=0;i<iBaseList.size();i++) {
@@ -99,12 +99,12 @@ public class VotingProccess {
     	  int index = Collections.binarySearch(Q_imBaseList, pointA, ecPointComparator);
     	  if (index>=0) {
     		  ECPoint pointB = Q_imBaseList.get(index);
-			  System.out.println(pointA + "," + pointB);
+			  //System.out.println(pointA + "," + pointB);
 			  long timeFin = System.currentTimeMillis();
-			  System.out.println("logBabyStepGiantStepEC a pris : " + String.valueOf(timeFin-timeDebut) + " ms");
-			  System.out.println("i=" + i + ";j=" + index);
-			  System.out.println();
-			  System.out.println("result = " + result + "et g^p = " + (base.multiply(new BigInteger(String.valueOf(i+j*m)))).normalize());
+			  //System.out.println("logBabyStepGiantStepEC a pris : " + String.valueOf(timeFin-timeDebut) + " ms");
+			  //System.out.println("i=" + i + ";j=" + index);
+			  //System.out.println();
+			  //System.out.println("result = " + result + "et g^p = " + (base.multiply(new BigInteger(String.valueOf(i+j*m)))).normalize());
 			  return (long)(i+j*m); 
     	  }
     	  
@@ -144,44 +144,6 @@ public class VotingProccess {
    	g.initialize(ecSpec, new SecureRandom());
    	
    	ECCurve curve = ecSpec.getCurve();
-   	ECPoint yG = curve.createPoint(new BigInteger("50691235389227174336683915521017056113766552788461351081860921559467389817918"), new BigInteger("77616208651119448442382986254165483222263911805140372537644040310359862731463"));
-   	ECPoint votePoint1 = curve.createPoint(new BigInteger("56321406392798902601463525060233516822248532674269807233234267998287529646083"), new BigInteger("16397007917345963904976872491420336079325640164272097739632189698676522567322"));
-   	BigInteger Xpri1 = new BigInteger("73684597056470802520640839675442817373247702535850643999083350831860052477001");
-   	
-   	ECPoint xG3 = curve.createPoint(new BigInteger("80227359492715094506325016781306806136822890283990303394298243616817936770299"), new BigInteger("70056389323893569053657074063749746191252176222615108208694655004295637164321"));
-   	ECPoint votePoint2 = curve.createPoint(new BigInteger("95069486358188837661323375614801361963607218617204558822555281701024564542398"), new BigInteger("98508925712894897278208141542708546870827494465219426806879377100579785141052"));
-   	BigInteger Xpri2 = new BigInteger("106554628258140934843991940734271727557510876833354296893443127816727132563840");
-   	
-   	
-   	ECPoint xG1 = curve.createPoint(new BigInteger("33561867925540106748684736507917043448339171144892578936974884912379995892352"), new BigInteger("1872976994842669328236376191998994182108827779376965610480382302885253006649"));
-   	BigInteger privateKey = new BigInteger("114974353814374300534403313831673194688880570414354514484570699902104115492311");
-   	
-   	String address1 = "0x70f9d95d0660476fd9ba6f0e052e560e2d41caf9";
-   	String address2 = "0xa76512bcf54f1994a451c5b295d0f749138d59aa";
-   	String address3 = "0xc3c98a47af44aba07cdc4380e76e26a25abc468a";
-   	
-   	ECPoint xyG = yG.multiply(new BigInteger("6667205255059125942400314223350582287065273273365832917293050468602247570838")).normalize();
-   	ECPoint gvi2 = ecSpec.getG().multiply(new BigInteger("1")).normalize();
-   	ECPoint xyGG = xyG.add(gvi2).normalize();
-   	System.out.println("xyG : " + xyG.getRawXCoord().toBigInteger());
-   	System.out.println("xyG : " + xyG.getRawYCoord().toBigInteger());
-   	System.out.println("xyG_x : " + xyGG.getRawXCoord().toBigInteger());
-   	System.out.println("xyG_y : " + xyGG.getRawYCoord().toBigInteger());
-   	
-   	/*
-   	System.out.println(yG1);
-   	System.out.println(votePoint1);
-   	
-   	ECPoint ygx = (yG1.multiply(Xpri1)).normalize();
-   	System.out.println("ygx : " + ygx.getRawXCoord().toBigInteger());
-   	ECPoint	sol = votePoint1.add(ygx.negate()).normalize();
-   	System.out.println(ecSpec.getG().getAffineXCoord().toBigInteger());
-   	System.out.println(sol);
-   	
-   	ECPoint ygx2g = (yG2.multiply(Xpri2)).add(ecSpec.getG()).normalize();
-   	System.out.println("ygx2 : " + ygx2g);
-   	System.out.println("sol2 : " + votePoint2);
-   	*/
    	
    	int nombre_votants = 5000;
    	
@@ -347,30 +309,38 @@ public class VotingProccess {
 	
    }
    
-
-	public static void main(String[] args) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {	
-	   	Security.addProvider(new BouncyCastleProvider());
+   
+   public static void computeLogBabyStepGiantStepEC(int totalVoter, int totalCandidat, ECPoint sumVote) {
+	   Security.addProvider(new BouncyCastleProvider());
 	   	ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256k1");
-	   	ECCurve curve = ecSpec.getCurve();
-	   	
-		int nombre_votants = 4;
-		int nombreCandidat = 4;
-		ECPoint produitVote = curve.createPoint(new BigInteger("23593695842213704323894249109946233988291594176434645859101973539580417621171"), new BigInteger("71470002574855576372143173110000816563859031876144663484613718030123982354396"));
-		
+
 		//On trouve m tel que 2^m>n
 	   	int m=1;
-	   	while (Math.pow(2, m)<=nombre_votants) {
+	   	while (Math.pow(2, m)<=totalVoter) {
 	   		m++;
 	   	}
+	
+	   	long result = logBabyStepGiantStepEC(ecSpec.getG(), sumVote, (long)Math.pow(2, totalCandidat*m));
+	   	System.out.println(result);
+   }
+   
+   public static void computeTally(int totalVoter, int totalCandidat, ECPoint sumVote) {
+	   Security.addProvider(new BouncyCastleProvider());
+	   	ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256k1");
+
+		//On trouve m tel que 2^m>n
+	   	int m=1;
+	   	while (Math.pow(2, m)<=totalVoter) {
+	   		m++;
+	   	}
+
 	   	
-	   	System.out.println("m = " + m);
-	   	
-	   	long sommeVi = logBabyStepGiantStepEC(ecSpec.getG(), produitVote, (long)Math.pow(2, nombreCandidat*m));
+	   	long sommeVi = logBabyStepGiantStepEC(ecSpec.getG(), sumVote, (long)Math.pow(2, totalCandidat*m));
 	   	System.out.println("sommeViBaby = " + sommeVi);
 	   	
 	   	double x = 0;
 	   	ArrayList<Double> depouillementVoteCandidatList = new ArrayList<Double>();
-	   	for(int i=nombreCandidat-1;i>=0;i--) {
+	   	for(int i=totalCandidat-1;i>=0;i--) {
 	   		double c = 1;
 	   		while(Math.pow(2, m*i)*c<=sommeVi-x) {
 	   			c++;
@@ -382,5 +352,24 @@ public class VotingProccess {
 	   	}
 	   	Collections.reverse(depouillementVoteCandidatList);
 	   	System.out.println("Depouillement = " + depouillementVoteCandidatList);
+   }
+
+	public static void main(String[] args) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {
+		if(args.length<4) {
+			throw new ArrayIndexOutOfBoundsException("Not enough arguments");
+		} else {
+		   	Security.addProvider(new BouncyCastleProvider());
+		   	ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256k1");
+		   	ECCurve curve = ecSpec.getCurve();
+		   	
+			int totalVoter = Integer.valueOf(args[0]);
+			int totalCandidat = Integer.valueOf(args[1]);
+			BigInteger sumVote_x = new BigInteger(args[2]);
+			BigInteger sumVote_y = new BigInteger(args[3]);
+			ECPoint sumVote = curve.createPoint(sumVote_x, sumVote_y);
+			
+			computeLogBabyStepGiantStepEC(totalVoter, totalCandidat, sumVote);
+		}
+
 	}
 }

@@ -731,6 +731,9 @@ contract WaveVote is owned {
   }
      
   
+  //Used to follow each registration
+  event RegisterAccountEvent(address indexed accountToRegister, bool _successful, string message);
+  
   // Called by the administrator to register a voter
   function registerAccount(address accountToRegister, uint[2] adminPublicKey, uint[2] xG, uint[3] vG, uint r) inState(State.SIGNUP) onlyOwner returns (bool _successful, string _error) {
 	  
@@ -760,13 +763,16 @@ contract WaveVote is owned {
             	vote: nullArray});
             
             _successful = true;
+            RegisterAccountEvent(accountToRegister, true, "Account register");
         } else {
         	_successful = false;
         	_error = "Impossible to verify correctly the ZKP";
+        	RegisterAccountEvent(accountToRegister, _successful, _error);
         }
 	} else {
     	_successful = false;
     	_error = "This ethereum account is already registred.";
+    	RegisterAccountEvent(accountToRegister, _successful, _error);
 	}
 
   }
@@ -824,7 +830,7 @@ contract WaveVote is owned {
  
       
       //We compute the recalculatedKey
-      //@see DAT to understand the computation
+      //@dev DAT to understand the computation
       address addressVoter = addresses[indexVoter-1];
       
       uint[2] memory yG;
@@ -893,10 +899,10 @@ contract WaveVote is owned {
   /**
    * Function to submit the vote from a voter
    * @param y : the vote of the voter
-   * @param diAndRiList : informations of the ZKP
+   * @param diAndriList : informations of the ZKP
    * @param aList : informations of the ZKP
    * @param bList : informations of the ZKP
-   * @see the DAT to know what is di, ri, ai and bi
+   * @dev the DAT to know what is di, ri, ai and bi
    */
   function submitVote(uint[3] y, uint[2][10] diAndriList, uint[2][10] aList,  uint[2][10] bList) inState(State.VOTE) returns (bool _successful, string _message) {
 
@@ -1167,6 +1173,40 @@ contract WaveVote is owned {
 	       _result = x;
 	       return;
 	     }
+  }
+  
+  /**
+   * Constant function to verify if the tally is correct. This function can be called by all voters to be sure of the result.
+   */
+  function verifyTally() constant returns (bool) {
+  	uint totalAnswers = getTotalAnswers();
+  	
+  	//On trouve m tel que 2^m>n
+  	uint m=1;
+  	while (2**m<=totalregistered) {
+  		m+=1;
+  	}
+	  
+	  uint sumAnswers = 0;
+	  for(uint i=0;i<totalAnswers;i++) {
+		  uint numberVote = finalTally[i];
+		  sumAnswers += (2**(m*i))*numberVote;
+	  }
+	  
+	  if(sumAnswers==0) {
+		  return false;
+	  } else {
+		  uint[3] memory temp = Secp256k1._mul(sumAnswers, G);
+		  ECCMath.toZ1(temp, pp);
+		  
+		  uint[2] memory sumVotes = computeSumAllVote();
+		  
+		  if(temp[0]!=sumVotes[0] || temp[1]!=sumVotes[1]) {
+			  return false;
+		  } else {
+			  return true;
+		  }
+	  }  
   }
 
   // Parameters xG, r where r = v - xc, and vG.

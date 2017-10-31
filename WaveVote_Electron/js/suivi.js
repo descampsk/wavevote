@@ -43,93 +43,93 @@ db.adminKey = new Datastore({filename: adminDatabasePath, autoload: true, onload
 	console.log(error);
 }});
 
-/*
-db.suivi = new Datastore({filename: suiviDatabasePath, autoload: true, onload: function(error) {
-	console.log(error);
-}});
-*/
-
-var fs = require('fs');
-var stream = fs.createWriteStream(suiviJsonPath);
-
-var totalRegistrationAsked = anonymousvotingAddr.totalRegistrationAsked();
-for(var i=0;i<totalRegistrationAsked;i++) {
-	var addressToRegister = anonymousvotingAddr.addressesToRegister(i);
-	updateSuiviAddress(addressToRegister, i);
-}
-
-//Find all documents in the collection
-db.adminKey.find({}, function (err, docs) {
-	for(var i=0;i<docs.length;i++) {
-		var doc = docs[i];
-		var address = doc.account;
-		if (address===undefined) {
-	    	var voterJson = {
-	    			name: doc.name, lastName: doc.lastName, mail: doc.mail, 
-	    			registrationAsked: false, inscriptionCode: "confidentiel",
-	    			inscriptionCodeValide: false,
-	    			registered: false, voteCast: false,
-	    		};
-	    	
-	    	var voterStr = JSON.stringify(voterJson);
-	    	var id = parseInt(totalRegistrationAsked) + parseInt(i);
-	    	stream.write("{\"index\":{\"_index\":\"transaction\",\"_type\":\"voter\",\"_id\":" + doc.numero + "}}\n");
-	    	stream.write(voterStr + "\n");
-		}
-	}
+var elasticsearch = require('elasticsearch');
+var client = new elasticsearch.Client({
+  host: '10.120.3.25:9200',
+  log: 'trace'
 });
 
-//createJsonTransaction();
-updateElastic();
+function updateAllVoters() {
+	var bulk = [];
+	var totalRegistrationAsked = anonymousvotingAddr.totalRegistrationAsked();
+	for(var i=0;i<totalRegistrationAsked;i++) {
+		var addressToRegister = anonymousvotingAddr.addressesToRegister(i);
+		//addBulkUpdateSuiviAddress(bulk, addressToRegister);
+		updateSuiviAddress(addressToRegister);
+	}
 
-function updateElastic() {
-	var filter = web3.eth.filter('latest');
- 
-	filter.watch(function (error, log) {
-		console.log(web3.eth.getBlock(log));
-		console.log(log);
-		var block = web3.eth.getBlock(log,true);
-		streamBis.write("{\"index\":{\"_index\":\"transaction\",\"_type\":\"block\",\"_id\":" + block.number + "}}\n");
-		delete block["transactions"];
-		delete block["logsBloom"];
-		delete block["nonce"];
-		var json = JSON.stringify(block);
-		streamBis.write(json + "\n");
-		if(transactionList.length!=0) {
-			for(var j=0;j<transactionList.length;j++) {
-				var transaction = transactionList[j];
-				var input = transaction.input;
-				try{
-					var inputDecoded = abiDecoder.decodeMethod(input);
-					transaction.input = inputDecoded;
-					json = JSON.stringify(transaction);
-					streamBis.write("{\"index\":{\"_index\":\"transaction\",\"_type\":\"transaction\",\"_id\":" + block.number + j + "}}\n");
-					streamBis.write(json + "\n");
-				} catch(e) {
-					console.log(e);
-				}
+	//Find all documents in the collection
+	db.adminKey.find({}, function (err, docs) {
+		for(var i=0;i<docs.length;i++) {
+			var doc = docs[i];
+			var address = doc.account;
+			var numero = doc.numero
+			if (address===undefined) {
+		    	var voterJson = {
+		    			name: doc.name, lastName: doc.lastName, mail: doc.mail, 
+		    			registrationAsked: false, inscriptionCode: "confidentiel",
+		    			inscriptionCodeValide: false,
+		    			registered: false, voteCast: false,
+		    		};
+		    	
+		    	var actionJson = { index : {
+					  _index: 'transaction',
+					  _type: 'voter',
+					  _id: numero
+		    		}	
+				};
+		    	
+		    	bulk.push(actionJson);
+		    	bulk.push(voterJson);
+		    	/*
+		    	var voterStr = JSON.stringify(voterJson);
+				client.index({
+					  index: 'transaction',
+					  type: 'voter',
+					  body: voterStr,
+					  id: numero,
+					}, function (error, response) {
+					  console.log(error);
+					  //console.log(response);
+					});
+					*/
 			}
 		}
-	});
+		console.log(bulk);
+		client.bulk({
+			body: bulk
+		}, function (err, resp) {
+			console.log(err);
+			console.log(resp);
+		});
+	});	
 }
 
-function createJsonTransaction() {
+function insertAllBlocksAndTransactions() {
 	const abiDecoder = require('abi-decoder');
 	abiDecoder.addABI(abi);
-	var streamBis = fs.createWriteStream(suiviTransactionJsonPath);
-
+	
 	var lastBlockNumber = web3.eth.blockNumber;
 
 	for(var i=1500;i<=lastBlockNumber;i++) {
 		console.log(i);
 		var block = web3.eth.getBlock(i,true);
 		var transactionList = block.transactions;
-		streamBis.write("{\"index\":{\"_index\":\"transaction\",\"_type\":\"block\",\"_id\":" + i + "}}\n");
 		delete block["transactions"];
 		delete block["logsBloom"];
 		delete block["nonce"];
 		var json = JSON.stringify(block);
-		streamBis.write(json + "\n");
+		
+		client.create({
+			  index: 'transaction',
+			  type: 'block',
+			  body: json,
+			  id: i,
+			}, function (error, response) {
+			  console.log(error);
+			  console.log(response);
+			});
+		
 		if(transactionList.length!=0) {
 			for(var j=0;j<transactionList.length;j++) {
 				var transaction = transactionList[j];
@@ -138,8 +138,15 @@ function createJsonTransaction() {
 					var inputDecoded = abiDecoder.decodeMethod(input);
 					transaction.input = inputDecoded;
 					json = JSON.stringify(transaction);
-					streamBis.write("{\"index\":{\"_index\":\"transaction\",\"_type\":\"transaction\",\"_id\":" + i + j + "}}\n");
-					streamBis.write(json + "\n");
+					client.create({
+						  index: 'transaction',
+						  type: 'transaction',
+						  body: json,
+						  id: i + "_" + j,
+						}, function (error, response) {
+						  console.log(error);
+						  console.log(response);
+						});
 				} catch(e) {
 					console.log(e);
 				}
@@ -149,7 +156,7 @@ function createJsonTransaction() {
 }
 
 
-function updateSuiviAddress(address, id) {
+function updateSuiviAddress(address) {
 	var register = anonymousvotingAddr.getPeopleToRegister(address);
 	//console.log("register : " + register);
 	var registrationAsked = register[0];
@@ -231,9 +238,124 @@ function updateSuiviAddress(address, id) {
 	    		};
 	    	
 	    	var voterStr = JSON.stringify(voterJson);
-	    	stream.write("{\"index\":{\"_index\":\"transaction\",\"_type\":\"voter\",\"_id\":" + numero + "}}\n");
-	    	stream.write(voterStr + "\n");
+			client.index({
+				  index: 'transaction',
+				  type: 'voter',
+				  body: voterStr,
+				  id: numero,
+				}, function (error, response) {
+				  console.log(error);
+				  //console.log(response);
+				});
 		});
 		
 	});
 }
+
+function addBulkUpdateSuiviAddress(bulk, address) {
+	var register = anonymousvotingAddr.getPeopleToRegister(address);
+	//console.log("register : " + register);
+	var registrationAsked = register[0];
+	var personalPublicKey_x = register[1][0];
+	var personalPublicKey_y = register[1][1];
+
+	var inscriptionCode = web3.toUtf8(register[2]);
+	
+	
+	db.adminKey.count({}, function (err, count) {
+		db.adminKey.findOne({_id: inscriptionCode}, function(err, doc) {
+	    	//console.log(doc);
+	    	var inscriptionCodeValide;
+	    	var name;
+	    	var lastName;
+	    	var mail;
+	    	var adminPrivateKey;
+	    	var votingPrivateKey;
+	    	var numero;
+	    	if(doc==null) {
+	    		inscriptionCodeValide = false;
+	    		name = "N/C";
+	    		lasteName = "N/C";
+	    		mail = "N/C";
+	    		adminPrivateKey = "N/C";
+	    		votingPrivateKey = "N/C";
+	    		numero = count;
+	    		count+=1;
+	    	} else {
+	    		inscriptionCodeValide = true;
+	    		name = doc.name;
+	    		lastName = doc.lastName;
+	    		mail = doc.mail;
+	    		adminPrivateKey = doc.adminPrivateKey;
+	    		votingPrivateKey = doc.votingPrivateKey;
+	    		numero = doc.numero;
+	    	}
+	    	
+	    	var voter = anonymousvotingAddr.getVoterBis(address);
+	    	var registered = voter[0];
+	    	var voteCast = voter[1];
+	    	var personalPublicKeyBis_x = voter[2][0];
+	    	var personalPublicKeyBis_y = voter[2][1];
+	    	//console.log(personalPublicKeyBis_x);
+	    	//console.log(personalPublicKeyBis_y);
+	    	//console.log(personalPublicKey_x);
+	    	//console.log(personalPublicKey_y);
+	    	var samePersonalKey;
+	    	if (personalPublicKeyBis_x.equals(personalPublicKey_x) && personalPublicKeyBis_y.equals(personalPublicKey_y)) {
+	    		samePersonalKey = true;
+	    	} else {
+	    		samePersonalKey = false;
+	    	}
+	    	
+	    	var adminPublicKey_x = voter[3][0];
+	    	var adminPublicKey_y = voter[3][1];
+	    	
+	    	var registeredKey_x = voter[4][0];
+	    	var registeredKey_y = voter[4][1];
+	    	
+	    	var reconstructedKey_x = voter[5][0];
+	    	var reconstructedKey_y = voter[5][1];
+	    	
+	    	var vote_x = voter[6][0];
+	    	var vote_y = voter[6][1];
+	    	
+	    	var voterJson = {
+	    			name: name, lastName: lastName, mail: mail, account: address, 
+	    			registrationAsked: registrationAsked, inscriptionCode: inscriptionCode,
+	    			inscriptionCodeValide: inscriptionCodeValide,
+	    			registered: registered, voteCast: voteCast,
+	    			samePersonalKey: samePersonalKey, 
+	    			personalPublicKey: [personalPublicKey_x.toString(10), personalPublicKey_y.toString(10)],
+	    			personalPublicKeyBis: [personalPublicKeyBis_x.toString(10), personalPublicKeyBis_y.toString(10)],
+	    			adminPublicKey: [adminPublicKey_x.toString(10), adminPublicKey_y.toString(10)],
+	    			registeredKey: [registeredKey_x.toString(10), registeredKey_y.toString(10)],
+	    			reconstructedKey: [reconstructedKey_x.toString(10), reconstructedKey_y.toString(10)],
+	    			vote: [vote_x.toString(10), vote_y.toString(10)]
+	    		};
+	    	
+	    	//var voterStr = JSON.stringify(voterJson);
+	    	var actionJson = { index : {
+				  _index: 'transaction',
+				  _type: 'voter',
+				  _id: numero
+	    		}	
+			};
+	    	
+	    	bulk.push(actionJson);
+	    	bulk.push(voterJson);
+		});
+		
+	});
+}
+	
+client.ping({
+	  requestTimeout: 3000
+	}, function (error) {
+	  if (error) {
+	    console.trace('elasticsearch cluster is down!');
+	  } else {
+	    console.log('All is well');
+	    //insertAllBlocksAndTransactions();
+	    updateAllVoters();
+	  }
+	});

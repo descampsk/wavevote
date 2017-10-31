@@ -77,8 +77,9 @@
 	  web3.eth.isSyncing(function(error, sync){
 		    if(!error) {
 		        // stop all app activity
-		        if((sync && web3.eth.syncing.highestBlock!=web3.eth.blockNumber) || web3.eth.blockNumber==0) {
-			      	document.getElementById('resultTest').innerHTML = "You are connected to the Ethereum node. The node is syncing with the Blockchain. Please wait.";
+		        if((sync && web3.eth.syncing.highestBlock!=web3.eth.blockNumber && web3.eth.blockNumber<3000) || web3.eth.blockNumber==0) {
+			      	document.getElementById('resultTest').innerHTML = "You are connected to the Ethereum node. The node is syncing with the Blockchain : " +
+			      														web3.eth.blockNumber + "/" + web3.eth.syncing.highestBlock + ". Please wait.";
 			      	document.getElementById('modifyAddress').setAttribute("hidden", true);
 			      	document.getElementById('pageButton').setAttribute("hidden", true);
 		        // re-gain app operation

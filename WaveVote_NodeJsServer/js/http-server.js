@@ -1,5 +1,5 @@
 /**
- * http://usejsdoc.org/
+ * This http server is used to send one Ether to each Voter. They send an http request and the server does a transaction on the blockchain network.
  */
 
 /**
