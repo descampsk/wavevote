@@ -103,7 +103,7 @@ function launchGeth() {
 		if(!debug) {
 			var options = ["--networkid", networkid, "--rpc", "--rpcapi" , "db,eth,net,web3,personal",
 				  "--rpcaddr", "0.0.0.0", "--datadir", datadir];
-			geth = spawn(gethPath, options);git commit -a
+			geth = spawn(gethPath, options);
 		} else {
 			var optionStr = ' --networkid ' + networkid +
 			' --rpc --rpcapi db,eth,net,web3,personal --rpcaddr 0.0.0.0 --datadir ' + datadir;			;
