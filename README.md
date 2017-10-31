@@ -16,8 +16,8 @@ Based of this work, WaveVote :<br>
 ## I want directly test the WaveVote Client ! 
 It's possible. <br>
 To achieve this, you have to download VirtualBox here : https://www.virtualbox.org/wiki/Downloads<br>
-Then, you need to download a Virtual Box LUbuntu image, which contains the client and a local private Ethereum Blockchain which mines automatically. You will find the image here : <br>
-Last thing, import the image into VirtualBox and let's have fun ! The administrator's password is : Vote
+Then, you need to download a Virtual Box LUbuntu image, which contains the client and a local private Ethereum Blockchain which mines automatically. You will find the image here : https://mega.nz/#!JhU1BDZR!phrSjjZTT2SM0NSIKX6KZ8TyLtKcrzATFyam_TYY6v8<br>
+Last thing, import the image into VirtualBox and let's have fun ! The administrator's password is : Vote and the password of all Ethereum's accounts are password.
 
 ## How to install the WaveVote client ?
 ```
@@ -31,8 +31,14 @@ Last thing, import the image into VirtualBox and let's have fun ! The administra
 ### Prerequisites
 
 #### Private Blockchain
-A Geth client is included in the application. It will automatically create the genesis block (the genesis file can be changed) and connect to the Blockchain on the networkid 9876. You can change the networkid in the file config.json.<br>
+A Geth client is included in the application. It will automatically create the genesis block (the genesis file can be changed) and connect to the Blockchain on the networkid 9876. You can change the networkid in the file config.json.<br><b>WARNING: the intern geth client work only under Windows. If you want to use the application under Linux or Mac, you have to use an external geth client.</b><br>
+```
+{"networkid":458,...}
+```
 By default, the client will not mine new blocks and will act as a relay. However, you can change the "mine" value to true in the config file, so that the client will mine with a single thread.<br>
+```
+{"mine":true, "minethreads":2, ...}
+```
 It's possible to use an other geth client. To do this, change in the config file, the value "externGeth" to true and the value "addrProvider" to "IP:8545". For example :
 ```
 {"externGeth": true, "addrProvider": localhost:8545, ...}
@@ -41,4 +47,9 @@ It's possible to use an other geth client. To do this, change in the config file
 #### How to install the Smart Contract ?
 1 - Install Ethereum-Wallet/Mist : https://github.com/ethereum/mist/releases<br> <b>Warning</b> : the version must be under 0.9.0 or you won't be able to compile the contract.<br>
 2 - Compile and upload the 3 contracts : WaveVote.sol, LocalCrypto.sol and WaveVoteContractRegistry.sol.<br>
-3 - 
+3 - Edit the config file and change the param "WaveVoteContractRegistryAddress" to the new address of the contract WaveVoteContractRegistry.<br>
+```
+{"WaveVoteContractRegistryAddress":"0xe73B1eBf7190A66e2b07F39A8cF9A117Db4d2740", ...}
+```
+4 - Send two transactions to the Contract WaveVoteContractRegistry to set the abi and the address of the contracts WaveVote and LocalCrypto.<br>
+5 - You can now use the client.
