@@ -1,0 +1,8 @@
+{
+  "contract_name": "ECCMath",
+  "abi": [],
+  "unlinked_binary": "0x60606040523415600e57600080fd5b5b603680601c6000396000f30060606040525b600080fd00a165627a7a7230582018bfd9eda6912062f8839694d7918ff9b32f2053e62fa72dc4c26a02a519a91b0029",
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1508880578624
+}
