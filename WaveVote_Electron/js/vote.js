@@ -144,6 +144,7 @@ function askForRegistration() {
         return;
     }
     
+    //TODO : Do a ZKP for the personalPublicKey
 	//Generate keys of the new voter
 	var key = ec.genKeyPair();
 	var x = new BigNumber(key.getPrivate().toString());

@@ -72,7 +72,7 @@ var config = require(path.join(__dirname, "../config/config.json"));
 console.log(config);
 const networkid = config.networkid;
 const datadir = path.join(process.env.APPDATA, '/Ethereum-' + networkid);
-const gethPath = path.join(__dirname, '../geth/geth.exe');
+const gethPath = path.join(__dirname, '../geth/geth-1.6.7.exe');
 const genesisPath = path.join(__dirname, '../geth/genesis.json');
 
 const { spawn, exec } = require('child_process');
@@ -80,9 +80,11 @@ var geth=null;
 function launchGeth() {
 	var mine = config.mine;
 	var minerthreads = config.minerthreads;
+	var etherbase = config.etherbase;
 	if(mine) {
-		var optionStr = ' --networkid ' + networkid + ' --rpc --rpcapi db,eth,net,web3,personal --rpcaddr 0.0.0.0 --datadir ' + datadir
-						+ ' --mine --minerthreads ' + minerthreads + ' --etherbase 0x0000000000000000000000000000000000000001';
+		var optionStr = ' --networkid ' + networkid + ' --rpc --rpcapi db,eth,net,web3,personal --rpcaddr 0.0.0.0 --datadir="' + datadir
+						+ '" --mine --minerthreads ' + minerthreads + ' --etherbase ' + etherbase;
+		console.log('start /affinity 1 ' + gethPath + optionStr);
 		geth = exec('start /affinity 1 ' + gethPath + optionStr);
 	} else {
 		var options = ["--networkid", networkid, "--rpc", "--rpcapi" , "db,eth,net,web3,personal",

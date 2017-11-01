@@ -1,7 +1,8 @@
 {
-	"externGeth": true, 
-	"addrProvider": "192.168.99.100:8545",
-	"mine": false, "minerthreads":1,
+	"externGeth": false, 
+	"addrProvider": "localhost:8545",
+	"mine": true, "minerthreads":1,
 	"networkid": 9876,
-	"WaveVoteContractRegistryAddress": "0xe73B1eBf7190A66e2b07F39A8cF9A117Db4d2740"
+	"WaveVoteContractRegistryAddress": "0xaC90bd3aDE48B4C06031193B43Cdf4071E424215",
+	"etherbase": "0x8202A5B2f53aBe14bd320635168c358dB6521b54"
 }
