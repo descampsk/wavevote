@@ -77,3 +77,21 @@ function generateEachInscriptionKey() {
 			numero+=1;
 		});
 }
+
+/**
+ * Print all mail that are registered
+ */
+function printAllMailRegistered() {
+	db.find({registered:true}, function(error,docs) {
+		if(error) {
+			console.log(error);
+		} else {
+			var allMail = "";
+			for(var i=0;i<docs.length;i++) {
+				var doc = docs[i];
+				allMail = allMail + doc.mail + "\n";
+			}
+			console.log(allMail);
+		}
+	});
+}

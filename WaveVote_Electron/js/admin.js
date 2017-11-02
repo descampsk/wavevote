@@ -1,7 +1,7 @@
  //This requires an environment variable, which we will get to in a moment.
  //require files joining that directory variable with the location within your package of files
- const databasePath = require('path').join(directory, '/db/adminKey.db');
- const mailDataPath = require('path').join(directory, '/data/mail.csv');
+ const databasePath = require('path').join(__dirname, '../db/adminKey.db');
+ const mailDataPath = require('path').join(__dirname, '../data/mail.csv');
  console.log("Set of the path : ok");
 
 //Ouverture de la base de données

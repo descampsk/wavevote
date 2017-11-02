@@ -36,15 +36,8 @@
 	 }
  }
  
- //create a function which returns true or false to recognize a development environment
- const isProd = () => process.env.NODE_ENV === 'production';
- console.log("Env is prod : " + isProd());
- console.log("Env : "); 
- console.log(process.env);
  //use that function to either use the development path OR the production prefix to your file location
  const path = require("path");
- const directory = path.join(__dirname, isProd() ? '../resources/app' : '../');
- console.log("Directory : " + directory);
  
 var config = require(path.join(__dirname, "../config/config.json"));
 console.log(config);

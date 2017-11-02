@@ -746,6 +746,7 @@ contract WaveVote is owned {
      }
      
     //TODO : doit vérifier que xG est unique !!!
+     //TODO : need one ZKP for AdminPublicKey
 	if (!isRegistered(accountToRegister)) {
         if(verifyZKP(xG,r,vG) ) {
             // Update voter's registration

@@ -4,8 +4,8 @@
 
 //This requires an environment variable, which we will get to in a moment.
 //require files joining that directory variable with the location within your package of files
-const databasePath = require('path').join(directory, '/db/votersKey.db');
-const javaPath = require('path').join(directory, '/java/');
+const databasePath = require('path').join(__dirname, '../db/votersKey.db');
+const javaPath = require('path').join(__dirname, '../java/');
 
 //Ouverture de la base de données
 var Datastore = require('nedb')
