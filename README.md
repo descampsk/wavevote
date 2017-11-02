@@ -23,7 +23,7 @@ Last thing, import the image into VirtualBox and let's have fun ! The administra
 ```
 1 - git clone <location> https://github.com/descampsk/wavevote/
 2 - cd \<location\>/WaveVote_Electron
-3 - npm install
+3 - npm install --unsafe-perm
 4 - npm start
 5 - To build an executable : electron-forge make
 ```
