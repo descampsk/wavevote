@@ -36,7 +36,6 @@
     "electron-compile": "^6.4.1",
     "electron-compilers": "^5.9.0",
     "electron-forge": "^4.0.0",
-    "electron-prebuilt-compile": "1.6.12",
     "elliptic": "^6.4.0",
     "fs-extra": "^4.0.2",
     "geth": "^0.4.0",

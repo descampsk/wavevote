@@ -18,9 +18,6 @@ winston.configure({
 });
 winston.level = 'debug';
 
-const isProd = () => process.env.NODE_ENV === 'production';
-const directory = isProd() ? 'resources/app' : './';
-
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
@@ -77,16 +74,19 @@ var config = require(path.join(__dirname, "../config/config.json"));
 console.log(config);
 
 const networkid = config.networkid;
-const datadir = path.join(process.env.APPDATA, '/Ethereum-' + networkid);
+
 const genesisPath = path.join(__dirname, '../geth/genesis.json');
 
 const OS = process.env.OS;
 
 var gethPath;
+var datadir;
 if(OS.indexOf("Windows")!=-1) {
 	gethPath = path.join(__dirname, '../geth/geth-win32-64.exe');
+	datadir = path.join(process.env.APPDATA, '/Ethereum-' + networkid);
 } else {
 	gethPath = path.join(__dirname, '../geth/geth-linux-64');
+	datadir = path.join(process.env.HOME, '/Ethereum-' + networkid);
 }
 
 const { spawn, exec } = require('child_process');
