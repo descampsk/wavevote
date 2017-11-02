@@ -81,12 +81,15 @@ const OS = process.env.OS;
 
 var gethPath;
 var datadir;
-if(OS.indexOf("Windows")!=-1) {
+if(OS==undefined) {
+	gethPath = path.join(__dirname, '../geth/geth-linux-64');
+	datadir = path.join(process.env.HOME, '/Ethereum-' + networkid);
+} else if(OS.indexOf("Windows")!=-1) {
 	gethPath = path.join(__dirname, '../geth/geth-win32-64.exe');
 	datadir = path.join(process.env.APPDATA, '/Ethereum-' + networkid);
 } else {
-	gethPath = path.join(__dirname, '../geth/geth-linux-64');
-	datadir = path.join(process.env.HOME, '/Ethereum-' + networkid);
+	gethPath = path.join(__dirname, '../geth/geth-win32-64.exe');
+	datadir = path.join(process.env.APPDATA, '/Ethereum-' + networkid);
 }
 
 const { spawn, exec } = require('child_process');
