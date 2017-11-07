@@ -1011,8 +1011,6 @@ contract WaveVote is owned {
   function computeSumAllVote() constant returns(uint[2] _sum) {
 	 uint[3] memory temp;
      uint[2] memory vote;
-     
-     state = State.FINISHED;
 
      // Sum all votes : map is 1 to n ...
      for(uint i=1; i<=totalregistered; i++) {
@@ -1093,8 +1091,11 @@ contract WaveVote is owned {
 		  uint[2] memory sumAllVoteTemp = computeSumAllVote();
 		  
 		  if (sumAllVoteTemp[0]==temp[0]) {
-			  //The result is correct
+			  //The result is correct  
 			  (_successful, _message) = computeFinalTally(result);
+			  if(_successful) {
+				  state = State.FINISHED;
+			  }
 			  return;
 		  } else {
 			  _successful = false;

@@ -31,7 +31,6 @@
   "dependencies": {
     "babel-plugin-transform-async-to-generator": "^6.24.1",
     "babel-preset-env": "^1.6.0",
-    "babel-preset-react": "^6.24.1",
     "bignumber.js": "^4.0.3",
     "electron-compile": "^6.4.1",
     "electron-compilers": "^5.9.0",

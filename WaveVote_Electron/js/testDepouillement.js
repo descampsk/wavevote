@@ -15,7 +15,12 @@ function computeTallyFromJavaChildProcess(totalVoter, totalCandidat, sumVote_x, 
 			);
 	
 	child.stdout.on('data', function(data) {
-	    console.log(data.toString());
+	    //console.log(parseInt(data));
+		var output = parseInt(data);
+		if(!isNaN(output)) {
+			console.log(data.toString() + " ok ");
+		}
+			
 	});
 
 	child.stderr.on("data", function (data) {
@@ -24,6 +29,6 @@ function computeTallyFromJavaChildProcess(totalVoter, totalCandidat, sumVote_x, 
 	});
 }
 
-computeTallyFromJavaChildProcess(4, 4 , 
-		"23593695842213704323894249109946233988291594176434645859101973539580417621171",
-		"7147000257485557637214317311000081656385903187614466348461371803012398235439");
+computeTallyFromJavaChildProcess(21, 5, 
+		"107952543076626429943462417033159301330402174594016601212249657809727033303422",
+		"65367218548505295699149818696372470913178035247521762526945976449086021239580");

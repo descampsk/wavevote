@@ -145,7 +145,7 @@ public class VotingProccess {
    	
    	ECCurve curve = ecSpec.getCurve();
    	
-   	int nombre_votants = 5000;
+   	int nombre_votants = 20;
    	
    	//Initialisation des clés des votants
    	List<KeyPair> key_list = new ArrayList<KeyPair>();
@@ -212,7 +212,6 @@ public class VotingProccess {
    	List<Integer> voteCandidatList = new ArrayList<Integer>();
    	for(int i=0;i<nombre_votants;i++) {
    		int randomVote = random.nextInt(nombreCandidat);
-   		randomVote = 2;
    		voteCandidatList.add(randomVote);
    		if (nombreVotantParCandidat.containsKey(randomVote)) {
    			nombreVotantParCandidat.put(randomVote, nombreVotantParCandidat.get(randomVote)+1);

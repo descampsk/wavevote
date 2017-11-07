@@ -60,7 +60,7 @@ function openLogin() {
 	 }
 	
 	 selectbox = selectbox + "</select></p>";
-	 selectbox = selectbox + "<p>Password: <input type='password' id='passwordf' value='' name='fname'> <button onclick='unlock()' class='btn btn-primary'>Unlock</button> </p>";
+	 selectbox = selectbox + "<p>Password: <input type='password' id='passwordf' value='password' name='fname'> <button onclick='unlock()' class='btn btn-primary'>Unlock</button> </p>";
 	
 	 if(foundOwner) {
 	   document.getElementById('dropdown').innerHTML = selectbox;
@@ -797,6 +797,9 @@ function processNullVoting(privateVotingKeyStr, addressToDoNullVote) {
 	}
 }
 
+/**
+ * Function call by the button manualTally. Get the result from the input box and send a transaction to compute manually the tally
+ */
 function manualTally() {
 	  try {
 		var resultDiscretLogarithm = document.getElementById('discretlogarithm').value;
@@ -813,6 +816,80 @@ function manualTally() {
 		  console.log(e);
 		  alert(e);
 	  }
+}
+
+/**
+ * Function call by a button to compute the Tally with a java child process
+ */
+function computeJavaTally() {
+	try {
+		var sumVote = WaveVoteAddr.computeSumAllVote();
+		var totalAnswer = WaveVoteAddr.getTotalAnswers();
+		var totalVoter = WaveVoteAddr.totalregistered();
+		var totalVoted = WaveVoteAddr.totalvoted();
+		
+		if((totalVoter.eq(totalVoted)) && !WaveVoteAddr.totalregistered().eq(new BigNumber("0"))) {
+			computeTallyFromJavaChildProcess(totalVoted.toString(10), totalAnswer.toString(10), sumVote[0].toString(10), sumVote[1].toString(10));
+		} else {
+			alert("Can't tally because not all voter have voted!");
+		}
+	} catch(e) {
+		console.log(e);
+		alert(e);
+	}
+}
+
+/**
+ * Use a java child process to compute the discret logarithme of the sum of all votes
+ * and then send a transaction to compute the tally.
+ * @param totalVoter Total of the voters
+ * @param totalCandidat Total of the candidates
+ * @param sumVote_x X coordinate of the point which represents the sum of all votes
+ * @param sumVote_y Y coordinate of the point which represents the sum of all votes
+ */
+function computeTallyFromJavaChildProcess(totalVoter, totalCandidat, sumVote_x, sumVote_y) {
+	try {
+		var path = require('path');
+		const jarPath = path.join(__dirname, '../jar/WaveVote-1.0-jar-with-dependencies.jar');
+		var child = require('child_process').spawn(
+				  'java', ['-jar', jarPath, totalVoter, totalCandidat, sumVote_x, sumVote_y]
+				);
+		
+		child.stdout.on('data', function(data) {
+			console.log(data.toString());
+			var output = parseInt(data);
+			if(!isNaN(output)) {
+				try {
+					  web3.personal.unlockAccount(addr,password);
+					  var res = WaveVoteAddr.manualComputeFinalTally.call(output, {from:web3.eth.accounts[accountindex]});
+					  
+					  if (res[0]) {
+						  WaveVoteAddr.manualComputeFinalTally.sendTransaction(output, {from:web3.eth.accounts[accountindex], gas: 9000000});
+						  document.getElementById("tallybutton").innerHTML  = "Waiting for Ethereum to confirm tally";
+					  } else {
+						  console.log(res[1]);
+						  alert(res[1]);
+					  }
+				} catch(e) {
+					console.log(e);
+					alert(e);
+				}
+
+			}
+		});
+
+		child.stderr.on("data", function (data) {
+		    console.log(data.toString());
+			  alert(data.toString());
+		});
+		
+		document.getElementById("tallybutton").innerHTML  = "Waiting for the java child process to compute the tally";
+		
+	} catch(e) {
+		alert(e);
+		console.log(e);
+	}
+
 }
 
 var tallyCreate = false;
