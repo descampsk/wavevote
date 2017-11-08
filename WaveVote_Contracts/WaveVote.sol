@@ -1077,11 +1077,10 @@ contract WaveVote is owned {
   
   
   /**
-   * Function called by the administrator to do a manual Tally
+   * Function called by the administrator to do a Tally
    * @param result : result of the discret logarithm of the sum of all votes
-   * TODO: call this function only if State is finished or ... ??
    */
-  function manualComputeFinalTally(uint result) onlyOwner returns (bool _successful, string _message){
+  function computeFinalTally(uint result) onlyOwner returns (bool _successful, string _message){
 	  //Check that all voters has cast their vote
 	  if(totalregistered==totalvoted) {
 	  
@@ -1092,10 +1091,27 @@ contract WaveVote is owned {
 		  
 		  if (sumAllVoteTemp[0]==temp[0]) {
 			  //The result is correct  
-			  (_successful, _message) = computeFinalTally(result);
-			  if(_successful) {
-				  state = State.FINISHED;
-			  }
+			  uint totalAnswers = getTotalAnswers();
+			  	
+			  	//On trouve m tel que 2^m>n
+			  	uint m=1;
+			  	while (2**m<=totalregistered) {
+			  		m+=1;
+			  	}
+			  	
+			  	uint x = 0;
+				for(int i=int(totalAnswers-1);i>=0;i--) {
+					uint c = 1;
+					while((2**(m*uint(i)))*c<=result-x) {
+						c+=1;
+					}
+					c-=1;
+					finalTally[uint(i)]=c;
+					x+=c*(2**(m*uint(i)));
+				}
+					
+				_successful = true;
+				state = State.FINISHED;
 			  return;
 		  } else {
 			  _successful = false;
@@ -1110,40 +1126,6 @@ contract WaveVote is owned {
 		  return;
 	  }
 	  
-  }
-  
-  /**
-   * Intern function.
-   * TODO : merge this function with manualComputeFinalTally because the admin can call this function with a false result !!
-   */
-  function computeFinalTally(uint result) onlyOwner returns(bool _successful, string _message){
-	if(totalregistered==totalvoted) {
-
-	  	uint totalAnswers = getTotalAnswers();
-	  	
-	  	//On trouve m tel que 2^m>n
-	  	uint m=1;
-	  	while (2**m<=totalregistered) {
-	  		m+=1;
-	  	}
-	  	
-	  	uint x = 0;
-		for(int i=int(totalAnswers-1);i>=0;i--) {
-			uint c = 1;
-			while((2**(m*uint(i)))*c<=result-x) {
-				c+=1;
-			}
-			c-=1;
-			finalTally[uint(i)]=c;
-			x+=c*(2**(m*uint(i)));
-		}
-			
-		_successful = true;
-	  } else {
-		  _successful = false;
-		  _message = "Impossible to compute tally because not all registered people has voted.";
-		  return;
-	  }
   }
   
   /**
@@ -1180,7 +1162,7 @@ contract WaveVote is owned {
   /**
    * Constant function to verify if the tally is correct. This function can be called by all voters to be sure of the result.
    */
-  function verifyTally() constant returns (bool) {
+  function verifyTally(uint[2] sumVotes) constant returns (bool) {
   	uint totalAnswers = getTotalAnswers();
   	
   	//On trouve m tel que 2^m>n
@@ -1200,8 +1182,6 @@ contract WaveVote is owned {
 	  } else {
 		  uint[3] memory temp = Secp256k1._mul(sumAnswers, G);
 		  ECCMath.toZ1(temp, pp);
-		  
-		  uint[2] memory sumVotes = computeSumAllVote();
 		  
 		  if(temp[0]!=sumVotes[0] || temp[1]!=sumVotes[1]) {
 			  return false;

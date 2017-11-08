@@ -33,7 +33,6 @@ function createWindow () {
     slashes: true
   }))
   
-  var config = require(path.join(__dirname, "../config/config.json"));
   var debug = config.debug;
   if(debug) {
 	  mainWindow.openDevTools();
@@ -46,6 +45,7 @@ function createWindow () {
     // when you should delete the corresponding element.
     mainWindow = null
   })
+  
 }
 
 
@@ -72,11 +72,10 @@ process.on('uncaughtException', function (error) {
 
 var config = require(path.join(__dirname, "../config/config.json"));
 console.log(config);
+global.config = config;
 
 const networkid = config.networkid;
-
 const genesisPath = path.join(__dirname, '../geth/genesis.json');
-
 const OS = process.env.OS;
 
 var gethPath;

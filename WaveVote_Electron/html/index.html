@@ -42,26 +42,29 @@
   </body>
    
   <script>
-  const isProd = () => process.env.NODE_ENV === 'production';
-  var Web3 = require('web3');
-  var web3;
+  var remote = require('electron').remote;
+  console.log(remote.getCurrentWindow());
+  console.log(remote.getGlobal('testOp'));
   
+  var Web3 = require('web3');
   //We define the address of the ethereum node 
   var path = require("path");
   var config = require(path.join(__dirname, "../config/config.json"));
   console.log(config);
   var addrProvider = config.addrProvider;
   console.log("AddrProvider : " + addrProvider);
-
-  document.getElementById('pageAdmin').href="admin.html?addr=" + addrProvider;
-  document.getElementById('pageVotant').href="vote.html?addr=" + addrProvider;
-  
+  var web3;
   if (typeof web3 !== 'undefined') {
       web3 = new Web3(web3.currentProvider);
   } else {
       // set the provider you want from Web3.providers
   	web3 = new Web3(new Web3.providers.HttpProvider("http://" + addrProvider));
   }
+
+  document.getElementById('pageAdmin').href="admin.html?addr=" + addrProvider;
+  document.getElementById('pageVotant').href="vote.html?addr=" + addrProvider;
+  
+
   
   var checkingSyncing = false;
   function checkSyncing() {

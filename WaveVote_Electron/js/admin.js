@@ -804,10 +804,10 @@ function manualTally() {
 	  try {
 		var resultDiscretLogarithm = document.getElementById('discretlogarithm').value;
 		  web3.personal.unlockAccount(addr,password);
-		  var res = WaveVoteAddr.manualComputeFinalTally.call(resultDiscretLogarithm, {from:web3.eth.accounts[accountindex]});
+		  var res = WaveVoteAddr.computeFinalTally.call(resultDiscretLogarithm, {from:web3.eth.accounts[accountindex]});
 		  
 		  if (res[0]) {
-			  WaveVoteAddr.manualComputeFinalTally.sendTransaction(resultDiscretLogarithm, {from:web3.eth.accounts[accountindex], gas: 9000000});
+			  WaveVoteAddr.computeFinalTally.sendTransaction(resultDiscretLogarithm, {from:web3.eth.accounts[accountindex], gas: 9000000});
 			  document.getElementById("tallybutton").innerHTML  = "Waiting for Ethereum to confirm tally";
 		  } else {
 			  alert(res[1]);
@@ -861,10 +861,10 @@ function computeTallyFromJavaChildProcess(totalVoter, totalCandidat, sumVote_x, 
 			if(!isNaN(output)) {
 				try {
 					  web3.personal.unlockAccount(addr,password);
-					  var res = WaveVoteAddr.manualComputeFinalTally.call(output, {from:web3.eth.accounts[accountindex]});
+					  var res = WaveVoteAddr.computeFinalTally.call(output, {from:web3.eth.accounts[accountindex]});
 					  
 					  if (res[0]) {
-						  WaveVoteAddr.manualComputeFinalTally.sendTransaction(output, {from:web3.eth.accounts[accountindex], gas: 9000000});
+						  WaveVoteAddr.computeFinalTally.sendTransaction(output, {from:web3.eth.accounts[accountindex], gas: 9000000});
 						  document.getElementById("tallybutton").innerHTML  = "Waiting for Ethereum to confirm tally";
 					  } else {
 						  console.log(res[1]);
