@@ -30,6 +30,9 @@ Last thing, import the image into VirtualBox and let's have fun ! The administra
 
 ### Prerequisites
 
+#### Public Blockchain
+At the moment, this project is neither on the testnet nor on the mainnet.
+
 #### Private Blockchain
 A Geth client is included in the application. It will automatically create the genesis block (the genesis file can be changed) and connect to the Blockchain on the networkid 9876. You can change the networkid in the file config.json.<br><b>WARNING: the intern geth client work only under Windows. If you want to use the application under Linux or Mac, you have to use an external geth client.</b><br>
 ```
@@ -38,6 +41,10 @@ A Geth client is included in the application. It will automatically create the g
 By default, the client will not mine new blocks and will act as a relay. However, you can change the "mine" value to true in the config file, so that the client will mine with a single thread.<br>
 ```
 {"mine":true, "minethreads":2, ...}
+```
+It's possible to set the client as a light node. In this case, the client mandatory act as a relay. To set this, change the value "lightNode" to true in the config file.<br>
+```
+{"lightNode": true, ...}
 ```
 It's possible to use an other geth client. To do this, change in the config file, the value "externGeth" to true and the value "addrProvider" to "IP:8545". For example :
 ```
