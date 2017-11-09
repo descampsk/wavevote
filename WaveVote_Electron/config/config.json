@@ -1,6 +1,7 @@
 {
 	"externGeth": true, 
 	"addrProvider": "192.168.99.100:8545",
+	"lightNode": false,
 	"mine": true, "minerthreads":1,
 	"networkid": 1234,
 	"WaveVoteContractRegistryAddress": "0x350c37c00966Ecf69Aa55D11Ee967158874207E0",

@@ -96,22 +96,35 @@ var geth=null;
 function launchGeth() {
 	var mine = config.mine;
 	var minerthreads = config.minerthreads;
-	if(mine) {
-		var optionStr = ' --networkid ' + networkid + ' --rpc --rpcapi db,eth,net,web3,personal --rpcaddr 0.0.0.0 --datadir ' + datadir
-						+ ' --mine --minerthreads ' + minerthreads + ' --etherbase 0x0000000000000000000000000000000000000001';
-		geth = exec('start /affinity 1 ' + gethPath + optionStr);
-	} else {
-		var debug = config.debug;
+	var lightNode = config.lightNode;
+	var debug = config.debug;
+	
+	if(lightNode) {
 		if(!debug) {
-			var options = ["--networkid", networkid, "--rpc", "--rpcapi" , "db,eth,net,web3,personal",
+			var options = ["--light", "--networkid", networkid, "--rpc", "--rpcapi" , "db,eth,net,web3,personal",
 				  "--rpcaddr", "0.0.0.0", "--datadir", datadir];
 			geth = spawn(gethPath, options);
 		} else {
-			var optionStr = ' --networkid ' + networkid +
+			var optionStr = ' --light --networkid ' + networkid +
 			' --rpc --rpcapi db,eth,net,web3,personal --rpcaddr 0.0.0.0 --datadir ' + datadir;			;
 			geth = exec('start /affinity 1 ' + gethPath + optionStr);
 		}
-
+	} else {
+		if(mine) {
+			var optionStr = ' --networkid ' + networkid + ' --rpc --rpcapi db,eth,net,web3,personal --rpcaddr 0.0.0.0 --datadir ' + datadir
+							+ ' --mine --minerthreads ' + minerthreads + ' --etherbase 0x0000000000000000000000000000000000000001';
+			geth = exec('start /affinity 1 ' + gethPath + optionStr);
+		} else {
+			if(!debug) {
+				var options = ["--networkid", networkid, "--rpc", "--rpcapi" , "db,eth,net,web3,personal",
+					  "--rpcaddr", "0.0.0.0", "--datadir", datadir];
+				geth = spawn(gethPath, options);
+			} else {
+				var optionStr = ' --networkid ' + networkid +
+				' --rpc --rpcapi db,eth,net,web3,personal --rpcaddr 0.0.0.0 --datadir ' + datadir;			;
+				geth = exec('start /affinity 1 ' + gethPath + optionStr);
+			}
+		}
 	}
 
 	geth.stdout.on('data', (data) => {
