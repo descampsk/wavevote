@@ -29,6 +29,11 @@ Last thing, import the image into VirtualBox and let's have fun ! The administra
 
 ### Prerequisites
 
+#### NodeJs
+Download and install NodeJs here : https://nodejs.org/en/ <br>
+The project has been tested with this versions : <br>
+- Node : 8.9.3 & npm : 5.5.1
+
 #### Public Blockchain
 At the moment, this project is neither on the testnet nor on the mainnet.
 
