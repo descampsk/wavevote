@@ -77,11 +77,12 @@ global.config = config;
 const networkid = config.networkid;
 const genesisPath = path.join(__dirname, '../geth/genesis.json');
 const OS = process.env.OS;
+console.log(process.env);
 
 var gethPath;
 var datadir;
 if(OS==undefined) {
-	gethPath = path.join(__dirname, '../geth/geth-linux-64');
+	gethPath = path.join(__dirname, '../geth/geth-win32-64.exe');
 	datadir = path.join(process.env.HOME, '/Ethereum-' + networkid);
 } else if(OS.indexOf("Windows")!=-1) {
 	gethPath = path.join(__dirname, '../geth/geth-win32-64.exe');
@@ -102,26 +103,26 @@ function launchGeth() {
 	if(lightNode) {
 		if(!debug) {
 			var options = ["--light", "--networkid", networkid, "--rpc", "--rpcapi" , "db,eth,net,web3,personal",
-				  "--rpcaddr", "0.0.0.0", "--datadir", datadir];
+				  "--rpcaddr", "0.0.0.0", "--datadir \"", datadir + '"'];
 			geth = spawn(gethPath, options);
 		} else {
 			var optionStr = ' --light --networkid ' + networkid +
-			' --rpc --rpcapi db,eth,net,web3,personal --rpcaddr 0.0.0.0 --datadir ' + datadir;			;
+			' --rpc --rpcapi db,eth,net,web3,personal --rpcaddr 0.0.0.0 --datadir "' + datadir + '"';
 			geth = exec('start /affinity 1 ' + gethPath + optionStr);
 		}
 	} else {
 		if(mine) {
-			var optionStr = ' --networkid ' + networkid + ' --rpc --rpcapi db,eth,net,web3,personal --rpcaddr 0.0.0.0 --datadir ' + datadir
+			var optionStr = ' --networkid ' + networkid + ' --rpc --rpcapi db,eth,net,web3,personal --rpcaddr 0.0.0.0 --datadir "' + datadir + '"'
 							+ ' --mine --minerthreads ' + minerthreads + ' --etherbase 0x0000000000000000000000000000000000000001';
 			geth = exec('start /affinity 1 ' + gethPath + optionStr);
 		} else {
 			if(!debug) {
 				var options = ["--networkid", networkid, "--rpc", "--rpcapi" , "db,eth,net,web3,personal",
-					  "--rpcaddr", "0.0.0.0", "--datadir", datadir];
+					  "--rpcaddr", "0.0.0.0", "--datadir \"", datadir + '"'];
 				geth = spawn(gethPath, options);
 			} else {
 				var optionStr = ' --networkid ' + networkid +
-				' --rpc --rpcapi db,eth,net,web3,personal --rpcaddr 0.0.0.0 --datadir ' + datadir;			;
+				' --rpc --rpcapi db,eth,net,web3,personal --rpcaddr 0.0.0.0 --datadir "' + datadir + '"';
 				geth = exec('start /affinity 1 ' + gethPath + optionStr);
 			}
 		}
