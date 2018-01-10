@@ -1,4 +1,4 @@
-pragma solidity ^0.4.10;
+pragma solidity ^0.4.17;
 
 /**
  * @title ECCMath_noconflict
@@ -13,9 +13,8 @@ library ECCMath_noconflict {
     /// @param a The number.
     /// @param p The mmodulus.
     /// @return x such that ax = 1 (mod p)
-    function invmod(uint a, uint p) internal constant returns (uint) {
-        if (a == 0 || a == p || p == 0)
-            throw;
+    function invmod(uint a, uint p) internal pure returns (uint) {
+        require(a != 0 && a != p && p!= 0);
         if (a > p)
             a = a % p;
         int t1;
@@ -39,13 +38,12 @@ library ECCMath_noconflict {
     /// @param e The exponent.
     /// @param m The modulus.
     /// @return x such that x = b**e (mod m)
-    function expmod(uint b, uint e, uint m) internal constant returns (uint r) {
+    function expmod(uint b, uint e, uint m) internal view returns (uint r) {
+        require(m != 0);
         if (b == 0)
             return 0;
         if (e == 0)
             return 1;
-        if (m == 0)
-            throw;
         r = 1;
         uint bit = 2 ** 255;
 		bit = bit;
@@ -69,7 +67,7 @@ library ECCMath_noconflict {
     /// @param z2Inv The square of zInv
     /// @param prime The prime modulus.
     /// @return (Px", Py", 1)
-    function toZ1(uint[3] memory P, uint zInv, uint z2Inv, uint prime) internal constant {
+    function toZ1(uint[3] memory P, uint zInv, uint z2Inv, uint prime) internal pure {
         P[0] = mulmod(P[0], z2Inv, prime);
         P[1] = mulmod(P[1], mulmod(zInv, z2Inv, prime), prime);
         P[2] = 1;
@@ -80,7 +78,7 @@ library ECCMath_noconflict {
     /// @param PJ The point.
     /// @param prime The prime modulus.
     /// @return (Px", Py", 1)
-    function toZ1(uint[3] PJ, uint prime) internal constant {
+    function toZ1(uint[3] PJ, uint prime) internal pure {
         uint zInv = invmod(PJ[2], prime);
         uint zInv2 = mulmod(zInv, zInv, prime);
         PJ[0] = mulmod(PJ[0], zInv2, prime);
@@ -115,7 +113,7 @@ library Secp256k1_noconflict {
     // uint constant beta = "0x7ae96a2b657c07106e64479eac3434e99cf0497512f58995c1396c28719501ee";
 
     /// @dev See Curve.onCurve
-    function onCurve(uint[2] P) internal constant returns (bool) {
+    function onCurve(uint[2] P) internal view returns (bool) {
         uint p = pp;
         if (0 == P[0] || P[0] == p || 0 == P[1] || P[1] == p)
             return false;
@@ -125,13 +123,13 @@ library Secp256k1_noconflict {
     }
 
     /// @dev See Curve.isPubKey
-    function isPubKey(uint[2] memory P) internal constant returns (bool isPK) {
+    function isPubKey(uint[2] memory P) internal view returns (bool isPK) {
         isPK = onCurve(P);
     }
 
     /// @dev See Curve.isPubKey
     // TODO: We assume we are given affine co-ordinates for now
-    function isPubKey(uint[3] memory P) internal constant returns (bool isPK) {
+    function isPubKey(uint[3] memory P) internal view returns (bool isPK) {
         uint[2] memory a_P;
         a_P[0] = P[0];
         a_P[1] = P[1];
@@ -139,7 +137,7 @@ library Secp256k1_noconflict {
     }
 
     /// @dev See Curve.validateSignature
-    function validateSignature(bytes32 message, uint[2] rs, uint[2] Q) internal constant returns (bool) {
+    function validateSignature(bytes32 message, uint[2] rs, uint[2] Q) internal view returns (bool) {
         uint n = nn;
         uint p = pp;
         if(rs[0] == 0 || rs[0] >= n || rs[1] == 0 || rs[1] > lowSmax)
@@ -161,13 +159,13 @@ library Secp256k1_noconflict {
     }
 
     /// @dev See Curve.compress
-    function compress(uint[2] P) internal constant returns (uint8 yBit, uint x) {
+    function compress(uint[2] P) internal pure returns (uint8 yBit, uint x) {
         x = P[0];
         yBit = P[1] & 1 == 1 ? 1 : 0;
     }
 
     /// @dev See Curve.decompress
-    function decompress(uint8 yBit, uint x) internal constant returns (uint[2] P) {
+    function decompress(uint8 yBit, uint x) internal view returns (uint[2] P) {
         uint p = pp;
         var y2 = addmod(mulmod(x, mulmod(x, x, p), p), 7, p);
         var y_ = ECCMath_noconflict.expmod(y2, (p + 1) / 4, p);
@@ -179,7 +177,7 @@ library Secp256k1_noconflict {
     // Point addition, P + Q
     // inData: Px, Py, Pz, Qx, Qy, Qz
     // outData: Rx, Ry, Rz
-    function _add(uint[3] memory P, uint[3] memory Q) internal constant returns (uint[3] memory R) {
+    function _add(uint[3] memory P, uint[3] memory Q) internal view returns (uint[3] memory R) {
         if(P[2] == 0)
             return Q;
         if(Q[2] == 0)
@@ -218,7 +216,7 @@ library Secp256k1_noconflict {
     // Point addition, P + Q. P Jacobian, Q affine.
     // inData: Px, Py, Pz, Qx, Qy
     // outData: Rx, Ry, Rz
-    function _addMixed(uint[3] memory P, uint[2] memory Q) internal constant returns (uint[3] memory R) {
+    function _addMixed(uint[3] memory P, uint[2] memory Q) internal view returns (uint[3] memory R) {
         if(P[2] == 0)
             return [Q[0], Q[1], 1];
         if(Q[1] == 0)
@@ -258,7 +256,7 @@ library Secp256k1_noconflict {
     }
 
     // Same as addMixed but params are different and mutates P.
-    function _addMixedM(uint[3] memory P, uint[2] memory Q) internal constant {
+    function _addMixedM(uint[3] memory P, uint[2] memory Q) internal view {
         if(P[1] == 0) {
             P[0] = Q[0];
             P[1] = Q[1];
@@ -304,7 +302,7 @@ library Secp256k1_noconflict {
     // Point doubling, 2*P
     // Params: Px, Py, Pz
     // Not concerned about the 1 extra mulmod.
-    function _double(uint[3] memory P) internal constant returns (uint[3] memory Q) {
+    function _double(uint[3] memory P) internal view returns (uint[3] memory Q) {
         uint p = pp;
         if (P[2] == 0)
             return;
@@ -320,7 +318,7 @@ library Secp256k1_noconflict {
     }
 
     // Same as double but mutates P and is internal only.
-    function _doubleM(uint[3] memory P) internal constant {
+    function _doubleM(uint[3] memory P) internal view {
         uint p = pp;
         if (P[2] == 0)
             return;
@@ -338,7 +336,7 @@ library Secp256k1_noconflict {
     // Multiplication dP. P affine, wNAF: w=5
     // Params: d, Px, Py
     // Output: Jacobian Q
-    function _mul(uint d, uint[2] memory P) internal constant returns (uint[3] memory Q) {
+    function _mul(uint d, uint[2] memory P) internal view returns (uint[3] memory Q) {
         uint p = pp;
         if (d == 0) // TODO
             return;
@@ -466,11 +464,10 @@ contract LocalCrypto {
   // c = H(g, g^{v}, g^{x});
   // r = v - xz (mod p);
   // return(r,vG)
-  function createZKP(uint x, uint v, uint[2] xG) constant returns (uint[4] res) {
+  function createZKP(uint x, uint v, uint[2] xG) view returns (uint[4] res) {
       
-      if(!Secp256k1_noconflict.isPubKey(xG)) {
-          throw; //Must be on the curve!
-      }
+      //Must be on the curve!
+      require(Secp256k1_noconflict.isPubKey(xG));
 
       // Get g^{v}
       uint[3] memory vG = Secp256k1_noconflict._mul(v, G);
@@ -499,11 +496,10 @@ contract LocalCrypto {
   // c = H(g, g^{v}, g^{x});
   // r = v - xz (mod p);
   // return(r,vG)
-  function createZKPNullVote(uint x, uint v, uint[2] yG) constant returns (uint[7] res) {
+  function createZKPNullVote(uint x, uint v, uint[2] yG) view returns (uint[7] res) {
 
-      if(!Secp256k1_noconflict.isPubKey(yG)) {
-          throw; //Must be on the curve!
-      }
+      //Must be on the curve!
+      require(Secp256k1_noconflict.isPubKey(yG));
 
       // Get g^{v}
       uint[3] memory vG = Secp256k1_noconflict._mul(v, G);
@@ -552,7 +548,7 @@ contract LocalCrypto {
 
   // Parameters xG, r where r = v - xc, and vG.
   // Verify that vG = rG + xcG!
-  function verifyZKP(uint[2] xG, uint r, uint[3] vG) constant returns (bool _successful, string _error){
+  function verifyZKP(uint[2] xG, uint r, uint[3] vG) view returns (bool _successful, string _error){
 
       // Check both keys are on the curve.
       if(!Secp256k1_noconflict.isPubKey(xG) || !Secp256k1_noconflict.isPubKey(vG)) {
@@ -589,7 +585,7 @@ contract LocalCrypto {
   // Parameters xG, r where r = v - xc, and vG.
   // Verify that vG = rG + xcG
   // And that vH = rH + (y/G)^c
-  function verifyZKPNullVote(uint[2] xG, uint[2] yG, uint[2] voteNull, uint r, uint[3] vG, uint[3] vH) constant returns (bool _successful, string _error, uint[2] temp_affine){
+  function verifyZKPNullVote(uint[2] xG, uint[2] yG, uint[2] voteNull, uint r, uint[3] vG, uint[3] vH) view returns (bool _successful, string _error, uint[2] temp_affine){
 	  
       // Check both keys are on the curve.
       if(!Secp256k1_noconflict.isPubKey(xG) || !Secp256k1_noconflict.isPubKey(vG) || !Secp256k1_noconflict.isPubKey(voteNull) || !Secp256k1_noconflict.isPubKey(vH)) {
@@ -648,7 +644,7 @@ contract LocalCrypto {
       }
   }
   
-  function createNullVote(uint[2] yG, uint x) constant returns (uint[2] res) {
+  function createNullVote(uint[2] yG, uint x) view returns (uint[2] res) {
       uint[3] memory temp1 = Secp256k1_noconflict._mul(x,yG);
       Secp256k1_noconflict._addMixedM(temp1,G);
       ECCMath_noconflict.toZ1(temp1, pp);
@@ -658,7 +654,7 @@ contract LocalCrypto {
       res[1] = temp1[1];
   }
   
-  function checkVote(uint x, uint[2] yG, uint[2] voteCrypted, uint totalVoter, uint totalCandidat) constant returns(bool _successful, string _message, uint _result) {
+  function checkVote(uint x, uint[2] yG, uint[2] voteCrypted, uint totalVoter, uint totalCandidat) view returns(bool _successful, string _message, uint _result) {
       //On calcule g^yixi
 	  uint[3] memory temp1 = Secp256k1_noconflict._mul(x,yG);
 	  ECCMath_noconflict.toZ1(temp1, pp);
@@ -688,7 +684,7 @@ contract LocalCrypto {
 		return;
   }
   
-  function createVote(uint[2] yG, uint x, uint choice, uint totalVoters) constant returns (uint[2] vote, uint _m, uint _vi, uint[3] _viG, uint[3] _xyG) {
+  function createVote(uint[2] yG, uint x, uint choice, uint totalVoters) view returns (uint[2] vote, uint _m, uint _vi, uint[3] _viG, uint[3] _xyG) {
   	//On trouve m tel que 2^m>n
   	uint m=1;
   	while (2**m<=totalVoters) {
@@ -717,7 +713,7 @@ contract LocalCrypto {
 	vote[1] = xyGviG[1];
   }
   
-  function buildVotingPrivateKey(uint aPrivateKey, uint[2] bPublicKey) constant returns (uint _privateKey, uint[2] _publicKey) {
+  function buildVotingPrivateKey(uint aPrivateKey, uint[2] bPublicKey) view returns (uint _privateKey, uint[2] _publicKey) {
 	  uint[3] memory temp = Secp256k1_noconflict._mul(aPrivateKey,bPublicKey);
 	  ECCMath_noconflict.toZ1(temp, pp);
 	  
@@ -785,7 +781,7 @@ contract LocalCrypto {
   	
   	tempUint[4]=0;
 	//Calcul des ai
-  	//On boucle de 0 à totalAnswers-1
+  	//On boucle de 0 ï¿½ totalAnswers-1
 	for(uint i=0;i<res1D[3];i++) {
 		
 		//Si i!=vote

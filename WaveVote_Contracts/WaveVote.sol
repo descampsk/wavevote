@@ -1,4 +1,4 @@
-pragma solidity ^0.4.3;
+pragma solidity ^0.4.17;
 
 /**
  * @title ECCMath
@@ -13,9 +13,8 @@ library ECCMath {
     /// @param a The number.
     /// @param p The mmodulus.
     /// @return x such that ax = 1 (mod p)
-    function invmod(uint a, uint p) internal constant returns (uint) {
-        if (a == 0 || a == p || p == 0)
-            throw;
+    function invmod(uint a, uint p) internal pure returns (uint) {
+        require(a != 0 && a != p && p!= 0);
         if (a > p)
             a = a % p;
         int t1;
@@ -39,13 +38,12 @@ library ECCMath {
     /// @param e The exponent.
     /// @param m The modulus.
     /// @return x such that x = b**e (mod m)
-    function expmod(uint b, uint e, uint m) internal constant returns (uint r) {
+    function expmod(uint b, uint e, uint m) internal view returns (uint r) {
+        require(m != 0);
         if (b == 0)
             return 0;
         if (e == 0)
             return 1;
-        if (m == 0)
-            throw;
         r = 1;
         uint bit = 2 ** 255;
 		bit = bit;
@@ -69,7 +67,7 @@ library ECCMath {
     /// @param z2Inv The square of zInv
     /// @param prime The prime modulus.
     /// @return (Px", Py", 1)
-    function toZ1(uint[3] memory P, uint zInv, uint z2Inv, uint prime) internal constant {
+    function toZ1(uint[3] memory P, uint zInv, uint z2Inv, uint prime) internal pure {
         P[0] = mulmod(P[0], z2Inv, prime);
         P[1] = mulmod(P[1], mulmod(zInv, z2Inv, prime), prime);
         P[2] = 1;
@@ -80,7 +78,7 @@ library ECCMath {
     /// @param PJ The point.
     /// @param prime The prime modulus.
     /// @return (Px", Py", 1)
-    function toZ1(uint[3] PJ, uint prime) internal constant {
+    function toZ1(uint[3] PJ, uint prime) internal pure {
         uint zInv = invmod(PJ[2], prime);
         uint zInv2 = mulmod(zInv, zInv, prime);
         PJ[0] = mulmod(PJ[0], zInv2, prime);
@@ -115,7 +113,7 @@ library Secp256k1 {
     // uint constant beta = "0x7ae96a2b657c07106e64479eac3434e99cf0497512f58995c1396c28719501ee";
 
     /// @dev See Curve.onCurve
-    function onCurve(uint[2] P) internal constant returns (bool) {
+    function onCurve(uint[2] P) internal view returns (bool) {
         uint p = pp;
         if (0 == P[0] || P[0] == p || 0 == P[1] || P[1] == p)
             return false;
@@ -125,13 +123,13 @@ library Secp256k1 {
     }
 
     /// @dev See Curve.isPubKey
-    function isPubKey(uint[2] memory P) internal constant returns (bool isPK) {
+    function isPubKey(uint[2] memory P) internal view returns (bool isPK) {
         isPK = onCurve(P);
     }
 
     /// @dev See Curve.isPubKey
     // TODO: We assume we are given affine co-ordinates for now
-    function isPubKey(uint[3] memory P) internal constant returns (bool isPK) {
+    function isPubKey(uint[3] memory P) internal view returns (bool isPK) {
         uint[2] memory a_P;
         a_P[0] = P[0];
         a_P[1] = P[1];
@@ -141,7 +139,7 @@ library Secp256k1 {
     // Point addition, P + Q
     // inData: Px, Py, Pz, Qx, Qy, Qz
     // outData: Rx, Ry, Rz
-    function _add(uint[3] memory P, uint[3] memory Q) internal constant returns (uint[3] memory R) {
+    function _add(uint[3] memory P, uint[3] memory Q) internal view returns (uint[3] memory R) {
         if(P[2] == 0)
             return Q;
         if(Q[2] == 0)
@@ -180,7 +178,7 @@ library Secp256k1 {
     // Point addition, P + Q. P Jacobian, Q affine.
     // inData: Px, Py, Pz, Qx, Qy
     // outData: Rx, Ry, Rz
-    function _addMixed(uint[3] memory P, uint[2] memory Q) internal constant returns (uint[3] memory R) {
+    function _addMixed(uint[3] memory P, uint[2] memory Q) internal view returns (uint[3] memory R) {
         if(P[2] == 0)
             return [Q[0], Q[1], 1];
         if(Q[1] == 0)
@@ -220,7 +218,7 @@ library Secp256k1 {
     }
 
     // Same as addMixed but params are different and mutates P.
-    function _addMixedM(uint[3] memory P, uint[2] memory Q) internal constant {
+    function _addMixedM(uint[3] memory P, uint[2] memory Q) internal view {
         if(P[1] == 0) {
             P[0] = Q[0];
             P[1] = Q[1];
@@ -266,7 +264,7 @@ library Secp256k1 {
     // Point doubling, 2*P
     // Params: Px, Py, Pz
     // Not concerned about the 1 extra mulmod.
-    function _double(uint[3] memory P) internal constant returns (uint[3] memory Q) {
+    function _double(uint[3] memory P) internal view returns (uint[3] memory Q) {
         uint p = pp;
         if (P[2] == 0)
             return;
@@ -282,7 +280,7 @@ library Secp256k1 {
     }
 
     // Same as double but mutates P and is internal only.
-    function _doubleM(uint[3] memory P) internal constant {
+    function _doubleM(uint[3] memory P) internal view {
         uint p = pp;
         if (P[2] == 0)
             return;
@@ -300,7 +298,7 @@ library Secp256k1 {
     // Multiplication dP. P affine, wNAF: w=5
     // Params: d, Px, Py
     // Output: Jacobian Q
-    function _mul(uint d, uint[2] memory P) internal constant returns (uint[3] memory Q) {
+    function _mul(uint d, uint[2] memory P) internal view returns (uint[3] memory Q) {
         uint p = pp;
         if (d == 0) // TODO
             return;
@@ -396,7 +394,7 @@ contract owned {
 
     /* Function to dictate that only the designated owner can call a function */
 	  modifier onlyOwner {
-        if(owner != msg.sender) throw;
+        require(owner == msg.sender);
         _;
     }
 
@@ -411,7 +409,7 @@ contract owned {
  *  Open Vote Network
  *  A self-talling protocol that supports voter privacy.
  *
- *  Author: Kévin DESCAMPS
+ *  Author: Kï¿½vin DESCAMPS
  */
 contract WaveVote is owned {
 
@@ -465,14 +463,14 @@ contract WaveVote is owned {
   }
   
   // Work around function to fetch details about someone which asked to register
-  function getPeopleToRegister(address _address) constant returns (bool _registrationAsked, uint[2] _personalPublicKey, bytes32 _inscriptionCode) {
+  function getPeopleToRegister(address _address) view returns (bool _registrationAsked, uint[2] _personalPublicKey, bytes32 _inscriptionCode) {
 	  _registrationAsked = peopleToRegisterMap[_address].registrationAsked;
 	  _personalPublicKey = peopleToRegisterMap[_address].personalPublicKey;
 	  _inscriptionCode = peopleToRegisterMap[_address].inscriptionCode;
   }
   
   // Work around function to fetch details about a voter
-  function getVoterBis(address _address) constant returns (bool _registered, bool _voteCast, uint[2] _personalPublicKey, uint[2] _adminPublicKey, uint[2] _registeredkey, uint[2] _reconstructedkey, uint[2] _vote) {
+  function getVoterBis(address _address) view returns (bool _registered, bool _voteCast, uint[2] _personalPublicKey, uint[2] _adminPublicKey, uint[2] _registeredkey, uint[2] _reconstructedkey, uint[2] _vote) {
 	  uint index = addressid[_address];
 	  if (index==0) {
 		  uint256[2] memory nullArray;
@@ -495,21 +493,21 @@ contract WaveVote is owned {
   }
   
   //Getter for all boolean of the voter
-  function hasAskedForRegistration(address _address) constant returns(bool) {
+  function hasAskedForRegistration(address _address) view returns(bool) {
 	  return peopleToRegisterMap[_address].registrationAsked;
   }
   
-  function isRegistered(address _address) constant returns(bool) {
+  function isRegistered(address _address) view returns(bool) {
 	  uint index = addressid[_address];
 	  return voterMapBis[index].registered; 
   }
   
-  function hasCastVote(address _address) constant returns(bool) {
+  function hasCastVote(address _address) view returns(bool) {
 	  uint index = addressid[_address];
 	  return voterMapBis[index].voteCast; 
   }
   
-  function getTotalAnswers() constant returns (uint) {
+  function getTotalAnswers() view returns (uint) {
 	  return answerList.length;
   }
 
@@ -535,9 +533,7 @@ contract WaveVote is owned {
   State public state;
 
   modifier inState(State s) {
-    if(state != s) {
-        throw;
-    }
+    require(state == s);
     _;
   }
 
@@ -616,7 +612,7 @@ contract WaveVote is owned {
   // and allocate refunds to the correct people depending on the situation.
   function deadlinePassed() returns (bool){
 
-      //TODO : cette fonction ne sert peut-être à rien
+      //TODO : cette fonction ne sert peut-ï¿½tre ï¿½ rien
       // Has the Election Authority missed the signup deadline?
       // Election Authority will forfeit his deposit.
       if(state == State.SIGNUP && block.timestamp > endSignupPhase) {
@@ -745,7 +741,7 @@ contract WaveVote is owned {
     	 _error = "The deadline to signup is over";
      }
      
-    //TODO : doit vérifier que xG est unique !!!
+    //TODO : doit vï¿½rifier que xG est unique !!!
      //TODO : need one ZKP for AdminPublicKey
 	if (!isRegistered(accountToRegister)) {
         if(verifyZKP(xG,r,vG) ) {
@@ -964,7 +960,7 @@ contract WaveVote is owned {
   function submitNullVote(address addressToDoNullVote, uint[2] nullVote, uint[3] vG, uint[3] yvG, uint r) inState(State.VOTE) onlyOwner returns (bool _successful, string _error) {
      // HARD DEADLINE
 	  
-	  //A modifier pour pouvoir lancer la fonction qu'après la fin du vote
+	  //A modifier pour pouvoir lancer la fonction qu'aprï¿½s la fin du vote
 	  
 	  /*
      if(block.timestamp > endVotingPhase) {
@@ -1008,7 +1004,7 @@ contract WaveVote is owned {
   /**
    * Constant function to sum all the votes
    */
-  function computeSumAllVote() constant returns(uint[2] _sum) {
+  function computeSumAllVote() view returns(uint[2] _sum) {
 	 uint[3] memory temp;
      uint[2] memory vote;
 
@@ -1016,9 +1012,7 @@ contract WaveVote is owned {
      for(uint i=1; i<=totalregistered; i++) {
 
          // Confirm all votes have been cast...
-         if(!voterMapBis[i].voteCast) {
-            throw;
-         }
+         require(voterMapBis[i].voteCast);
 
          vote = voterMapBis[i].vote;
 
@@ -1131,7 +1125,7 @@ contract WaveVote is owned {
   /**
    * Constant function to compute the discret Logarithme of a elliptic point
    */
-  function discretLogarithme(uint[2] point) constant returns (bool _successful, string _message, uint _result){
+  function discretLogarithme(uint[2] point) view returns (bool _successful, string _message, uint _result){
 	  if(point[0] == 0) {
 	       _successful = false;
 	       _message = "The point was null";
@@ -1162,7 +1156,7 @@ contract WaveVote is owned {
   /**
    * Constant function to verify if the tally is correct. This function can be called by all voters to be sure of the result.
    */
-  function verifyTally(uint[2] sumVotes) constant returns (bool) {
+  function verifyTally(uint[2] sumVotes) view returns (bool) {
   	uint totalAnswers = getTotalAnswers();
   	
   	//On trouve m tel que 2^m>n
@@ -1225,7 +1219,7 @@ contract WaveVote is owned {
   // Parameters xG, r where r = v - xc, and vG.
   // Verify that vG = rG + xcG
   // And that vH = rH + (y/G)^c
-  function verifyZKPNullVote(uint[2] xG, uint[2] yG, uint[2] voteNull, uint r, uint[3] vG, uint[3] vH) constant returns (bool _successful, string _error){
+  function verifyZKPNullVote(uint[2] xG, uint[2] yG, uint[2] voteNull, uint r, uint[3] vG, uint[3] vH) view returns (bool _successful, string _error){
 	  
       // Check both keys are on the curve.
       if(!Secp256k1.isPubKey(xG) || !Secp256k1.isPubKey(vG) || !Secp256k1.isPubKey(voteNull) || !Secp256k1.isPubKey(vH)) {
