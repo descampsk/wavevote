@@ -5,5 +5,7 @@
 	"mine": false, "minerthreads":1,
 	"networkid": 9876,
 	"WaveVoteContractRegistryAddress": "0x21dF52A56043727a021F56F84c50d8B902e3fB47",
-	"debug": true
+	"debug": true,
+	"minerIp" : "34.242.173.123",
+	"minerEnode" : "791532f81a98fb466fdf127d944dcf65211882383f3a82f8181253f4e6c96d117f379c13d522be79ed24055c1df9804176b109b3dba5f35714d822f5d29c8a0f"
 }

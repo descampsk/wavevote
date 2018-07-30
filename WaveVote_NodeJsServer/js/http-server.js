@@ -87,7 +87,7 @@ var server = http.createServer((request, response) => {
 	        if (isAddress(account)) {
 	                console.log("account : " + account);
 	
-	                web3.personal.unlockAccount(web3.eth.accounts[0], "password");
+	                web3.personal.unlockAccount(web3.eth.accounts[0], "wavevote");
 	
 	                console.log("Connected");
 	                var res = anonymousvotingAddr.sendOneEtherToVoter.call(account, {

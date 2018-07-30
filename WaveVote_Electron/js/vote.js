@@ -117,8 +117,10 @@ function askOneEther() {
     }
     
     try { 	
+        var config = require(path.join(__dirname, "../config/config.json"));
+        var ip = config.minerIp;
         var xmlHttp = new XMLHttpRequest();
-        xmlHttp.open( "GET", "http://10.120.3.16:3000?account=" + web3.eth.accounts[accounts_index] , false ); // false for synchronous request
+        xmlHttp.open( "GET", "http://" + ip + ":3000?account=" + web3.eth.accounts[accounts_index] , false ); // false for synchronous request
         xmlHttp.send( null );
         console.log(xmlHttp);
         alert(xmlHttp.responseText);

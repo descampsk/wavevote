@@ -1,4 +1,5 @@
 const electron = require('electron')
+const fs = require('fs');
 // Module to control application life.
 const app = electron.app
 // Module to create native browser window.
@@ -94,7 +95,17 @@ if(OS==undefined) {
 
 const { spawn, exec } = require('child_process');
 var geth=null;
+
+function createStaticNodeFile() {
+	var minerIp = config.minerIp;
+	var minerEnode = config.minerEnode;
+	var staticNodeFile = "[\n\t\"enode://" + minerEnode + "@" + minerIp + ":30303\"\n]";
+	fs.writeFileSync(path.join(datadir,'/static-nodes.json'), staticNodeFile);
+}
+
 function launchGeth() {
+	createStaticNodeFile();
+
 	var mine = config.mine;
 	var minerthreads = config.minerthreads;
 	var lightNode = config.lightNode;
@@ -145,7 +156,6 @@ function launchGeth() {
 var externGeth = config.externGeth;
 if(!externGeth) {
 	//If no database exists, then we init the Blockchain with the genesis file
-	var fs = require('fs');
 	if (!fs.existsSync(path.join(datadir, '/geth/chaindata'))) {
 		const gethInit = spawn(gethPath,
 				  ["init", genesisPath, "--datadir", datadir]);
@@ -161,8 +171,8 @@ if(!externGeth) {
 		gethInit.on('exit', (code) => {
 		  console.log(`Child exited with code ${code}`);
 		  //We need to copy the static-nodes.json into the folder
-		  var fsExtra = require('fs-extra');
-		  fsExtra.copySync(path.join(__dirname,'../geth/static-nodes.json'), path.join(datadir,'/static-nodes.json'));
+		  //var fsExtra = require('fs-extra');
+		  //fsExtra.copySync(path.join(__dirname,'../geth/static-nodes.json'), path.join(datadir,'/static-nodes.json'));
 		  launchGeth();
 		});
 	} else {
