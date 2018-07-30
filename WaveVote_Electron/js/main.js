@@ -118,11 +118,12 @@ function launchGeth() {
 		} else {
 			if(!debug) {
 				var options = ["--networkid", networkid, "--rpc", "--rpcapi" , "db,eth,net,web3,personal",
-					  "--rpcaddr", "0.0.0.0", "--datadir \"", datadir + '"'];
+					  "--datadir \"", datadir + '"'];
 				geth = spawn(gethPath, options);
 			} else {
 				var optionStr = ' --networkid ' + networkid +
-				' --rpc --rpcapi db,eth,net,web3,personal --rpcaddr 0.0.0.0 --datadir "' + datadir + '"';
+				' --rpc --rpcapi db,eth,net,web3,personal --datadir "' + datadir + '"';
+				console.log(optionStr);
 				geth = exec('start /affinity 1 ' + gethPath + optionStr);
 			}
 		}

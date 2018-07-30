@@ -1,0 +1,9 @@
+[Unit]
+Description=Ethereum go client
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/geth --networkid 9876 --rpc --rpcapi "db,eth,net,web3,personal,web3" --mine --minerthreads 1 --datadir /home/ubuntu/.ethereum  2>> /var/log/geth.log
+
+[Install]
+WantedBy=default.target
