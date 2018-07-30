@@ -2,6 +2,7 @@
  //require files joining that directory variable with the location within your package of files
  const databasePath = require('path').join(__dirname, '../db/adminKey.db');
  const mailDataPath = require('path').join(__dirname, '../data/mail.csv');
+ const jarPath = require('path').join(__dirname, '../jar/WaveVote-1.0-jar-with-dependencies.jar');
  console.log("Set of the path : ok");
 
 //Ouverture de la base de données
@@ -849,8 +850,6 @@ function computeJavaTally() {
  */
 function computeTallyFromJavaChildProcess(totalVoter, totalCandidat, sumVote_x, sumVote_y) {
 	try {
-		var path = require('path');
-		const jarPath = path.join(__dirname, '../jar/WaveVote-1.0-jar-with-dependencies.jar');
 		var child = require('child_process').spawn(
 				  'java', ['-jar', jarPath, totalVoter, totalCandidat, sumVote_x, sumVote_y]
 				);
