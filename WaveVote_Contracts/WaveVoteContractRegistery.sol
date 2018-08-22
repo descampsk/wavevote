@@ -1,4 +1,4 @@
-pragma solidity ^0.4.3;
+pragma solidity ^0.4.17;
 
 contract WaveVoteContractRegistery {
 	address public owner;
@@ -18,7 +18,7 @@ contract WaveVoteContractRegistery {
     }
 
     modifier onlyOwner() {
-        if(owner != msg.sender) throw;
+        require(owner == msg.sender);
         _;
     }
 
